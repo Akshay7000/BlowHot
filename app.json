@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "blowhot",
+    "slug": "blowhot",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "http://103.231.46.238:5000/public/img/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.avigator003.blowhot"
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
+    }
+  }
+}
