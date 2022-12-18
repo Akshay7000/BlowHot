@@ -87,7 +87,7 @@ export function LoginStack(props) {
         options={({ navigation }) => ({
           headerTitleAlign: "center",
           headerStyle: {
-            backgroundColor: '#E9E9E9',
+            backgroundColor: "#E9E9E9",
             borderBottomEndRadius: 20,
             borderBottomStartRadius: 20,
           },

@@ -196,7 +196,12 @@ function Login(props) {
                 }}
               >
                 <Text
-                  style={{ fontSize: 18, fontWeight: "600", letterSpacing: 1, color: "#FFF" }}
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "600",
+                    letterSpacing: 1,
+                    color: "#FFF",
+                  }}
                 >
                   Login
                 </Text>
@@ -218,7 +223,7 @@ function Login(props) {
             </DataTable.Header>
 
             {responseData.div_com?.map((dat) => (
-              <DataTable.Row>
+              <DataTable.Row key={dat.idr}>
                 <DataTable.Cell>{dat.com_name}</DataTable.Cell>
                 <DataTable.Cell>
                   {dat.sdate
