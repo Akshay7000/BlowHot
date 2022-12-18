@@ -10844,7 +10844,7 @@ react-native-loading-spinner-overlay@^2.0.0:
   dependencies:
     prop-types "^15.6.2"
 
-react-native-material-textfield@^0.16.1, "react-native-material-textfield@github:vishaljadav24/react-native-material-textfield":
+react-native-material-textfield@^0.16.1, react-native-material-textfield@vishaljadav24/react-native-material-textfield:
   version "0.16.1"
   resolved "https://codeload.github.com/vishaljadav24/react-native-material-textfield/tar.gz/e2d155446ab9057fc7bf6251492fe445d47c07c2"
   dependencies:
@@ -10854,6 +10854,13 @@ react-native-modal-animated@0.0.2:
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/react-native-modal-animated/-/react-native-modal-animated-0.0.2.tgz#0b8c0936bb41e3643f364177f4f9da936a41ff49"
   integrity sha512-9tkFFtByclrrZ+zx6US41DfOB43wc5H3GXypyNuvFWqQocbw4sTK+mh842G/OPdc0ICdjpfacCQsEl5IToSy9w==
+
+react-native-modal-datetime-picker@^14.0.0:
+  version "14.0.0"
+  resolved "https://registry.yarnpkg.com/react-native-modal-datetime-picker/-/react-native-modal-datetime-picker-14.0.0.tgz#ca2c81a275ee3a23d9ad02113e76ed243c90781e"
+  integrity sha512-orI0BMgX9uooSZWYIILmMaZXqi8Ebr0vqsLUFL03zORpv9NvkBlLMQ8dZVdDxWUc1Lbx/N5DJskC16AOypPy8Q==
+  dependencies:
+    prop-types "^15.7.2"
 
 react-native-modal@^11.5.6:
   version "11.10.0"
