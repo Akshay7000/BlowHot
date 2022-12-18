@@ -1,23 +1,14 @@
-import {
-  View,
-  Text,
-  Button,
-  StyleSheet,
-  Image,
-  Linking,
-  Dimensions,
-} from "react-native";
-import React, { useEffect } from "react";
-import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Icon from "react-native-vector-icons/FontAwesome";
+import moment from "moment";
+import React, { useEffect, useState } from "react";
+import { Image, Linking, StyleSheet, Text, View } from "react-native";
+import { Col, Grid, Row } from "react-native-easy-grid";
+import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from "../../responsiveLayout/ResponsiveLayout";
-import moment from "moment";
-import { Grid, Row, Col } from "react-native-easy-grid";
-import { useState } from "react";
+import { host } from "../../Constants/Host";
 function Landing(props) {
   const [admin, setAdmin] = useState();
   const [sales, setSales] = useState();
@@ -100,305 +91,304 @@ function Landing(props) {
   }, []);
 
   return (
-    <ScrollView style={styles.container}>
-      {admin ? (
-        <Grid>
-          <Row
-            style={[
-              styles.container1,
-              { borderBottomColor: "black", borderBottomWidth: 0.5 },
-            ]}
-          >
-            <Col
+    <>
+      <ScrollView style={styles.container}>
+        {admin ? (
+          <Grid>
+            <Row
               style={[
                 styles.container1,
-                { borderRigthColor: "black", borderRightWidth: 0.5 },
+                { borderBottomColor: "black", borderBottomWidth: 0.5 },
               ]}
             >
-              <TouchableOpacity
-                style={styles.icon}
-                activeOpacity={0.8}
-                onPress={() => attendanceHandler()}
-              >
-                <Image
-                  source={require("../../../assets/Deal.png")}
-                  style={styles.image}
-                  resizeMode="contain"
-                />
-                <Text style={styles.text}>Attendance</Text>
-              </TouchableOpacity>
-            </Col>
-            <Col
-              style={[
-                styles.container1,
-                { borderRigthColor: "black", borderRightWidth: 0.5 },
-              ]}
-            >
-              <TouchableOpacity
-                style={styles.icon}
-                activeOpacity={0.8}
-                onPress={() => callVisitEntryHandler()}
-              >
-                <Image
-                  source={require("../../../assets/contractentry.png")}
-                  style={styles.image}
-                  resizeMode="contain"
-                />
-                <Text style={styles.text}>Call Visit Entry</Text>
-              </TouchableOpacity>
-            </Col>
-          </Row>
-
-          <Row
-            style={[
-              styles.container1,
-              { borderBottomColor: "black", borderBottomWidth: 0.5 },
-            ]}
-          >
-            <Col
-              style={[
-                styles.container1,
-                { borderRigthColor: "black", borderRightWidth: 0.5 },
-              ]}
-            >
-              <TouchableOpacity
-                style={styles.icon}
-                activeOpacity={0.8}
-                onPress={() => attendanceListHandler()}
-              >
-                <Image
-                  source={require("../../../assets/register.png")}
-                  style={styles.image}
-                  resizeMode="contain"
-                />
-                <Text style={styles.text}>Attendance List</Text>
-              </TouchableOpacity>
-            </Col>
-            <Col
-              style={[
-                styles.container1,
-                { borderRigthColor: "black", borderRightWidth: 0.5 },
-              ]}
-            >
-              <TouchableOpacity
-                style={styles.icon}
-                activeOpacity={0.8}
-                onPress={() => callVisitEntryListHandler()}
-              >
-                <Image
-                  source={require("../../../assets/billing.png")}
-                  style={styles.image}
-                  resizeMode="contain"
-                />
-                <Text style={styles.text}>Visit List</Text>
-              </TouchableOpacity>
-            </Col>
-          </Row>
-
-          <Row
-            style={[
-              styles.container1,
-              { borderBottomColor: "black", borderBottomWidth: 0.5 },
-            ]}
-          >
-            <Col
-              style={[
-                styles.container1,
-                { borderRigthColor: "black", borderRightWidth: 0.5 },
-              ]}
-            >
-              <TouchableOpacity
-                style={styles.icon}
-                activeOpacity={0.8}
-                onPress={() => callSummaryHandler()}
-              >
-                <Image
-                  source={require("../../../assets/register.png")}
-                  style={styles.image}
-                  resizeMode="contain"
-                />
-                <Text style={styles.text}>Call Summary</Text>
-              </TouchableOpacity>
-            </Col>
-            <Col
-              style={[
-                styles.container1,
-                { borderRigthColor: "black", borderRightWidth: 0.5 },
-              ]}
-            >
-              <TouchableOpacity
-                style={styles.icon}
-                activeOpacity={0.8}
-                onPress={() => comingSoonHandler()}
-              >
-                <Image
-                  source={require("../../../assets/billing.png")}
-                  style={styles.image}
-                  resizeMode="contain"
-                />
-                <Text style={styles.text}>Claim Status</Text>
-              </TouchableOpacity>
-            </Col>
-          </Row>
-        </Grid>
-      ) : (
-        <>
-          {!sales ? (
-            <Grid>
-              <Row
+              <Col
                 style={[
                   styles.container1,
-                  { borderBottomColor: "black", borderBottomWidth: 0.5 },
+                  { borderRigthColor: "black", borderRightWidth: 0.5 },
                 ]}
               >
-                <Col
-                  style={[
-                    styles.container1,
-                    { borderRigthColor: "black", borderRightWidth: 0.5 },
-                  ]}
+                <TouchableOpacity
+                  style={styles.icon}
+                  activeOpacity={0.8}
+                  onPress={() => attendanceHandler()}
                 >
-                  <TouchableOpacity
-                    style={styles.icon}
-                    activeOpacity={0.8}
-                    onPress={() => attendanceHandler()}
-                  >
-                    <Image
-                      source={require("../../../assets/Deal.png")}
-                      style={styles.image}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.text}>Attendance</Text>
-                  </TouchableOpacity>
-                </Col>
-                <Col
-                  style={[
-                    styles.container1,
-                    { borderRigthColor: "black", borderRightWidth: 0.5 },
-                  ]}
-                >
-                  <TouchableOpacity
-                    style={styles.icon}
-                    activeOpacity={0.8}
-                    onPress={() => callVisitEntryHandler()}
-                  >
-                    <Image
-                      source={require("../../../assets/contractentry.png")}
-                      style={styles.image}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.text}>Call Visit Entry</Text>
-                  </TouchableOpacity>
-                </Col>
-              </Row>
-
-              <Row
+                  <Image
+                    source={require("../../../assets/Deal.png")}
+                    style={styles.image}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.text}>Attendance</Text>
+                </TouchableOpacity>
+              </Col>
+              <Col
                 style={[
                   styles.container1,
-                  { borderBottomColor: "black", borderBottomWidth: 0.5 },
+                  { borderRigthColor: "black", borderRightWidth: 0.5 },
                 ]}
               >
-                <Col
-                  style={[
-                    styles.container1,
-                    { borderRigthColor: "black", borderRightWidth: 0.5 },
-                  ]}
+                <TouchableOpacity
+                  style={styles.icon}
+                  activeOpacity={0.8}
+                  onPress={() => callVisitEntryHandler()}
                 >
-                  <TouchableOpacity
-                    style={styles.icon}
-                    activeOpacity={0.8}
-                    onPress={() => attendanceListHandler()}
-                  >
-                    <Image
-                      source={require("../../../assets/register.png")}
-                      style={styles.image}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.text}>Attendance List</Text>
-                  </TouchableOpacity>
-                </Col>
-                <Col
-                  style={[
-                    styles.container1,
-                    { borderRigthColor: "black", borderRightWidth: 0.5 },
-                  ]}
-                >
-                  <TouchableOpacity
-                    style={styles.icon}
-                    activeOpacity={0.8}
-                    onPress={() => callVisitEntryListHandler()}
-                  >
-                    <Image
-                      source={require("../../../assets/billing.png")}
-                      style={styles.image}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.text}>Visit List</Text>
-                  </TouchableOpacity>
-                </Col>
-              </Row>
-            </Grid>
-          ) : (
-            <Grid>
-              <Row
+                  <Image
+                    source={require("../../../assets/contractentry.png")}
+                    style={styles.image}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.text}>Call Visit Entry</Text>
+                </TouchableOpacity>
+              </Col>
+            </Row>
+
+            <Row
+              style={[
+                styles.container1,
+                { borderBottomColor: "black", borderBottomWidth: 0.5 },
+              ]}
+            >
+              <Col
                 style={[
                   styles.container1,
-                  { borderBottomColor: "black", borderBottomWidth: 0.5 },
+                  { borderRigthColor: "black", borderRightWidth: 0.5 },
                 ]}
               >
-                <Col
-                  style={[
-                    styles.container1,
-                    { borderRigthColor: "black", borderRightWidth: 0.5 },
-                  ]}
+                <TouchableOpacity
+                  style={styles.icon}
+                  activeOpacity={0.8}
+                  onPress={() => attendanceListHandler()}
                 >
-                  <TouchableOpacity
-                    style={styles.icon}
-                    activeOpacity={0.8}
-                    onPress={() => callSummaryHandler()}
-                  >
-                    <Image
-                      source={require("../../../assets/register.png")}
-                      style={styles.image}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.text}>Call Summary</Text>
-                  </TouchableOpacity>
-                </Col>
-                <Col
-                  style={[
-                    styles.container1,
-                    { borderRigthColor: "black", borderRightWidth: 0.5 },
-                  ]}
+                  <Image
+                    source={require("../../../assets/register.png")}
+                    style={styles.image}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.text}>Attendance List</Text>
+                </TouchableOpacity>
+              </Col>
+              <Col
+                style={[
+                  styles.container1,
+                  { borderRigthColor: "black", borderRightWidth: 0.5 },
+                ]}
+              >
+                <TouchableOpacity
+                  style={styles.icon}
+                  activeOpacity={0.8}
+                  onPress={() => callVisitEntryListHandler()}
                 >
-                  <TouchableOpacity
-                    style={styles.icon}
-                    activeOpacity={0.8}
-                    onPress={() => comingSoonHandler()}
-                  >
-                    <Image
-                      source={require("../../../assets/billing.png")}
-                      style={styles.image}
-                      resizeMode="contain"
-                    />
-                    <Text style={styles.text}>Claim Status</Text>
-                  </TouchableOpacity>
-                </Col>
-              </Row>
-            </Grid>
-          )}
-        </>
-      )}
+                  <Image
+                    source={require("../../../assets/billing.png")}
+                    style={styles.image}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.text}>Visit List</Text>
+                </TouchableOpacity>
+              </Col>
+            </Row>
 
-      <View
-        style={{ height: hp("15%"), marginTop: hp(!sales ? "51.8%" : "68%") }}
-      >
+            <Row
+              style={[
+                styles.container1,
+                { borderBottomColor: "black", borderBottomWidth: 0.5 },
+              ]}
+            >
+              <Col
+                style={[
+                  styles.container1,
+                  { borderRigthColor: "black", borderRightWidth: 0.5 },
+                ]}
+              >
+                <TouchableOpacity
+                  style={styles.icon}
+                  activeOpacity={0.8}
+                  onPress={() => callSummaryHandler()}
+                >
+                  <Image
+                    source={require("../../../assets/register.png")}
+                    style={styles.image}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.text}>Call Summary</Text>
+                </TouchableOpacity>
+              </Col>
+              <Col
+                style={[
+                  styles.container1,
+                  { borderRigthColor: "black", borderRightWidth: 0.5 },
+                ]}
+              >
+                <TouchableOpacity
+                  style={styles.icon}
+                  activeOpacity={0.8}
+                  onPress={() => comingSoonHandler()}
+                >
+                  <Image
+                    source={require("../../../assets/billing.png")}
+                    style={styles.image}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.text}>Claim Status</Text>
+                </TouchableOpacity>
+              </Col>
+            </Row>
+          </Grid>
+        ) : (
+          <>
+            {!sales ? (
+              <Grid>
+                <Row
+                  style={[
+                    styles.container1,
+                    { borderBottomColor: "black", borderBottomWidth: 0.5 },
+                  ]}
+                >
+                  <Col
+                    style={[
+                      styles.container1,
+                      { borderRigthColor: "black", borderRightWidth: 0.5 },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.icon}
+                      activeOpacity={0.8}
+                      onPress={() => attendanceHandler()}
+                    >
+                      <Image
+                        source={require("../../../assets/Deal.png")}
+                        style={styles.image}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.text}>Attendance</Text>
+                    </TouchableOpacity>
+                  </Col>
+                  <Col
+                    style={[
+                      styles.container1,
+                      { borderRigthColor: "black", borderRightWidth: 0.5 },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.icon}
+                      activeOpacity={0.8}
+                      onPress={() => callVisitEntryHandler()}
+                    >
+                      <Image
+                        source={require("../../../assets/contractentry.png")}
+                        style={styles.image}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.text}>Call Visit Entry</Text>
+                    </TouchableOpacity>
+                  </Col>
+                </Row>
+
+                <Row
+                  style={[
+                    styles.container1,
+                    { borderBottomColor: "black", borderBottomWidth: 0.5 },
+                  ]}
+                >
+                  <Col
+                    style={[
+                      styles.container1,
+                      { borderRigthColor: "black", borderRightWidth: 0.5 },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.icon}
+                      activeOpacity={0.8}
+                      onPress={() => attendanceListHandler()}
+                    >
+                      <Image
+                        source={require("../../../assets/register.png")}
+                        style={styles.image}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.text}>Attendance List</Text>
+                    </TouchableOpacity>
+                  </Col>
+                  <Col
+                    style={[
+                      styles.container1,
+                      { borderRigthColor: "black", borderRightWidth: 0.5 },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.icon}
+                      activeOpacity={0.8}
+                      onPress={() => callVisitEntryListHandler()}
+                    >
+                      <Image
+                        source={require("../../../assets/billing.png")}
+                        style={styles.image}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.text}>Visit List</Text>
+                    </TouchableOpacity>
+                  </Col>
+                </Row>
+              </Grid>
+            ) : (
+              <Grid>
+                <Row
+                  style={[
+                    styles.container1,
+                    { borderBottomColor: "black", borderBottomWidth: 0.5 },
+                  ]}
+                >
+                  <Col
+                    style={[
+                      styles.container1,
+                      { borderRigthColor: "black", borderRightWidth: 0.5 },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.icon}
+                      activeOpacity={0.8}
+                      onPress={() => callSummaryHandler()}
+                    >
+                      <Image
+                        source={require("../../../assets/register.png")}
+                        style={styles.image}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.text}>Call Summary</Text>
+                    </TouchableOpacity>
+                  </Col>
+                  <Col
+                    style={[
+                      styles.container1,
+                      { borderRigthColor: "black", borderRightWidth: 0.5 },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.icon}
+                      activeOpacity={0.8}
+                      onPress={() => comingSoonHandler()}
+                    >
+                      <Image
+                        source={require("../../../assets/billing.png")}
+                        style={styles.image}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.text}>Claim Status</Text>
+                    </TouchableOpacity>
+                  </Col>
+                </Row>
+              </Grid>
+            )}
+          </>
+        )}
+      </ScrollView>
+      <View style={{ height: hp("15%"), position: "absolute", bottom: 0, width: '100%' }}>
         <View style={{ height: hp("9%"), zIndex: 20 }} resizeMode="contain">
           <TouchableOpacity
           //   onPress={() => Linking.openURL('http://softsauda.com/userright/login')}
           >
             <Image
               source={{
-                uri: `http://103.231.46.238:5000/public/img/logo.png `,
+                uri: `${host}/public/img/logo.png `,
               }}
               style={{
                 height: hp("13%"),
@@ -444,7 +434,7 @@ function Landing(props) {
           </TouchableOpacity>
         </View>
       </View>
-    </ScrollView>
+    </>
   );
 }
 

@@ -8,12 +8,15 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  Image,
+  Linking,
   Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import DatePicker from "react-native-datepicker";
 import DropDownPicker from "react-native-dropdown-picker";
 import { ScrollView, TextInput } from "react-native-gesture-handler";
@@ -30,6 +33,8 @@ import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from "../../responsiveLayout/ResponsiveLayout";
+import { ImagePickerModal } from "../../components/ImagePickerModal";
+import { host } from "../../Constants/Host";
 
 let height = Dimensions.get("window").height;
 
@@ -37,36 +42,21 @@ function CallSummary({ navigation, route }) {
   const [loading, setLoading] = useState(true);
 
   const [tableData, setTableData] = useState();
-  const [length, setLength] = useState();
-  const [data, setData] = useState();
   const [searchName, setSearchName] = useState();
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState();
   const [filteredData, setFilteredData] = useState();
-  const [routeName, setRouteName] = useState();
   const [selectedIndex, setSelectedIndex] = useState(0);
-  // const [visible, setVisible] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  // const [loadForm, setLoadForm] = useState(true);
   const [productName, setProductName] = useState();
   const [modelName, setModelName] = useState();
   const [uniqueId, setUniqueId] = useState();
 
   const [fromTime, setFromTime] = useState(false);
 
-  // const [count, setCount] = useState(0);
-
-  // const handleCategoryId = (item) => {
-  //   setCategoryId(item.id);
-  // };
-
   const handleProductId = (item) => {
     setProductId(item.id);
   };
-
-  // const handleSparePartId = (item) => {
-  //   setSparePartId(item.id);
-  // };
 
   // const clearAll = () => {
   //   setBuyerId("");
@@ -96,7 +86,6 @@ function CallSummary({ navigation, route }) {
 
       setStartDate(date);
       setEndDate(todayDate);
-      setRouteName(route.name);
       getDealerList(date, todayDate, 0);
     });
     return unsubscribe;
@@ -111,9 +100,9 @@ function CallSummary({ navigation, route }) {
     const user = await AsyncStorage.getItem("user");
     let arr = [
       "Assigned to Asc",
-      "Alloted to Engineer",
-      "Part Pending",
-      "Tech Advice",
+      "Alloted to engineer",
+      "Part-Pending",
+      "Technical-Advice",
     ];
     var status = arr[index];
 
@@ -129,16 +118,13 @@ function CallSummary({ navigation, route }) {
     };
 
     axios
-      .post("http://103.231.46.238:5000/call_summary/mobcall_summary", body)
+      .post(`${host}/call_summary/mobcall_summary`, body)
       .then(function(response) {
-        console.log("res");
-        setLength(response.data.s_call.length);
-        setData(response.data.s_call);
+        console.log("res ->");
         setTableData(response.data.s_call);
         setFilteredData(response.data.s_call);
       })
       .then(function(response) {
-        console.log("loaded", loaded, index);
         if (loaded && index !== 0) {
           getProducts();
         } else {
@@ -160,16 +146,16 @@ function CallSummary({ navigation, route }) {
     console.log("products");
 
     axios
-      .post("http://103.231.46.238:5000/call_summary/mobgetproduct", {
+      .post(`${host}/call_summary/mobgetproduct`, {
         masterid: await AsyncStorage.getItem("masterid"),
       })
       .then(function(response) {
-        response.data.product.map((dat) =>
-          setProductItems((oldArray) => [
-            ...oldArray,
-            { id: dat._id, name: dat.Fg_Des },
-          ])
-        );
+        let products = [...productItems];
+
+        response.data.product.map((dat, index) => {
+          products[index] = { ...dat, id: dat._id, name: dat.Fg_Des };
+        });
+        setProductItems(products);
       })
       .then(function(response) {
         getModels();
@@ -183,16 +169,16 @@ function CallSummary({ navigation, route }) {
     console.log("models");
 
     axios
-      .post("http://103.231.46.238:5000/call_summary/mobgetmodel", {
+      .post(`${host}/call_summary/mobgetmodel`, {
         masterid: await AsyncStorage.getItem("masterid"),
       })
       .then(function(response) {
-        response.data.model.map((dat) =>
-          setModelItems((oldArray) => [
-            ...oldArray,
-            { id: dat._id, name: dat.Description },
-          ])
-        );
+        let models = [...modelItems];
+
+        response.data.model.map((dat, index) => {
+          models[index] = { ...dat, id: dat._id, name: dat.Description };
+        });
+        setModelItems(models);
       })
       .then(function(response) {
         setLoaded(false);
@@ -203,14 +189,13 @@ function CallSummary({ navigation, route }) {
       });
   };
 
-  const getParticularData = async (id) => {
-    setLoading(true);
-
-    await axios
-      .get(`http://103.231.46.238:5000/s_call/mobs_call_update/${id}`)
+  const getParticularData = (id) => {
+    console.log(`${host}/s_call/mobs_call_update/${id}`);
+    axios
+      .get(`${host}/s_call/mobs_call_update/${id}`)
       .then(function(response) {
         const data = response.data.s_call;
-        console.log("sfhuwhiu", response.data.rawMat_mast[0]?.raw_matrl_nm._id);
+        // console.log("sfhuwhiu", response.data.rawMat_mast[0]?.raw_matrl_nm._id);
         setCharges(data?.visit_charges);
         setTa(data?.ta_km);
         setEngineerRemarks(data?.visit_remark);
@@ -222,7 +207,8 @@ function CallSummary({ navigation, route }) {
         setProductName(data?.s_prod.Fg_Des);
         setUniqueId(data?.unique_id);
         setModelName(data?.s_mdl.Description);
-        console.log("list", response.data.rawMat_mast);
+        setVId(data?.unique_id);
+        // console.log("list", response.data.rawMat_mast);
         let brand = [...brandItems];
         response.data.rawMat_mast.map((dat, index) => {
           brand[index] = {
@@ -232,11 +218,7 @@ function CallSummary({ navigation, route }) {
           };
         });
         setBrandItems(brand);
-      })
-      .then(function(resposne) {
         setLoading(false);
-
-        console.log("open ref --> ");
         RBref.current.open();
       })
       .catch(function(error) {
@@ -302,6 +284,7 @@ function CallSummary({ navigation, route }) {
       RBref.current.open();
     }
   };
+
   const handleAppoitmentSubmit = async () => {
     setLoading(true);
     const submitData = async () => {
@@ -320,7 +303,7 @@ function CallSummary({ navigation, route }) {
 
       Axios({
         method: "POST",
-        url: "http://103.231.46.238:5000/s_call/mobappointment_add",
+        url: `${host}/s_call/mobappointment_add`,
         data: body,
       }).then((respone) => {
         Toast.showWithGravity("Data Submitted.", Toast.LONG, Toast.BOTTOM);
@@ -341,7 +324,7 @@ function CallSummary({ navigation, route }) {
 
   // Add Alloted to Engineer
   const [charges, setCharges] = useState("");
-  const [engineerDate, setEngineerDate] = useState();
+  const [engineerDate, setEngineerDate] = useState(new Date(1598051730000));
   const [engineerRemarks, setEngineerRemarks] = useState("");
   const [feedback, setFeedback] = useState("");
   const [ta, setTa] = useState(0);
@@ -373,8 +356,8 @@ function CallSummary({ navigation, route }) {
   const [brandId, setBrandId] = useState();
   const [modelId, setModelId] = useState();
 
-  // const [brokerType, setBrokerType] = useState();
-  // const [packItems, setPackItems] = useState([]);
+  const [imageModal, setImageModal] = useState(false);
+  const [selectedImages, setSelectedImages] = useState([]);
   // const [packValue, setpackvalue] = useState();
   // const [weight, setWeight] = useState();
 
@@ -447,6 +430,42 @@ function CallSummary({ navigation, route }) {
 
     let array = [];
 
+    let imageArray = [];
+
+    if (selectedImages?.uri) {
+      const newImageUri =
+        "file:///" + selectedImages.uri.split("file:/").join("");
+
+      let ext = newImageUri
+        .split("/")
+        .pop()
+        .split(".")[1];
+      imageArray.push({
+        uri: selectedImages.uri,
+        type: `image/${ext}`, //imageDetails.type,
+        name: newImageUri.split("/").pop(),
+      });
+    }
+    if (selectedImages?.length > 0) {
+      selectedImages.map((singleImage) => {
+        const newImageUri =
+          "file:///" + singleImage.uri.split("file:/").join("");
+
+        let ext = newImageUri
+          .split("/")
+          .pop()
+          .split(".")[1];
+        imageArray.push({
+          uri: singleImage.uri,
+          type: `image/${ext}`, //imageDetails.type,
+          name: newImageUri.split("/").pop(),
+        });
+      });
+    }
+
+    let imageForm = new FormData();
+    imageForm.append("files", imageArray);
+
     visit_group.map((item, index) => {
       let object = Object.assign(item, { visit: index });
       array.push(object);
@@ -474,39 +493,66 @@ function CallSummary({ navigation, route }) {
         masterid: await AsyncStorage.getItem("masterid"),
       };
 
-      console.log("body", body);
-      Axios({
-        method: "POST",
-        url: "http://103.231.46.238:5000/s_call/mobvisit_add",
-        data: body,
-      }).then((respone) => {
-        Toast.showWithGravity("Data Submitted.", Toast.LONG, Toast.BOTTOM);
-        const todayDate = moment(new Date()).format("DD/MM/YYYY");
-        Updates.reloadAsync();
-        // setVId("")
-        // setTa("")
-        // setFeedback("")
-        // setEngineerRemarks("")
-        // setCharges("")
-        // //    setStatus("")
-        // //   setWarrantyType("")
-        // setInvoiceNumber("")
-        // setEngineerDate(todayDate)
-        // setSelectedModelItems([])
-        // setSelectedProductItems([])
-        // setSelectedBrandItems([])
-        // setBrandId("")
-        // setProductId("")
-        // setModelId("")
-        // //   setArray([{ visit_qty: "", visit_spare_part: "", visit_rate: "", visit_status: "", visit_model: "", visit_product: "" }])
+      console.log("body ----> ", {
+        body: body,
+        files: imageForm,
       });
+      Axios.post(`${host}/s_call/mobvisit_add`, {
+        body: body,
+        files: imageForm,
+      })
+        .then((response) => {
+          console.log("data", response.data);
+          Toast.showWithGravity("Data Submitted.", Toast.LONG, Toast.BOTTOM);
+          const todayDate = moment(new Date()).format("DD/MM/YYYY");
+          Updates.reloadAsync();
+        })
+        .catch((e) => {
+          console.log(e);
+        });
     };
     submitData();
     setLoading(false);
   };
 
+  const pickImage = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      aspect: [3, 4],
+      quality: 0.7,
+      allowsMultipleSelection: true,
+    });
+    if (!result.cancelled) {
+      console.log("Images --> ", result);
+      if (result.selected) {
+        setSelectedImages(result?.selected);
+      } else {
+        setSelectedImages(result);
+      }
+      setImageModal(false);
+    }
+  };
+
+  const pickFromCamera = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      aspect: [3, 4],
+      quality: 0.5,
+      allowsMultipleSelection: true,
+    });
+    if (!result.cancelled) {
+      console.log("Images --> ", result);
+      setSelectedImages(result);
+      setImageModal(false);
+    }
+  };
+
   return (
-    <ScrollView keyboardShouldPersistTaps="always">
+    <View>
       <View style={{ backgroundColor: "#CBD9F5", borderRadius: 6, margin: 10 }}>
         <SegmentedControlTab
           values={[
@@ -615,26 +661,22 @@ function CallSummary({ navigation, route }) {
             <FlatList
               data={filteredData}
               initialNumToRender={10}
-              renderItem={({ item }) => {
+              renderItem={({ item, index }) => {
                 return (
-                  <>
-                    <List.Section style={{ top: 8 }}>
+                  <View key={index}>
+                    <List.Section>
                       <List.Accordion
                         title={`${item.s_cus?.ACName},${item?.s_cus?.CityName?.CityName}`}
-                        //   title = {<Text
-                        //   style={styles.hyperlinkStyle}
-                        //   onPress={() => {
-                        //     Linking.openURL('${dat.s_cus?.MobileNo}');
-                        //   }}>{dat.s_cus?.ACName}{dat.s_cus?.MobileNo}
-                        // </Text>}
                         description={`${item.s_cus?.Address1},${item.s_cus?.MobileNo}`}
-                        handleLeft={() => handleNewComplaint(item._id)}
+                        handleLeft={() => {
+                          handleNewComplaint(item._id);
+                        }}
                       >
-                        <>
+                        <View key={index + "a"}>
                           <View
                             style={{
                               borderBottomColor: "black",
-                              borderBottomWidth: 1,
+                              borderBottomWidth: 0.5,
                               marginBottom: 0,
                               padding: 0,
                               margin: 0,
@@ -643,8 +685,6 @@ function CallSummary({ navigation, route }) {
 
                           <View
                             style={{
-                              flex: 1,
-                              flexDirection: "row",
                               backgroundColor: theme1.LIGHT_BLUE_COLOR,
                             }}
                           >
@@ -652,8 +692,6 @@ function CallSummary({ navigation, route }) {
                               title="Model"
                               description={item.s_mdl?.Description}
                               style={{
-                                marginTop: 5,
-                                flex: 0.2,
                                 borderRightWidth: 0.8,
                                 fontSize: 8,
                               }}
@@ -662,8 +700,6 @@ function CallSummary({ navigation, route }) {
                               title="Product"
                               description={item.s_prod?.Fg_Des}
                               style={{
-                                marginTop: 5,
-                                flex: 0.2,
                                 borderRightWidth: 0.8,
                               }}
                             />
@@ -671,27 +707,22 @@ function CallSummary({ navigation, route }) {
                               title="Brand"
                               description={item.s_bnd?.Description}
                               style={{
-                                marginTop: 5,
-                                flex: 0.2,
                                 borderRightWidth: 0.8,
                               }}
                             />
                             <List.Item
                               title="Qty."
-                              description={item.s_qty}
+                              description={item?.s_qty}
                               style={{
-                                marginTop: 5,
-                                flex: 0.15,
                                 borderRightWidth: 0.8,
                               }}
                             />
                             <List.Item
                               title="Status"
                               description={item?.s_stus}
-                              style={{ marginTop: 5, flex: 0.25 }}
                             />
                           </View>
-                        </>
+                        </View>
                       </List.Accordion>
                       <View
                         style={{
@@ -703,19 +734,75 @@ function CallSummary({ navigation, route }) {
                       >
                         <Text
                           style={{
-                            fontSize: 10,
+                            fontSize: 14,
                             backgroundColor: theme1.MEDIUM_BLUE_COLOR,
+                            borderRadius: 5,
+                            color: "#FFF",
+                            paddingLeft: 10,
+                            height: 30,
+                            textAlignVertical: "center",
                           }}
                         >
                           {item?.unique_id}.
                         </Text>
-                        {/* <Text style={{ fontSize: 10 }}>{((dat?.so_date).substring(0, 10)).split('-').reverse().join('/')}</Text> */}
-                        <TouchableOpacity
-                          style={{ height: 45, backgroundColor: "red" }}
-                          onPress={() => getParticularData(item._id)}
+
+                        <View
+                          style={{
+                            width: "100%",
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                          }}
                         >
-                          <Text>Submit</Text>
-                        </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.ListButton}
+                            onPress={() => {
+                              if (item?._id) {
+                                setLoading(true);
+                                getParticularData(item?._id);
+                              }
+                            }}
+                          >
+                            <View>
+                              <Text style={styles.ListButtonText}>Submit</Text>
+                            </View>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={styles.ListButton}
+                            onPress={() => {
+                              item?.s_cus?.MobileNo &&
+                                Linking.openURL(
+                                  `tel:${item?.s_cus?.MobileNo}`
+                                ).catch((err) => {
+                                  console.error("An error occurred", err);
+                                });
+                            }}
+                          >
+                            <View>
+                              <Text style={styles.ListButtonText}>
+                                {item?.s_cus?.MobileNo}
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={styles.ListButton}
+                            onPress={() => {
+                              item?.s_cus?.ac_altno &&
+                                Linking.openURL(
+                                  `tel:${item?.s_cus?.ac_altno}`
+                                ).catch((err) => {
+                                  console.error("An error occurred", err);
+                                });
+                            }}
+                          >
+                            <View>
+                              <Text style={styles.ListButtonText}>
+                                {item?.s_cus?.ac_altno}
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </List.Section>
 
@@ -728,124 +815,10 @@ function CallSummary({ navigation, route }) {
                         margin: 0,
                       }}
                     />
-                  </>
+                  </View>
                 );
               }}
             />
-            {/* {filteredData?.map((dat) => (
-              <>
-                <List.Section style={{ top: 8 }}>
-                  <List.Accordion
-                    title={`${dat.s_cus?.ACName},${dat?.s_cus?.CityName?.CityName}`}
-                    //   title = {<Text
-                    //   style={styles.hyperlinkStyle}
-                    //   onPress={() => {
-                    //     Linking.openURL('${dat.s_cus?.MobileNo}');
-                    //   }}>{dat.s_cus?.ACName}{dat.s_cus?.MobileNo}
-                    // </Text>}
-                    description={`${dat.s_cus?.Address1},${dat.s_cus?.MobileNo}`}
-                    handleLeft={() => handleNewComplaint(dat._id)}
-                  >
-                    <>
-                      <View
-                        style={{
-                          borderBottomColor: "black",
-                          borderBottomWidth: 1,
-                          marginBottom: 0,
-                          padding: 0,
-                          margin: 0,
-                        }}
-                      />
-
-                      <View
-                        style={{
-                          flex: 1,
-                          flexDirection: "row",
-                          backgroundColor: theme1.LIGHT_BLUE_COLOR,
-                        }}
-                      >
-                        <List.Item
-                          title="Model"
-                          description={dat.s_mdl?.Description}
-                          style={{
-                            marginTop: 5,
-                            flex: 0.2,
-                            borderRightWidth: 0.8,
-                            fontSize: 8,
-                          }}
-                        />
-                        <List.Item
-                          title="Product"
-                          description={dat.s_prod?.Fg_Des}
-                          style={{
-                            marginTop: 5,
-                            flex: 0.2,
-                            borderRightWidth: 0.8,
-                          }}
-                        />
-                        <List.Item
-                          title="Brand"
-                          description={dat.s_bnd?.Description}
-                          style={{
-                            marginTop: 5,
-                            flex: 0.2,
-                            borderRightWidth: 0.8,
-                          }}
-                        />
-                        <List.Item
-                          title="Qty."
-                          description={dat.s_qty}
-                          style={{
-                            marginTop: 5,
-                            flex: 0.15,
-                            borderRightWidth: 0.8,
-                          }}
-                        />
-                        <List.Item
-                          title="Status"
-                          description={dat.s_stus}
-                          style={{ marginTop: 5, flex: 0.25 }}
-                        />
-                      </View>
-                    </>
-                  </List.Accordion>
-                  <View
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      padding: 10,
-                      borderRightWidth: 0.6,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 10,
-                        backgroundColor: theme1.MEDIUM_BLUE_COLOR,
-                      }}
-                    >
-                      {dat.unique_id}.
-                    </Text>
-                    // <Text style={{ fontSize: 10 }}>{((dat?.so_date).substring(0, 10)).split('-').reverse().join('/')}</Text> 
-                    <TouchableOpacity
-                      style={{ height: 45, backgroundColor: "red" }}
-                      onPress={() => getParticularData(dat._id)}
-                    >
-                      <Text>Submit</Text>
-                    </TouchableOpacity>
-                  </View>
-                </List.Section>
-
-                <View
-                  style={{
-                    borderBottomColor: "grey",
-                    borderBottomWidth: 0.5,
-                    marginBottom: 0,
-                    padding: 0,
-                    margin: 0,
-                  }}
-                />
-              </>
-            ))} */}
 
             {selectedIndex === 0 && (
               <RBSheet
@@ -883,7 +856,10 @@ function CallSummary({ navigation, route }) {
                   </TouchableOpacity>
                 </View>
 
-                <ScrollView keyboardShouldPersistTaps="always">
+                <ScrollView
+                  keyboardShouldPersistTaps="always"
+                  nestedScrollEnabled
+                >
                   {fromTime && (
                     <DateTimePicker
                       value={fromDate}
@@ -1111,9 +1087,10 @@ function CallSummary({ navigation, route }) {
 
             {(selectedIndex == 1 || selectedIndex == 2) && (
               <RBSheet
-                animationType="fade"
+                animationType="slide"
                 ref={RBref}
-                openDuration={250}
+                closeDuration={1}
+                openDuration={1}
                 customStyles={{
                   container: {
                     borderTopEndRadius: 20,
@@ -1141,8 +1118,16 @@ function CallSummary({ navigation, route }) {
                     -{uniqueId}{" "}
                   </Text>
                   <TouchableOpacity
-                    onPress={() => RBref.current.close()}
-                    style={{ marginRight: 20 }}
+                    onPress={() => {
+                      RBref.current.close();
+                    }}
+                    style={{
+                      marginRight: 20,
+                      height: 30,
+                      width: 30,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
                   >
                     <FIcon name="close" size={20} />
                   </TouchableOpacity>
@@ -1278,7 +1263,8 @@ function CallSummary({ navigation, route }) {
                     style={{
                       display: "flex",
                       flexDirection: "row",
-                      paddingLeft: 15,
+                      width: "95%",
+                      alignSelf: "center",
                     }}
                   >
                     <SelectTwo
@@ -1286,7 +1272,6 @@ function CallSummary({ navigation, route }) {
                       selectedItem={selectedModelItems}
                       handleId={handleModelId}
                       defaultValue={modelName}
-                      width={wp("100%")}
                       placeholder="Model"
                       borderColor="#ccc"
                     />
@@ -1296,15 +1281,70 @@ function CallSummary({ navigation, route }) {
                       selectedItem={selectedProductItems}
                       handleId={handleProductId}
                       defaultValue={productName}
-                      width={wp("30%")}
                       placeholder="Product"
                       borderColor="#ccc"
                     />
                   </View>
 
-                  <View style={{ marginTop: 15 }}>
-                    {visit_group.map((x, i) => (
-                      <View style={styles.card}>
+                  <View
+                    style={{
+                      width: "95%",
+                      alignSelf: "center",
+                      marginTop: 5,
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: theme1.MEDIUM_BLUE_COLOR,
+                        height: 40,
+                        width: 40,
+                        borderWidth: 1,
+                        margin: 5,
+                        borderStyle: "dashed",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                      onPress={() => {
+                        setImageModal(true);
+                      }}
+                    >
+                      <Text style={{ fontSize: 30, color: "#000" }}>+</Text>
+                    </TouchableOpacity>
+
+                    {selectedImages?.uri && (
+                      <Image
+                        style={{
+                          height: 40,
+                          width: 40,
+                          resizeMode: "cover",
+                          margin: 5,
+                        }}
+                        source={{ uri: selectedImages?.uri }}
+                      />
+                    )}
+
+                    {selectedImages?.length > 0 &&
+                      selectedImages?.map((singleImage, index) => {
+                        return (
+                          <Image
+                            key={index + "I"}
+                            style={{
+                              height: 40,
+                              width: 40,
+                              resizeMode: "cover",
+                              margin: 5,
+                            }}
+                            source={{ uri: singleImage?.uri }}
+                          />
+                        );
+                      })}
+                  </View>
+
+                  <View style={{ marginTop: 0 }}>
+                    {visit_group?.map((x, i) => (
+                      <View key={i} style={styles.card}>
                         <View style={styles.column}>
                           <SelectTwo
                             items={brandItems}
@@ -1580,13 +1620,20 @@ function CallSummary({ navigation, route }) {
                       <Text style={{ color: "white" }}>Save Changes</Text>
                     </TouchableOpacity>
                   </View>
+
+                  <ImagePickerModal
+                    isVisible={imageModal}
+                    onClose={() => setImageModal(false)}
+                    onImageLibraryPress={pickImage}
+                    onCameraPress={pickFromCamera}
+                  />
                 </ScrollView>
               </RBSheet>
             )}
           </View>
         </>
       )}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -1649,7 +1696,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     borderRadius: 10,
   },
-
   input: {
     height: 35,
     flex: 1,
@@ -1676,5 +1722,19 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     margin: 10,
     zIndex: -10,
+  },
+  ListButton: {
+    width: "30%",
+    height: 45,
+    backgroundColor: theme1.MEDIUM_BLUE_COLOR,
+    borderRadius: 7,
+    marginTop: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  ListButtonText: {
+    textAlignVertical: "center",
+    fontSize: 14,
+    color: "#FFF",
   },
 });

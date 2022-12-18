@@ -18,6 +18,7 @@ import { Button, Searchbar } from "react-native-paper";
 import RBSheet from "react-native-raw-bottom-sheet";
 import Icon from "react-native-vector-icons/Feather";
 import SelectTwo from "../components/SelectTwo";
+import { host } from "../Constants/Host";
 
 import {
   heightPercentageToDP as hp,
@@ -96,7 +97,7 @@ function ComingSoon({ navigation, route }) {
     const compid = await AsyncStorage.getItem("companyCode");
     const divid = await AsyncStorage.getItem("divisionCode");
 
-    const URL = `http://103.231.46.238:5000/claim_status/mobgetclaimstatuslist`;
+    const URL = `${host}/claim_status/mobgetclaimstatuslist`;
     Axios.post(URL, { user: await AsyncStorage.getItem("user") }).then(
       (response) => {
         setLength(response.data.s_callSchema.length);
@@ -168,7 +169,7 @@ function ComingSoon({ navigation, route }) {
     const compid = await AsyncStorage.getItem("companyCode");
     let divid = await AsyncStorage.getItem("divisionCode");
 
-    const URL = `http://103.231.46.238:5000/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${startDate}&end_date=${endDate}`;
+    const URL = `${host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${startDate}&end_date=${endDate}`;
     console.log(URL);
     Axios.get(URL).then((response) => {
       console.log(":hey", response);

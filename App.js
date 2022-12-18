@@ -38,6 +38,7 @@ import CallEntryList from "./screens/Home/CallEntry/CallEntryList";
 import CallSummary from "./screens/Home/CallSummary/CallSummary";
 import ClaimStatus from "./screens/Home/ClaimStatus/ClaimStatus";
 import Landing from "./screens/Home/Landing/Landing";
+import { host } from "./screens/Constants/Host.js";
 
 LogBox.ignoreAllLogs(true);
 
@@ -87,7 +88,7 @@ export function LoginStack(props) {
         options={({ navigation }) => ({
           headerTitleAlign: "center",
           headerStyle: {
-            backgroundColor: '#E9E9E9',
+            backgroundColor: "#E9E9E9",
             borderBottomEndRadius: 20,
             borderBottomStartRadius: 20,
           },
@@ -518,7 +519,7 @@ export function CustomDrawerContent(props) {
           }}
         >
           <Image
-            source={{ uri: `http://103.231.46.238:5000/public/img/logo.png ` }}
+            source={{ uri: `${host}/public/img/logo.png ` }}
             style={{ height: hp("10%"), width: wp("45%") }}
             resizeMode="contain"
           />
@@ -560,7 +561,7 @@ export function CustomDrawerContent(props) {
         {user && (
           <TouchableOpacity
             style={{ marginRight: 30 }}
-            onPress={() =>
+            onPress={() => {
               Alert.alert("Logout alert", "Do you really want to Logout...", [
                 {
                   text: "NO",
@@ -571,13 +572,13 @@ export function CustomDrawerContent(props) {
                   text: "YES",
                   onPress: () => {
                     AsyncStorage.removeItem("user");
-                    props.navigation.navigate("Posts");
+                    // props.navigation.navigate("Posts");
                     console.log("restarting");
                     Updates.reloadAsync();
                   },
                 },
-              ])
-            }
+              ]);
+            }}
           >
             <View
               style={{
