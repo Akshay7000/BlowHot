@@ -17,6 +17,7 @@ import {
 import DatePicker from "react-native-datepicker";
 import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
 import Toast from "react-native-simple-toast";
+import { host } from "../../Constants/Host";
 import { ImagePickerAvatar } from "../../components/ImagePickerAvatar";
 import { ImagePickerModal } from "../../components/ImagePickerModal";
 import theme1 from "../../components/styles/DarkTheme";
@@ -74,7 +75,7 @@ function Attendance({ navigation, route }) {
     const divid = await AsyncStorage.getItem("divisionCode");
 
     await fetch(
-      `http://    38:3000/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${new Date()}&end_date=${new Date()}`,
+      `${host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${new Date()}&end_date=${new Date()}`,
       data
     )
       .then((response) => response.json())
@@ -226,7 +227,7 @@ function Attendance({ navigation, route }) {
       //  console.log("body",body)
       axios({
         method: "POST",
-        url: "http://103.231.46.238:5000/attendance/startmobadd",
+        url: `${host}/attendance/startmobadd`,
         headers: {
           // 'Accept': 'application/json',
           "Content-Type": "multipart/form-data",
@@ -296,7 +297,7 @@ function Attendance({ navigation, route }) {
       console.log("data", data);
       axios({
         method: "POST",
-        url: "http://103.231.46.238:5000/attendance/mobend_add",
+        url: `${host}/attendance/mobend_add`,
         headers: {
           // 'Accept': 'application/json',
           "Content-Type": "multipart/form-data",

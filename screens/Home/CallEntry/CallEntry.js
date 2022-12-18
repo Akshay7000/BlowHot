@@ -29,6 +29,7 @@ import * as Location from "expo-location";
 import { Col } from "react-native-easy-grid";
 import DatePicker from "../../components/DatePicker";
 import { EvilIcons } from "@expo/vector-icons";
+import { host } from "../../Constants/Host";
 
 function CallEntry({ navigation, route }) {
   let masterid = "";
@@ -61,7 +62,7 @@ function CallEntry({ navigation, route }) {
     { brandid: "", so_qty: "", so_disc: "", model: "", dsirn: "" },
   ]);
 
-  const [buyerItems, setBuyerItems] = useState([]);
+  const [masterId, setMasterId] = useState();
   const [sellerItems, setSellerItems] = useState([]);
   const [brokeritems, setBrokerItems] = useState([]);
   const [productItems, setProductItems] = useState([]);
@@ -187,6 +188,7 @@ function CallEntry({ navigation, route }) {
   useEffect(() => {
     const init = async () => {
       masterid = await AsyncStorage.getItem("masterid");
+      setMasterId(masterid);
       PromisData(masterid);
     };
     init();
@@ -232,7 +234,7 @@ function CallEntry({ navigation, route }) {
       },
     };
     return await fetch(
-      `http://103.231.46.238:5000/c_visit_entry/mob_calldealer?masterid=${masterid}`,
+      `${host}/c_visit_entry/mob_calldealer?masterid=${masterid}`,
       data
     )
       .then((response) => response.json())
@@ -259,7 +261,7 @@ function CallEntry({ navigation, route }) {
       },
     };
     return await fetch(
-      `http://103.231.46.238:5000/c_visit_entry/mob_getcall?masterid=${masterid}`,
+      `${host}/c_visit_entry/mob_getcall?masterid=${masterid}`,
       data
     )
       .then((response) => response.json())
@@ -287,7 +289,7 @@ function CallEntry({ navigation, route }) {
       },
     };
     return await fetch(
-      `http://103.231.46.238:5000/c_visit_entry/mob_productname?masterid=${masterid}`,
+      `${host}/c_visit_entry/mob_productname?masterid=${masterid}`,
       data
     )
       .then((response) => response.json())
@@ -362,8 +364,8 @@ function CallEntry({ navigation, route }) {
     let location = await Location.getCurrentPositionAsync({});
     return location;
   };
-  // Submit Start Day Details
 
+  // Submit Start Day Details
   const submitData = async () => {
     const location = await getLocation();
 
@@ -391,7 +393,7 @@ function CallEntry({ navigation, route }) {
     // console.log("body", body)
     axios({
       method: "POST",
-      url: "http://103.231.46.238:5000/c_visit_entry/mobadd",
+      url: `${host}/c_visit_entry/mobadd`,
       data: body,
     }).then((respone) => {
       Toast.showWithGravity("Data Submitted.", Toast.LONG, Toast.BOTTOM);
@@ -405,15 +407,24 @@ function CallEntry({ navigation, route }) {
   const handleProductId = (id, product, index) => {
     setProductId(id);
   };
+
   const searchCustomer = () => {
     if (mobileNumber?.length === 10) {
       setSearchingCustomer(true);
-      setTimeout(() => {
-        console.log("false Loader");
-        setSearchingCustomer(false);
-
-        setName("user");
-      }, 3000);
+      fetch(
+        `${host}/c_visit_entry/mob_calldealermob?MobileNo=${mobileNumber}`
+      )
+        .then((res) => {
+          console.log("Mobile Response --> ", res);
+          setTimeout(() => {
+            console.log("false Loader");
+            setSearchingCustomer(false);
+            setName("user");
+          }, 3000);
+        })
+        .catch((e) => {
+          console.log("Mobile Res Error --> ", res);
+        });
     } else {
       ToastAndroid.showWithGravity(
         "Enter Correct Mobile Number!",
@@ -422,6 +433,7 @@ function CallEntry({ navigation, route }) {
       );
     }
   };
+
   return (
     <>
       {loading ? (

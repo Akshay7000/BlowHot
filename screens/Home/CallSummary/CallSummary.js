@@ -34,6 +34,7 @@ import {
   widthPercentageToDP as wp,
 } from "../../responsiveLayout/ResponsiveLayout";
 import { ImagePickerModal } from "../../components/ImagePickerModal";
+import { host } from "../../Constants/Host";
 
 let height = Dimensions.get("window").height;
 
@@ -117,7 +118,7 @@ function CallSummary({ navigation, route }) {
     };
 
     axios
-      .post("http://103.231.46.238:5000/call_summary/mobcall_summary", body)
+      .post(`${host}/call_summary/mobcall_summary`, body)
       .then(function(response) {
         console.log("res ->");
         setTableData(response.data.s_call);
@@ -145,7 +146,7 @@ function CallSummary({ navigation, route }) {
     console.log("products");
 
     axios
-      .post("http://103.231.46.238:5000/call_summary/mobgetproduct", {
+      .post(`${host}/call_summary/mobgetproduct`, {
         masterid: await AsyncStorage.getItem("masterid"),
       })
       .then(function(response) {
@@ -168,7 +169,7 @@ function CallSummary({ navigation, route }) {
     console.log("models");
 
     axios
-      .post("http://103.231.46.238:5000/call_summary/mobgetmodel", {
+      .post(`${host}/call_summary/mobgetmodel`, {
         masterid: await AsyncStorage.getItem("masterid"),
       })
       .then(function(response) {
@@ -189,8 +190,9 @@ function CallSummary({ navigation, route }) {
   };
 
   const getParticularData = (id) => {
+    console.log(`${host}/s_call/mobs_call_update/${id}`);
     axios
-      .get(`http://103.231.46.238:5000/s_call/mobs_call_update/${id}`)
+      .get(`${host}/s_call/mobs_call_update/${id}`)
       .then(function(response) {
         const data = response.data.s_call;
         // console.log("sfhuwhiu", response.data.rawMat_mast[0]?.raw_matrl_nm._id);
@@ -205,6 +207,7 @@ function CallSummary({ navigation, route }) {
         setProductName(data?.s_prod.Fg_Des);
         setUniqueId(data?.unique_id);
         setModelName(data?.s_mdl.Description);
+        setVId(data?.unique_id);
         // console.log("list", response.data.rawMat_mast);
         let brand = [...brandItems];
         response.data.rawMat_mast.map((dat, index) => {
@@ -281,6 +284,7 @@ function CallSummary({ navigation, route }) {
       RBref.current.open();
     }
   };
+
   const handleAppoitmentSubmit = async () => {
     setLoading(true);
     const submitData = async () => {
@@ -299,7 +303,7 @@ function CallSummary({ navigation, route }) {
 
       Axios({
         method: "POST",
-        url: "http://103.231.46.238:5000/s_call/mobappointment_add",
+        url: `${host}/s_call/mobappointment_add`,
         data: body,
       }).then((respone) => {
         Toast.showWithGravity("Data Submitted.", Toast.LONG, Toast.BOTTOM);
@@ -320,7 +324,7 @@ function CallSummary({ navigation, route }) {
 
   // Add Alloted to Engineer
   const [charges, setCharges] = useState("");
-  const [engineerDate, setEngineerDate] = useState();
+  const [engineerDate, setEngineerDate] = useState(new Date(1598051730000));
   const [engineerRemarks, setEngineerRemarks] = useState("");
   const [feedback, setFeedback] = useState("");
   const [ta, setTa] = useState(0);
@@ -426,6 +430,42 @@ function CallSummary({ navigation, route }) {
 
     let array = [];
 
+    let imageArray = [];
+
+    if (selectedImages?.uri) {
+      const newImageUri =
+        "file:///" + selectedImages.uri.split("file:/").join("");
+
+      let ext = newImageUri
+        .split("/")
+        .pop()
+        .split(".")[1];
+      imageArray.push({
+        uri: selectedImages.uri,
+        type: `image/${ext}`, //imageDetails.type,
+        name: newImageUri.split("/").pop(),
+      });
+    }
+    if (selectedImages?.length > 0) {
+      selectedImages.map((singleImage) => {
+        const newImageUri =
+          "file:///" + singleImage.uri.split("file:/").join("");
+
+        let ext = newImageUri
+          .split("/")
+          .pop()
+          .split(".")[1];
+        imageArray.push({
+          uri: singleImage.uri,
+          type: `image/${ext}`, //imageDetails.type,
+          name: newImageUri.split("/").pop(),
+        });
+      });
+    }
+
+    let imageForm = new FormData();
+    imageForm.append("files", imageArray);
+
     visit_group.map((item, index) => {
       let object = Object.assign(item, { visit: index });
       array.push(object);
@@ -453,16 +493,23 @@ function CallSummary({ navigation, route }) {
         masterid: await AsyncStorage.getItem("masterid"),
       };
 
-      console.log("body", body);
-      Axios({
-        method: "POST",
-        url: "http://103.231.46.238:5000/s_call/mobvisit_add",
-        data: body,
-      }).then((respone) => {
-        Toast.showWithGravity("Data Submitted.", Toast.LONG, Toast.BOTTOM);
-        const todayDate = moment(new Date()).format("DD/MM/YYYY");
-        Updates.reloadAsync();
+      console.log("body ----> ", {
+        body: body,
+        files: imageForm,
       });
+      Axios.post(`${host}/s_call/mobvisit_add`, {
+        body: body,
+        files: imageForm,
+      })
+        .then((response) => {
+          console.log("data", response.data);
+          Toast.showWithGravity("Data Submitted.", Toast.LONG, Toast.BOTTOM);
+          const todayDate = moment(new Date()).format("DD/MM/YYYY");
+          Updates.reloadAsync();
+        })
+        .catch((e) => {
+          console.log(e);
+        });
     };
     submitData();
     setLoading(false);
@@ -809,7 +856,10 @@ function CallSummary({ navigation, route }) {
                   </TouchableOpacity>
                 </View>
 
-                <ScrollView keyboardShouldPersistTaps="always">
+                <ScrollView
+                  keyboardShouldPersistTaps="always"
+                  nestedScrollEnabled
+                >
                   {fromTime && (
                     <DateTimePicker
                       value={fromDate}
@@ -1293,7 +1343,7 @@ function CallSummary({ navigation, route }) {
                   </View>
 
                   <View style={{ marginTop: 0 }}>
-                    {visit_group.map((x, i) => (
+                    {visit_group?.map((x, i) => (
                       <View key={i} style={styles.card}>
                         <View style={styles.column}>
                           <SelectTwo

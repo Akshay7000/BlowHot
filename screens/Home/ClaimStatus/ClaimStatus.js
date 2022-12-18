@@ -19,6 +19,7 @@ import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from '../../responsiveLayout/ResponsiveLayout'
+import { host } from '../../Constants/Host';
 
 
 function ClaimStatus({ navigation, route }) {
@@ -101,7 +102,7 @@ function ClaimStatus({ navigation, route }) {
     const service = await AsyncStorage.getItem("salesTeam")
     console.log(service)
     if (service) {
-      const URL = `http://103.231.46.238:5000/claim_status/mobgetclaimstatuslist`
+      const URL = `${host}/claim_status/mobgetclaimstatuslist`
       Axios.post(URL, { user: await AsyncStorage.getItem('user'),masterid:masterid,divid:divid,compid:compid })
         .then(response => {
           setLength(response.data.s_callSchema.length)
@@ -113,7 +114,7 @@ function ClaimStatus({ navigation, route }) {
     }
     else {
 
-      const URL = `http://103.231.46.238:5000/claim_status/mobgetclaimstatuslist`
+      const URL = `${host}/claim_status/mobgetclaimstatuslist`
       Axios.post(URL,{masterid:masterid,divid:divid,compid:compid})
         .then(response => {
           setLength(response.data.s_callSchema.length)
@@ -138,7 +139,7 @@ function ClaimStatus({ navigation, route }) {
     const compid = await AsyncStorage.getItem("companyCode");
     let divid = await AsyncStorage.getItem("divisionCode")
 
-    const URL = `http://103.231.46.238:5000/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${startDate}&end_date=${endDate}`
+    const URL = `${host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${startDate}&end_date=${endDate}`
     console.log(URL)
     Axios.get(URL)
       .then(response => {

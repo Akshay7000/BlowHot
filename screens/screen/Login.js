@@ -18,6 +18,7 @@ import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
 import { DataTable } from "react-native-paper";
 import Toast from "react-native-simple-toast";
 import FontAwesomeIcon from "react-native-vector-icons/FontAwesome";
+import { host } from "../Constants/Host";
 import { widthPercentageToDP as wp } from "../responsiveLayout/ResponsiveLayout";
 function Login(props) {
   const [userName, setUserName] = useState();
@@ -54,7 +55,7 @@ function Login(props) {
     setLoading(true);
     axios({
       method: "POST",
-      url: "http://103.231.46.238:5000/userright/appuserlogin",
+      url: `${host}/userright/appuserlogin`,
       data: {
         usrnm: userName,
         usrpwd: password,
@@ -137,7 +138,7 @@ function Login(props) {
           <Form style={styles.form}>
             <Image
               source={{
-                uri: `http://103.231.46.238:5000/public/img/logo.png `,
+                uri: `${host}/public/img/logo.png `,
               }}
               style={styles.image}
               resizeMode="contain"

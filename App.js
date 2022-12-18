@@ -38,6 +38,7 @@ import CallEntryList from "./screens/Home/CallEntry/CallEntryList";
 import CallSummary from "./screens/Home/CallSummary/CallSummary";
 import ClaimStatus from "./screens/Home/ClaimStatus/ClaimStatus";
 import Landing from "./screens/Home/Landing/Landing";
+import { host } from "./screens/Constants/Host.js";
 
 LogBox.ignoreAllLogs(true);
 
@@ -518,7 +519,7 @@ export function CustomDrawerContent(props) {
           }}
         >
           <Image
-            source={{ uri: `http://103.231.46.238:5000/public/img/logo.png ` }}
+            source={{ uri: `${host}/public/img/logo.png ` }}
             style={{ height: hp("10%"), width: wp("45%") }}
             resizeMode="contain"
           />
