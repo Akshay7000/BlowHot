@@ -381,10 +381,26 @@ function Landing(props) {
           </>
         )}
       </ScrollView>
-      <View style={{ height: hp("15%"), position: "absolute", bottom: 0, width: '100%' }}>
-        <View style={{ height: hp("9%"), zIndex: 20 }} resizeMode="contain">
+      <View style={{ position: "absolute", bottom: 0, width: "100%" }}>
+        <View
+          style={{
+            textAlign: "center",
+            justifyContent: "center",
+            backgroundColor: theme1.LIGHT_BLUE_COLOR,
+            height: hp("9%"),
+            borderTopEndRadius: 20,
+            borderTopStartRadius: 20,
+          }}
+        >
           <TouchableOpacity
-          //   onPress={() => Linking.openURL('http://softsauda.com/userright/login')}
+            onPress={() =>
+              Linking.openURL("http://softsauda.com/userright/login")
+            }
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-around",
+              alignItems: "center",
+            }}
           >
             <Image
               source={{
@@ -393,39 +409,15 @@ function Landing(props) {
               style={{
                 height: hp("13%"),
                 width: wp("10%"),
-                zIndex: 22,
-                marginLeft: 10,
-                top: hp("4.5%"),
               }}
               resizeMode="contain"
             />
-          </TouchableOpacity>
-        </View>
-
-        <View
-          style={{
-            textAlign: "center",
-            paddingTop: 20,
-            backgroundColor: theme1.LIGHT_BLUE_COLOR,
-            color: "white",
-            height: hp("20%"),
-            borderRadius: 20,
-            top: -15,
-          }}
-        >
-          <TouchableOpacity
-            onPress={() =>
-              Linking.openURL("http://softsauda.com/userright/login")
-            }
-          >
             <Text
               style={{
                 textAlign: "center",
-                paddingTop: 0,
                 fontSize: wp("3.5%"),
                 color: "black",
                 fontWeight: "bold",
-                left: 25,
               }}
             >
               {" "}

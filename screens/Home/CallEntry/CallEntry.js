@@ -6,6 +6,7 @@ import { Form } from "native-base";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   FlatList,
   StyleSheet,
@@ -40,7 +41,7 @@ function CallEntry({ navigation, route }) {
     rout = route.params.routing;
   }
   const [mobileNumber, setMobileNumber] = useState("");
-  const [name, setName] = useState("");
+  const [searchedUser, setSearchedUser] = useState({});
   const [searchingCustomer, setSearchingCustomer] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -367,6 +368,9 @@ function CallEntry({ navigation, route }) {
 
   // Submit Start Day Details
   const submitData = async () => {
+    if (!searchedUser?._id) {
+      return Alert.alert("select User");
+    }
     const location = await getLocation();
 
     sales_or_group.map((item, index) => {
@@ -379,7 +383,7 @@ function CallEntry({ navigation, route }) {
       buy_podt: followUpDate,
       c_j_s_p: "CVE",
       vouc_code: "1",
-      Ship_party: dealerId,
+      Ship_party: searchedUser?._id,
       buy_rmks: remarks,
       ac_cty: callTypeId,
       user: await AsyncStorage.getItem("user"),
@@ -411,16 +415,26 @@ function CallEntry({ navigation, route }) {
   const searchCustomer = () => {
     if (mobileNumber?.length === 10) {
       setSearchingCustomer(true);
-      fetch(
-        `${host}/c_visit_entry/mob_calldealermob?MobileNo=${mobileNumber}`
-      )
+      axios
+        .get(
+          `${host}/c_visit_entry/mob_calldealermob?MobileNo=${mobileNumber}&masterid=${masterId}`
+        )
         .then((res) => {
-          console.log("Mobile Response --> ", res);
-          setTimeout(() => {
-            console.log("false Loader");
+          console.log("Mobile Response --> ", res.data.results);
+          if (res.data.results.length > 0) {
+            setSearchedUser(res.data.results[0]);
             setSearchingCustomer(false);
-            setName("user");
-          }, 3000);
+          } else {
+            setSearchingCustomer(false);
+            Alert.alert("No user found", "try another number", [
+              {
+                text: "Ok",
+                onPress: () => {
+                  navigation.navigate("Add Party");
+                },
+              },
+            ]);
+          }
         })
         .catch((e) => {
           console.log("Mobile Res Error --> ", res);
@@ -502,11 +516,8 @@ function CallEntry({ navigation, route }) {
               >
                 <TextInput
                   style={{
-                    // width: wp("85%"),
-
                     height: 40,
-
-                    // paddingHorizontal: 15,
+                    width: "90%",
                   }}
                   keyboardType={"phone-pad"}
                   returnKeyType="search"
@@ -541,28 +552,41 @@ function CallEntry({ navigation, route }) {
                     borderRadius: 5,
                     paddingHorizontal: 15,
                     borderColor: "#ccc",
+                    color: "#000",
                   }}
+                  editable={false}
                   placeholder="Customer Name"
-                  value={name}
-                  onChangeText={(text) => setName(text)}
+                  value={searchedUser?.ACName}
                 />
               </View>
               <View style={styles.column}>
-                <SelectTwo
-                  items={callTypeItems}
-                  selectedItem={selectedCallTypeItems}
-                  handleId={handleCallTypeId}
-                  //   width={wp("80%")}
+                <TextInput
+                  style={{
+                    width: wp("40%"),
+                    borderWidth: 1,
+                    height: 40,
+                    borderRadius: 5,
+                    paddingHorizontal: 15,
+                    borderColor: "#ccc",
+                    color: "#000",
+                  }}
+                  editable={false}
                   placeholder="State"
-                  borderColor="#ccc"
+                  value={searchedUser?.StateName?.StateName}
                 />
-                <SelectTwo
-                  items={callTypeItems}
-                  selectedItem={selectedCallTypeItems}
-                  handleId={handleCallTypeId}
-                  //   width={wp("80%")}
+                <TextInput
+                  style={{
+                    width: wp("40%"),
+                    borderWidth: 1,
+                    height: 40,
+                    borderRadius: 5,
+                    paddingHorizontal: 15,
+                    borderColor: "#ccc",
+                    color: "#000",
+                  }}
+                  editable={false}
                   placeholder="City"
-                  borderColor="#ccc"
+                  value={searchedUser?.CityName?.CityName}
                 />
               </View>
 
@@ -724,8 +748,8 @@ const styles = StyleSheet.create({
   column: {
     display: "flex",
     flexDirection: "row",
-    justifyContent: "center",
-    marginHorizontal: hp("0.3%"),
+    justifyContent: "space-around",
+    marginHorizontal: wp("0.3%"),
     marginVertical: hp("0.8%"),
     // alignItems: "center",
   },
