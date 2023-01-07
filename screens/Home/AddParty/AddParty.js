@@ -270,7 +270,7 @@ function AddParty({ navigation, route }) {
                 />
               </Row>
 
-              <Row style={{ marginBottom: 10 }}>
+              {/* <Row style={{ marginBottom: 10 }}>
                 <TextInput
                   style={[styles.input, { backgroundColor: "#D3FD7A" }]}
                   placeholder="Webiste"
@@ -283,7 +283,8 @@ function AddParty({ navigation, route }) {
                   defaultValue={email}
                   onChangeText={(text) => setEmail(text)}
                 />
-              </Row>
+              </Row> */}
+              
               <Row style={{ marginBottom: 10 }}>
                 <TextInput
                   style={[styles.input, { backgroundColor: "#D3FD7A" }]}
@@ -301,7 +302,7 @@ function AddParty({ navigation, route }) {
                 />
               </Row>
 
-              <Row style={{ marginBottom: 10 }}>
+              {/* <Row style={{ marginBottom: 10 }}>
                 <TextInput
                   style={[styles.input, { backgroundColor: "#D3FD7A" }]}
                   placeholder="Resi no."
@@ -314,7 +315,7 @@ function AddParty({ navigation, route }) {
                   defaultValue={fax}
                   onChangeText={(text) => setFax(text)}
                 />
-              </Row>
+              </Row> */}
 
               <View style={[styles.column, { justifyContent: "center" }]}>
                 <TouchableOpacity

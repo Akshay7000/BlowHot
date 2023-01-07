@@ -34,7 +34,7 @@ import {
   widthPercentageToDP as wp,
 } from "../../responsiveLayout/ResponsiveLayout";
 import { ImagePickerModal } from "../../components/ImagePickerModal";
-import { host } from "../../Constants/Host";
+import { host, oldHost } from "../../Constants/Host";
 import { useNavigation } from "@react-navigation/native";
 
 let height = Dimensions.get("window").height;
@@ -168,8 +168,6 @@ function CallSummary({ navigation, route }) {
   };
 
   const getModels = async () => {
-    console.log("models");
-
     axios
       .post(`${host}/call_summary/mobgetmodel`, {
         masterid: await AsyncStorage.getItem("masterid"),
@@ -205,12 +203,29 @@ function CallSummary({ navigation, route }) {
         setEngineerRemarks(data?.visit_remark);
         setFeedback(data?.visit_feedback);
         setInvoiceNumber(data?.invoice_no?.toString());
-        setEngineerDate(data?.date);
+        setWarrantyType(data?.s_stus);
+        setStatus(data?.call_pending);
+        setEngineerDate(moment(new Date(data?.pur_date)).format("DD/MM/YYYY"));
+        setArray(
+          data?.visit_group.length > 0
+            ? data?.visit_group
+            : [
+                {
+                  visit_qty: "",
+                  visit_spare_part: "",
+                  visit_rate: "",
+                  visit_status: "",
+                  visit_model: "",
+                  visit_product: "",
+                },
+              ]
+        );
         setProductId(data?.s_prod._id);
         setModelId(data?.s_mdl._id);
         setProductName(data?.s_prod.Fg_Des);
         setUniqueId(data?.unique_id);
         setModelName(data?.s_mdl.Description);
+        setAutoSelectedImages(data?.filepath);
 
         let brand = [...brandItems];
         response.data.rawMat_mast.map((dat, index) => {
@@ -295,7 +310,7 @@ function CallSummary({ navigation, route }) {
         appointment_technician: technician,
         appointment_date: complaintDate,
         appointment_remark: complaintRemarks,
-        vhpxappointment: uniqueId,
+        vhpxappointment: SingleData?._id,
         user: await AsyncStorage.getItem("user"),
         compid: await AsyncStorage.getItem("companyCode"),
         divid: await AsyncStorage.getItem("divisionCode"),
@@ -325,13 +340,13 @@ function CallSummary({ navigation, route }) {
   // Add Alloted to Engineer
   const [SingleData, setSingleData] = useState({});
   const [charges, setCharges] = useState("");
-  const [engineerDate, setEngineerDate] = useState(new Date(1598051730000));
+  const [engineerDate, setEngineerDate] = useState(Date.now());
   const [engineerRemarks, setEngineerRemarks] = useState("");
   const [feedback, setFeedback] = useState("");
   const [ta, setTa] = useState(0);
   const [status, setStatus] = useState("");
-  const [invoiceNumber, setInvoiceNumber] = useState();
-  const [warrantyType, setWarrantyType] = useState();
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [warrantyType, setWarrantyType] = useState("");
   const [show, setShow] = useState(true);
 
   const [visit_group, setArray] = useState([
@@ -359,6 +374,8 @@ function CallSummary({ navigation, route }) {
 
   const [imageModal, setImageModal] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
+  const [AutoSelectedImages, setAutoSelectedImages] = useState([]);
+  const [happyCode, setHappyCode] = useState("");
   // const [packValue, setpackvalue] = useState();
   // const [weight, setWeight] = useState();
 
@@ -427,6 +444,16 @@ function CallSummary({ navigation, route }) {
   };
 
   const handleEngineerSubmit = async () => {
+    if (
+      status === "Resolved" &&
+      SingleData?._id?.substring(SingleData?._id.length-6).toUpperCase() !== happyCode
+    ) {
+      return Toast.showWithGravity(
+        "Invalid Happy Code",
+        Toast.LONG,
+        Toast.BOTTOM
+      );
+    }
     setLoading(true);
     const data = new FormData();
     let array = [];
@@ -448,7 +475,7 @@ function CallSummary({ navigation, route }) {
     if (selectedImages?.length > 0) {
       selectedImages.map((singleImage) => {
         const newImageUri =
-          "file:///" + singleImage.uri.split("file:/").join("");
+          "file:///" + singleImage?.uri?.split("file:/")?.join("");
 
         let ext = newImageUri
           .split("/")
@@ -497,16 +524,10 @@ function CallSummary({ navigation, route }) {
         headers: {
           "Content-Type": "multipart/form-data; charset=utf-8;",
         },
-        processData: false,
-        contentType: false,
         data: data,
-        onUploadProgress: (progress) => {
-          const { loaded, total } = progress;
-          console.log("Upload in progress --> ", loaded, " -- ", total);
-        },
       })
         .then((response) => {
-          console.log("data", response.data);
+          // console.log("data", response.data);
           Toast.showWithGravity("Data Submitted.", Toast.LONG, Toast.BOTTOM);
           const todayDate = moment(new Date()).format("DD/MM/YYYY");
           RBref.current.close();
@@ -663,7 +684,7 @@ function CallSummary({ navigation, route }) {
             }}
           />
 
-          <View>
+          <View style={{ height: "85%" }}>
             <FlatList
               data={filteredData}
               initialNumToRender={10}
@@ -1149,9 +1170,9 @@ function CallSummary({ navigation, route }) {
                   >
                     <DropDownPicker
                       items={[
-                        { label: "In-Warranty", value: "In-Warranty" },
-                        { label: "Out-Warranty", value: "Out-Warranty" },
-                        { label: "New", value: "New" },
+                        { label: "In-Warranty", value: "in-warranty" },
+                        { label: "Out-Warranty", value: "out-warranty" },
+                        { label: "New", value: "new" },
                       ]}
                       containerStyle={{
                         height: 35,
@@ -1166,6 +1187,7 @@ function CallSummary({ navigation, route }) {
                         width: wp("37%"),
                         marginTop: 5,
                       }}
+                      defaultValue={warrantyType}
                       onChangeItem={(item) => setWarrantyType(item.value)}
                       name="warrantyType"
                       placeholder="Select Warranty"
@@ -1205,6 +1227,8 @@ function CallSummary({ navigation, route }) {
                           value: "Technical-Advice",
                         },
                         { label: "Cancel", value: "Cancel" },
+                        { label: "Visit Schedule", value: "Visit Schedule" },
+                        { label: "Re Schedule", value: "Re Schedule" },
                       ]}
                       containerStyle={{
                         height: 35,
@@ -1223,6 +1247,7 @@ function CallSummary({ navigation, route }) {
                         marginTop: 5,
                         elevation: 15,
                       }}
+                      defaultValue={status}
                       onChangeItem={(item) => setStatus(item.value)}
                       name="status"
                       placeholder="Select Status"
@@ -1243,6 +1268,42 @@ function CallSummary({ navigation, route }) {
                       setDate={setEngineerDate}
                     />
                   </View>
+
+                  {status === "Resolved" && (
+                    <View
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        paddingLeft: 10,
+                      }}
+                    >
+                      <TextInput
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor:
+                              happyCode.length === 6 &&
+                              SingleData?._id?.substring(SingleData?._id.length-6).toUpperCase() ===
+                                happyCode
+                                ? "#D3FD7A"
+                                : "#f2918f",
+                            width: wp("95%"),
+                            flex: 1,
+                            height: hp("4.7%"),
+                            top: hp("0.3%"),
+                            marginRight: wp("5%"),
+                          },
+                        ]}
+                        placeholder="Happy Code"
+                        value={happyCode}
+                        onChangeText={(text) => {
+                          if (text.length <= 6) {
+                            setHappyCode(text.toUpperCase());
+                          }
+                        }}
+                      />
+                    </View>
+                  )}
 
                   <View
                     style={{
@@ -1298,6 +1359,23 @@ function CallSummary({ navigation, route }) {
                       <Text style={{ fontSize: 30, color: "#000" }}>+</Text>
                     </TouchableOpacity>
 
+                    {AutoSelectedImages?.length > 0 &&
+                      AutoSelectedImages?.map((fillImage, index) => {
+                        console.log("Image Host --> ", `${host}/${fillImage}`);
+                        return (
+                          <Image
+                            key={index + "AI"}
+                            style={{
+                              height: 40,
+                              width: 40,
+                              resizeMode: "cover",
+                              margin: 5,
+                            }}
+                            source={{ uri: `${host}/${fillImage}` }}
+                          />
+                        );
+                      })}
+
                     {selectedImages?.uri && (
                       <Image
                         style={{
@@ -1342,6 +1420,9 @@ function CallSummary({ navigation, route }) {
                             i={i}
                             product={x}
                             borderColor="#ccc"
+                            def_indexD={brandItems?.findIndex(
+                              (a) => a.id === x.visit_spare_part
+                            )}
                           />
 
                           <DropDownPicker
@@ -1598,12 +1679,24 @@ function CallSummary({ navigation, route }) {
                       { justifyContent: "center", marginTop: hp("3%") },
                     ]}
                   >
-                    <TouchableOpacity
-                      style={styles.button1}
-                      onPress={() => handleEngineerSubmit()}
-                    >
-                      <Text style={{ color: "white" }}>Save Changes</Text>
-                    </TouchableOpacity>
+                    {status === "Resolved" &&
+                    SingleData?._id?.substring(SingleData?._id.length-6).toUpperCase() ===
+                        happyCode && (
+                        <TouchableOpacity
+                          style={styles.button1}
+                          onPress={() => handleEngineerSubmit()}
+                        >
+                          <Text style={{ color: "white" }}>Save Changes</Text>
+                        </TouchableOpacity>
+                      )}
+                    {status !== "Resolved" && (
+                      <TouchableOpacity
+                        style={styles.button1}
+                        onPress={() => handleEngineerSubmit()}
+                      >
+                        <Text style={{ color: "white" }}>Save Changes</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
 
                   <ImagePickerModal
