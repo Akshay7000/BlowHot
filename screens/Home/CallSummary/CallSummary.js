@@ -17,7 +17,7 @@ import {
   View,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import DatePicker from "react-native-datepicker";
+import DatePicker from "../../components/DatePicker";
 import DropDownPicker from "react-native-dropdown-picker";
 import { ScrollView, TextInput } from "react-native-gesture-handler";
 import { List, Searchbar } from "react-native-paper";
@@ -34,11 +34,13 @@ import {
   widthPercentageToDP as wp,
 } from "../../responsiveLayout/ResponsiveLayout";
 import { ImagePickerModal } from "../../components/ImagePickerModal";
-import { host } from "../../Constants/Host";
+import { host, oldHost } from "../../Constants/Host";
+import { useNavigation } from "@react-navigation/native";
 
 let height = Dimensions.get("window").height;
 
 function CallSummary({ navigation, route }) {
+  const nav = useNavigation();
   const [loading, setLoading] = useState(true);
 
   const [tableData, setTableData] = useState();
@@ -120,7 +122,7 @@ function CallSummary({ navigation, route }) {
     axios
       .post(`${host}/call_summary/mobcall_summary`, body)
       .then(function(response) {
-        console.log("res ->");
+        // console.log("res -> ", JSON.stringify(response.data.s_call));
         setTableData(response.data.s_call);
         setFilteredData(response.data.s_call);
       })
@@ -166,8 +168,6 @@ function CallSummary({ navigation, route }) {
   };
 
   const getModels = async () => {
-    console.log("models");
-
     axios
       .post(`${host}/call_summary/mobgetmodel`, {
         masterid: await AsyncStorage.getItem("masterid"),
@@ -195,20 +195,38 @@ function CallSummary({ navigation, route }) {
       .get(`${host}/s_call/mobs_call_update/${id}`)
       .then(function(response) {
         const data = response.data.s_call;
-        // console.log("sfhuwhiu", response.data.rawMat_mast[0]?.raw_matrl_nm._id);
+
+        // console.log("Response Data --> ", JSON.stringify(data));
+        setSingleData(data);
         setCharges(data?.visit_charges);
         setTa(data?.ta_km);
         setEngineerRemarks(data?.visit_remark);
         setFeedback(data?.visit_feedback);
         setInvoiceNumber(data?.invoice_no?.toString());
-        setEngineerDate(data?.date);
+        setWarrantyType(data?.s_stus);
+        setStatus(data?.call_pending);
+        setEngineerDate(moment(new Date(data?.pur_date)).format("DD/MM/YYYY"));
+        setArray(
+          data?.visit_group.length > 0
+            ? data?.visit_group
+            : [
+                {
+                  visit_qty: "",
+                  visit_spare_part: "",
+                  visit_rate: "",
+                  visit_status: "",
+                  visit_model: "",
+                  visit_product: "",
+                },
+              ]
+        );
         setProductId(data?.s_prod._id);
         setModelId(data?.s_mdl._id);
         setProductName(data?.s_prod.Fg_Des);
         setUniqueId(data?.unique_id);
         setModelName(data?.s_mdl.Description);
-        setVId(data?.unique_id);
-        // console.log("list", response.data.rawMat_mast);
+        setAutoSelectedImages(data?.filepath);
+
         let brand = [...brandItems];
         response.data.rawMat_mast.map((dat, index) => {
           brand[index] = {
@@ -258,7 +276,6 @@ function CallSummary({ navigation, route }) {
   const [complaintDate, setComplaintDate] = useState();
   const [complaintRemarks, setComplaintRemarks] = useState("");
   const [fromDate, setFromDate] = useState(new Date(1598051730000));
-  const [vId, setVId] = useState();
 
   const [toTime, setToTime] = useState(false);
   const [toDate, setToDate] = useState(new Date(1598051730000));
@@ -277,7 +294,6 @@ function CallSummary({ navigation, route }) {
   };
 
   const handleNewComplaint = async (id) => {
-    setVId(id);
     if (selectedIndex !== 0) {
       getParticularData(id);
     } else {
@@ -294,7 +310,7 @@ function CallSummary({ navigation, route }) {
         appointment_technician: technician,
         appointment_date: complaintDate,
         appointment_remark: complaintRemarks,
-        vhpxappointment: vId,
+        vhpxappointment: SingleData?._id,
         user: await AsyncStorage.getItem("user"),
         compid: await AsyncStorage.getItem("companyCode"),
         divid: await AsyncStorage.getItem("divisionCode"),
@@ -312,7 +328,6 @@ function CallSummary({ navigation, route }) {
         setToDate(new Date(1598051730000));
         setToTime(false);
         setFromTime(false);
-        setVId("");
         setComplaintDate(todayDate);
         setComplaintRemarks("");
         setTechnician("");
@@ -323,14 +338,15 @@ function CallSummary({ navigation, route }) {
   };
 
   // Add Alloted to Engineer
+  const [SingleData, setSingleData] = useState({});
   const [charges, setCharges] = useState("");
-  const [engineerDate, setEngineerDate] = useState(new Date(1598051730000));
+  const [engineerDate, setEngineerDate] = useState(Date.now());
   const [engineerRemarks, setEngineerRemarks] = useState("");
   const [feedback, setFeedback] = useState("");
   const [ta, setTa] = useState(0);
   const [status, setStatus] = useState("");
-  const [invoiceNumber, setInvoiceNumber] = useState();
-  const [warrantyType, setWarrantyType] = useState();
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [warrantyType, setWarrantyType] = useState("");
   const [show, setShow] = useState(true);
 
   const [visit_group, setArray] = useState([
@@ -358,6 +374,8 @@ function CallSummary({ navigation, route }) {
 
   const [imageModal, setImageModal] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
+  const [AutoSelectedImages, setAutoSelectedImages] = useState([]);
+  const [happyCode, setHappyCode] = useState("");
   // const [packValue, setpackvalue] = useState();
   // const [weight, setWeight] = useState();
 
@@ -426,11 +444,19 @@ function CallSummary({ navigation, route }) {
   };
 
   const handleEngineerSubmit = async () => {
+    if (
+      status === "Resolved" &&
+      SingleData?._id?.substring(SingleData?._id.length-6).toUpperCase() !== happyCode
+    ) {
+      return Toast.showWithGravity(
+        "Invalid Happy Code",
+        Toast.LONG,
+        Toast.BOTTOM
+      );
+    }
     setLoading(true);
-
+    const data = new FormData();
     let array = [];
-
-    let imageArray = [];
 
     if (selectedImages?.uri) {
       const newImageUri =
@@ -440,7 +466,7 @@ function CallSummary({ navigation, route }) {
         .split("/")
         .pop()
         .split(".")[1];
-      imageArray.push({
+      data.append("files", {
         uri: selectedImages.uri,
         type: `image/${ext}`, //imageDetails.type,
         name: newImageUri.split("/").pop(),
@@ -449,22 +475,21 @@ function CallSummary({ navigation, route }) {
     if (selectedImages?.length > 0) {
       selectedImages.map((singleImage) => {
         const newImageUri =
-          "file:///" + singleImage.uri.split("file:/").join("");
+          "file:///" + singleImage?.uri?.split("file:/")?.join("");
 
         let ext = newImageUri
           .split("/")
           .pop()
           .split(".")[1];
-        imageArray.push({
-          uri: singleImage.uri,
-          type: `image/${ext}`, //imageDetails.type,
+        data.append("files", {
           name: newImageUri.split("/").pop(),
+          type: `image/${ext}`, //imageDetails.type,
+          uri: singleImage.uri,
         });
       });
     }
 
-    let imageForm = new FormData();
-    imageForm.append("files", imageArray);
+    // data.append("files", imageArray);
 
     visit_group.map((item, index) => {
       let object = Object.assign(item, { visit: index });
@@ -472,40 +497,42 @@ function CallSummary({ navigation, route }) {
     });
 
     const submitData = async () => {
-      const body = {
-        visit_date: engineerDate,
-        warranty_type: warrantyType,
-        invoice_no: invoiceNumber,
-        s_prod: productId,
-        s_mdl: modelId,
-        first_visit_status: status,
-        visit_group: array,
-        visit_charges: charges,
-        visit_remark: engineerRemarks,
-        ta_km: ta,
-        visit_feedback: feedback,
-        visit_signature: "",
-        vhpxvisit: vId,
-        ac_phmob: "",
-        user: await AsyncStorage.getItem("user"),
-        compid: await AsyncStorage.getItem("companyCode"),
-        divid: await AsyncStorage.getItem("divisionCode"),
-        masterid: await AsyncStorage.getItem("masterid"),
-      };
+      data.append("visit_date", engineerDate);
+      data.append("warranty_type", warrantyType);
+      data.append("invoice_no", invoiceNumber);
+      data.append("s_prod", productId);
+      data.append("s_mdl", modelId);
+      data.append("first_visit_status", status);
+      data.append("visit_group", array);
+      data.append("visit_charges", charges);
+      data.append("visit_remark", engineerRemarks);
+      data.append("ta_km", ta);
+      data.append("visit_feedback", feedback);
+      data.append("visit_signature", "");
+      data.append("vhpxvisit", SingleData?._id);
+      data.append("vunique_id", uniqueId);
+      data.append("ac_phmob", SingleData?.s_cus?.MobileNo);
+      data.append("user", await AsyncStorage.getItem("user"));
+      data.append("compid", await AsyncStorage.getItem("companyCode"));
+      data.append("divid", await AsyncStorage.getItem("divisionCode"));
+      data.append("masterid", await AsyncStorage.getItem("masterid"));
 
-      console.log("body ----> ", {
-        body: body,
-        files: imageForm,
-      });
-      Axios.post(`${host}/s_call/mobvisit_add`, {
-        body: body,
-        files: imageForm,
+      console.log("body ----> ", JSON.stringify(data));
+      await Axios({
+        method: "POST",
+        url: `${host}/s_call/mobvisit_add`,
+        headers: {
+          "Content-Type": "multipart/form-data; charset=utf-8;",
+        },
+        data: data,
       })
         .then((response) => {
-          console.log("data", response.data);
+          // console.log("data", response.data);
           Toast.showWithGravity("Data Submitted.", Toast.LONG, Toast.BOTTOM);
           const todayDate = moment(new Date()).format("DD/MM/YYYY");
-          Updates.reloadAsync();
+          RBref.current.close();
+          nav.reset({ index: 0, routes: [{ name: "Home" }] });
+          // Updates.reloadAsync();
         })
         .catch((e) => {
           console.log(e);
@@ -657,7 +684,7 @@ function CallSummary({ navigation, route }) {
             }}
           />
 
-          <View>
+          <View style={{ height: "85%" }}>
             <FlatList
               data={filteredData}
               initialNumToRender={10}
@@ -1143,9 +1170,9 @@ function CallSummary({ navigation, route }) {
                   >
                     <DropDownPicker
                       items={[
-                        { label: "In-Warranty", value: "In-Warranty" },
-                        { label: "Out-Warranty", value: "Out-Warranty" },
-                        { label: "New", value: "New" },
+                        { label: "In-Warranty", value: "in-warranty" },
+                        { label: "Out-Warranty", value: "out-warranty" },
+                        { label: "New", value: "new" },
                       ]}
                       containerStyle={{
                         height: 35,
@@ -1160,6 +1187,7 @@ function CallSummary({ navigation, route }) {
                         width: wp("37%"),
                         marginTop: 5,
                       }}
+                      defaultValue={warrantyType}
                       onChangeItem={(item) => setWarrantyType(item.value)}
                       name="warrantyType"
                       placeholder="Select Warranty"
@@ -1199,6 +1227,8 @@ function CallSummary({ navigation, route }) {
                           value: "Technical-Advice",
                         },
                         { label: "Cancel", value: "Cancel" },
+                        { label: "Visit Schedule", value: "Visit Schedule" },
+                        { label: "Re Schedule", value: "Re Schedule" },
                       ]}
                       containerStyle={{
                         height: 35,
@@ -1217,47 +1247,63 @@ function CallSummary({ navigation, route }) {
                         marginTop: 5,
                         elevation: 15,
                       }}
+                      defaultValue={status}
                       onChangeItem={(item) => setStatus(item.value)}
                       name="status"
                       placeholder="Select Status"
                       style={{ left: -5, backgroundColor: "transparent" }}
                     />
                     <DatePicker
-                      style={{
-                        width: wp("100%"),
+                      conatinerStyles={{
+                        width: wp("42%"),
+                        height: 40,
+                        justifyContent: "center",
                         borderRadius: 5,
-                        margin: 10,
-                        flex: 1,
+                        marginLeft: 8,
+                        marginRight: 17,
+                        borderColor: "#ccc",
                       }}
                       date={engineerDate}
-                      mode="date"
                       placeholder="Date"
-                      format="DD/MM/YYYY"
-                      confirmBtnText="Confirm"
-                      cancelBtnText="Cancel"
-                      customStyles={{
-                        dateIcon: {
-                          position: "absolute",
-                          left: 40000,
-                          top: 9,
-                          marginLeft: 0,
-                          height: hp("2.5%"),
-                          width: wp("3.5%"),
-                        },
-                        dateInput: {
-                          borderRadius: 10,
-                          marginRight: 0,
-                          height: hp("4.6%"),
-                          right: wp("1.5%"),
-                          bottom: hp("0.5%"),
-                        },
-                        // ... You can check the source to find the other keys.
-                      }}
-                      onDateChange={(date) => {
-                        setEngineerDate(date);
-                      }}
+                      setDate={setEngineerDate}
                     />
                   </View>
+
+                  {status === "Resolved" && (
+                    <View
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        paddingLeft: 10,
+                      }}
+                    >
+                      <TextInput
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor:
+                              happyCode.length === 6 &&
+                              SingleData?._id?.substring(SingleData?._id.length-6).toUpperCase() ===
+                                happyCode
+                                ? "#D3FD7A"
+                                : "#f2918f",
+                            width: wp("95%"),
+                            flex: 1,
+                            height: hp("4.7%"),
+                            top: hp("0.3%"),
+                            marginRight: wp("5%"),
+                          },
+                        ]}
+                        placeholder="Happy Code"
+                        value={happyCode}
+                        onChangeText={(text) => {
+                          if (text.length <= 6) {
+                            setHappyCode(text.toUpperCase());
+                          }
+                        }}
+                      />
+                    </View>
+                  )}
 
                   <View
                     style={{
@@ -1313,6 +1359,23 @@ function CallSummary({ navigation, route }) {
                       <Text style={{ fontSize: 30, color: "#000" }}>+</Text>
                     </TouchableOpacity>
 
+                    {AutoSelectedImages?.length > 0 &&
+                      AutoSelectedImages?.map((fillImage, index) => {
+                        console.log("Image Host --> ", `${host}/${fillImage}`);
+                        return (
+                          <Image
+                            key={index + "AI"}
+                            style={{
+                              height: 40,
+                              width: 40,
+                              resizeMode: "cover",
+                              margin: 5,
+                            }}
+                            source={{ uri: `${host}/${fillImage}` }}
+                          />
+                        );
+                      })}
+
                     {selectedImages?.uri && (
                       <Image
                         style={{
@@ -1357,6 +1420,9 @@ function CallSummary({ navigation, route }) {
                             i={i}
                             product={x}
                             borderColor="#ccc"
+                            def_indexD={brandItems?.findIndex(
+                              (a) => a.id === x.visit_spare_part
+                            )}
                           />
 
                           <DropDownPicker
@@ -1613,12 +1679,24 @@ function CallSummary({ navigation, route }) {
                       { justifyContent: "center", marginTop: hp("3%") },
                     ]}
                   >
-                    <TouchableOpacity
-                      style={styles.button1}
-                      onPress={() => handleEngineerSubmit()}
-                    >
-                      <Text style={{ color: "white" }}>Save Changes</Text>
-                    </TouchableOpacity>
+                    {status === "Resolved" &&
+                    SingleData?._id?.substring(SingleData?._id.length-6).toUpperCase() ===
+                        happyCode && (
+                        <TouchableOpacity
+                          style={styles.button1}
+                          onPress={() => handleEngineerSubmit()}
+                        >
+                          <Text style={{ color: "white" }}>Save Changes</Text>
+                        </TouchableOpacity>
+                      )}
+                    {status !== "Resolved" && (
+                      <TouchableOpacity
+                        style={styles.button1}
+                        onPress={() => handleEngineerSubmit()}
+                      >
+                        <Text style={{ color: "white" }}>Save Changes</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
 
                   <ImagePickerModal

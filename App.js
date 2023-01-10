@@ -134,7 +134,7 @@ export function LoginStack(props) {
                         text: "YES",
                         onPress: () => {
                           AsyncStorage.removeItem("user");
-                          navigation.navigate("Login");
+                          // navigation.navigate("Login");
                           console.log("restarting");
                           Updates.reloadAsync();
                         },
