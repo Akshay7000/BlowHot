@@ -407,8 +407,8 @@ function Landing(props) {
                 uri: `${host}/public/img/logo.png `,
               }}
               style={{
-                height: hp("13%"),
-                width: wp("10%"),
+                height: hp("10%"),
+                width: wp("25%"),
               }}
               resizeMode="contain"
             />
@@ -421,7 +421,7 @@ function Landing(props) {
               }}
             >
               {" "}
-              © 2020 Complete Canvassing Accounting Solution
+              ©2023 Blowhot - Future Perfect
             </Text>
           </TouchableOpacity>
         </View>

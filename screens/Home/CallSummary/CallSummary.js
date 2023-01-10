@@ -446,7 +446,8 @@ function CallSummary({ navigation, route }) {
   const handleEngineerSubmit = async () => {
     if (
       status === "Resolved" &&
-      SingleData?._id?.substring(SingleData?._id.length-6).toUpperCase() !== happyCode
+      SingleData?._id?.substring(SingleData?._id.length - 6).toUpperCase() !==
+        happyCode
     ) {
       return Toast.showWithGravity(
         "Invalid Happy Code",
@@ -456,7 +457,7 @@ function CallSummary({ navigation, route }) {
     }
     setLoading(true);
     const data = new FormData();
-    let array = [];
+    // let array = [];
 
     if (selectedImages?.uri) {
       const newImageUri =
@@ -489,57 +490,53 @@ function CallSummary({ navigation, route }) {
       });
     }
 
-    // data.append("files", imageArray);
+    // visit_group.map((item, index) => {
+    //   let object = Object.assign(item, { visit: index });
+    //   array.push(object);
+    //   // data.append("visit_group", JSON.stringify(object));
+    // });
+    let array = visit_group;
+    data.append("visit_date", engineerDate);
+    data.append("warranty_type", warrantyType);
+    data.append("invoice_no", invoiceNumber);
+    data.append("s_prod", productId);
+    data.append("s_mdl", modelId);
+    data.append("first_visit_status", status);
+    data.append("visit_group", JSON.stringify(array));
+    data.append("visit_charges", charges);
+    data.append("visit_remark", engineerRemarks);
+    data.append("ta_km", ta);
+    data.append("visit_feedback", feedback);
+    data.append("visit_signature", "");
+    data.append("vhpxvisit", SingleData?._id);
+    data.append("vunique_id", uniqueId);
+    data.append("ac_phmob", SingleData?.s_cus?.MobileNo);
+    data.append("user", await AsyncStorage.getItem("user"));
+    data.append("compid", await AsyncStorage.getItem("companyCode"));
+    data.append("divid", await AsyncStorage.getItem("divisionCode"));
+    data.append("masterid", await AsyncStorage.getItem("masterid"));
 
-    visit_group.map((item, index) => {
-      let object = Object.assign(item, { visit: index });
-      array.push(object);
-    });
-
-    const submitData = async () => {
-      data.append("visit_date", engineerDate);
-      data.append("warranty_type", warrantyType);
-      data.append("invoice_no", invoiceNumber);
-      data.append("s_prod", productId);
-      data.append("s_mdl", modelId);
-      data.append("first_visit_status", status);
-      data.append("visit_group", array);
-      data.append("visit_charges", charges);
-      data.append("visit_remark", engineerRemarks);
-      data.append("ta_km", ta);
-      data.append("visit_feedback", feedback);
-      data.append("visit_signature", "");
-      data.append("vhpxvisit", SingleData?._id);
-      data.append("vunique_id", uniqueId);
-      data.append("ac_phmob", SingleData?.s_cus?.MobileNo);
-      data.append("user", await AsyncStorage.getItem("user"));
-      data.append("compid", await AsyncStorage.getItem("companyCode"));
-      data.append("divid", await AsyncStorage.getItem("divisionCode"));
-      data.append("masterid", await AsyncStorage.getItem("masterid"));
-
-      console.log("body ----> ", JSON.stringify(data));
-      await Axios({
-        method: "POST",
-        url: `${host}/s_call/mobvisit_add`,
-        headers: {
-          "Content-Type": "multipart/form-data; charset=utf-8;",
-        },
-        data: data,
+    console.log("body ----> ", JSON.stringify(data));
+    await Axios({
+      method: "POST",
+      url: `${host}/s_call/mobvisit_add`,
+      headers: {
+        "Content-Type": "multipart/form-data; charset=utf-8;",
+      },
+      data: data,
+    })
+      .then((response) => {
+        // console.log("data", response.data);
+        Toast.showWithGravity("Data Submitted.", Toast.LONG, Toast.BOTTOM);
+        const todayDate = moment(new Date()).format("DD/MM/YYYY");
+        RBref.current.close();
+        nav.reset({ index: 0, routes: [{ name: "Home" }] });
+        setLoading(false);
       })
-        .then((response) => {
-          // console.log("data", response.data);
-          Toast.showWithGravity("Data Submitted.", Toast.LONG, Toast.BOTTOM);
-          const todayDate = moment(new Date()).format("DD/MM/YYYY");
-          RBref.current.close();
-          nav.reset({ index: 0, routes: [{ name: "Home" }] });
-          // Updates.reloadAsync();
-        })
-        .catch((e) => {
-          console.log(e);
-        });
-    };
-    submitData();
-    setLoading(false);
+      .catch((e) => {
+        console.log("API error --> ",e);
+        setLoading(false);
+      });
   };
 
   const pickImage = async () => {
@@ -1283,8 +1280,9 @@ function CallSummary({ navigation, route }) {
                           {
                             backgroundColor:
                               happyCode.length === 6 &&
-                              SingleData?._id?.substring(SingleData?._id.length-6).toUpperCase() ===
-                                happyCode
+                              SingleData?._id
+                                ?.substring(SingleData?._id.length - 6)
+                                .toUpperCase() === happyCode
                                 ? "#D3FD7A"
                                 : "#f2918f",
                             width: wp("95%"),
@@ -1680,8 +1678,9 @@ function CallSummary({ navigation, route }) {
                     ]}
                   >
                     {status === "Resolved" &&
-                    SingleData?._id?.substring(SingleData?._id.length-6).toUpperCase() ===
-                        happyCode && (
+                      SingleData?._id
+                        ?.substring(SingleData?._id.length - 6)
+                        .toUpperCase() === happyCode && (
                         <TouchableOpacity
                           style={styles.button1}
                           onPress={() => handleEngineerSubmit()}
