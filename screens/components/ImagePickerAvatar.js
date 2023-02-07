@@ -8,12 +8,12 @@ import {
   ImageBackground,
   Dimensions,
 } from 'react-native';
-import { Button } from 'react-native-paper';
-import { images } from '../../assets';
-import theme1 from '../components/styles/DarkTheme' 
-const { width, height } = Dimensions.get('window')
+import {Button} from 'react-native-paper';
+import {images} from '../../assets';
+import theme1 from '../components/styles/DarkTheme';
+const {width, height} = Dimensions.get('window');
 
-export function ImagePickerAvatar({ uri, onPress,editable }) {
+export function ImagePickerAvatar({uri, onPress, editable}) {
   return (
     <ImageBackground
       style={styles.imageBackground}
@@ -21,9 +21,14 @@ export function ImagePickerAvatar({ uri, onPress,editable }) {
       <View style={styles.avatar}>
         <Image
           style={styles.avatarImage}
-          source={uri ? { uri } : images.avatar}
+          source={uri ? {uri} : images.avatar}
         />
-        <Button icon="camera" mode="contained" onPress={onPress} color={theme1.DARK_BLUE_COLOR} disabled={editable}>
+        <Button
+          icon="camera"
+          mode="contained"
+          onPress={onPress}
+          style={{backgroundColor: theme1.DARK_ORANGE_COLOR}}
+          disabled={editable}>
           Add a Photo
         </Button>
       </View>
@@ -40,12 +45,12 @@ const styles = StyleSheet.create({
     marginTop: '10%',
   },
   avatarImage: {
-    height: height/4,
-    width: width/2,
+    height: height / 4,
+    width: width / 2,
     overflow: 'hidden',
     borderColor: 'grey',
     borderWidth: 2,
-    marginBottom:10
+    marginBottom: 10,
   },
   addButton: {
     height: 54,
@@ -59,7 +64,6 @@ const styles = StyleSheet.create({
     height: 54,
     width: 54,
     marginTop: 30,
-
   },
   usernameText: {
     fontSize: 24,

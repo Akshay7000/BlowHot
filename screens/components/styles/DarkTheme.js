@@ -1,7 +1,15 @@
 export default theme1={
   DARK_BLUE_COLOR:"#4B77BE",
+  DARK_ORANGE_COLOR:"#e75a19",
   HEADER_TEXT_COLOR:"#222",
   MEDIUM_BLUE_COLOR:"#77A7EF",
+  MEDIUM_ORANGE_COLOR:"#e75a199a",
   LIGHT_BLUE_COLOR:"#CBD9F5",
-  FILTER_BUTTON:""
+  LIGHT_ORANGE_COLOR:"#e75a195a",
+  FILTER_BUTTON:"",
+  White: '#FFF',
+  Grey: '#BFBFBF',
+  GreyWhite: '#E9E9E9',
+  LightBlack: '#222',
+  SemiBlack: '#111',
 }

@@ -1,20 +1,20 @@
-import moment from "moment";
-import React, { useState } from "react";
-import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
-import DateTimePickerModal from "react-native-modal-datetime-picker";
-import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import AntDesign from "react-native-vector-icons/AntDesign";
+import moment from 'moment';
+import React, {useState} from 'react';
+import {StyleSheet, TextInput, TouchableOpacity, View} from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 const DatePicker = ({
   date,
   setDate,
   placeholderTextColor,
-  type = "date",
-  title = "Date",
-  placeholder = "Date",
+  type = 'date',
+  title = 'Date',
+  placeholder = 'Date',
   conatinerStyles,
   maxDate,
   minDate,
-  isDisable= false,
+  isDisable = false,
 }) => {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const showDatePicker = () => {
@@ -25,49 +25,43 @@ const DatePicker = ({
     setDatePickerVisibility(false);
   };
 
-  const handleConfirm = (date) => {
+  const handleConfirm = date => {
     var dateTime =
-      type === "date"
-        ? moment(date).format("DD/MM/YYYY")
-        : type === "time"
-        ? moment(date).format("h:mm a")
+      type === 'date'
+        ? moment(date).format('DD/MM/YYYY')
+        : type === 'time'
+        ? moment(date).format('h:mm a')
         : date;
     setDate(dateTime);
     hideDatePicker();
   };
   const styles = StyleSheet.create({
     mainContainer: {
-      width: "48%",
-      height: 35,
+      width: '48%',
+      height: 40,
       marginTop: 2,
-      justifyContent: "space-between",
-
+      justifyContent: 'space-between',
       borderBottomWidth: 1,
       borderRadius: 5,
       borderWidth: 1,
-
-      // paddingHorizontal: 10,
     },
     textInput: {
-      flexDirection: "row",
-
-      alignItems: "center",
-
-      justifyContent: "space-around",
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-around',
     },
     text: {
-      flex: 1,
-      height: 35,
+      // flex: 1,
+      // height: 40,
       textAlignVertical: 'center',
       fontSize: 14,
-      fontWeight: "600",
+      fontWeight: '600',
       letterSpacing: 0.1,
-      color: "black",
+      color: 'black',
       borderRadius: 14,
-      marginTop: 5
     },
     heading: {
-      color: "#6C6C6C",
+      color: '#6C6C6C',
       fontSize: 10,
     },
   });
@@ -78,19 +72,23 @@ const DatePicker = ({
           <TextInput
             returnKeyType="done"
             placeholderTextColor={
-              placeholderTextColor ? placeholderTextColor : "#BBB"
+              placeholderTextColor ? placeholderTextColor : '#BBB'
             }
             placeholder={placeholder}
             style={styles.text}
-            onChangeText={(value) => setDate(value)}
+            onChangeText={value => setDate(value)}
             editable={false}
             value={date}
           />
 
-          {type !== "time" ? (
+          {type !== 'time' ? (
             <AntDesign name="calendar" size={20} color={'#222'} />
           ) : (
-            <MaterialCommunityIcons name="clock-time-eight-outline" size={20} color={'#222'} />
+            <MaterialCommunityIcons
+              name="clock-time-eight-outline"
+              size={20}
+              color={'#222'}
+            />
           )}
         </View>
       </TouchableOpacity>

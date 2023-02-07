@@ -1,30 +1,34 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import ImageCropPicker from 'react-native-image-crop-picker';
 import Geolocation from '@react-native-community/geolocation';
+import {useNavigation} from '@react-navigation/native';
+import Axios from 'axios';
+import { observer } from 'mobx-react-lite';
 import moment from 'moment';
-import React, {useEffect, useState} from 'react';
+import React, {useLayoutEffect, useState} from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import DatePicker from '../../components/DatePicker';
 import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
+import ImageCropPicker from 'react-native-image-crop-picker';
 import Toast from 'react-native-simple-toast';
-import {host} from '../../Constants/Host';
+import DatePicker from '../../components/DatePicker';
 import {ImagePickerAvatar} from '../../components/ImagePickerAvatar';
 import {ImagePickerModal} from '../../components/ImagePickerModal';
 import theme1 from '../../components/styles/DarkTheme';
+import {host} from '../../Constants/Host';
+import AuthStore from '../../Mobx/AuthStore';
 import {widthPercentageToDP as wp} from '../../responsiveLayout/ResponsiveLayout';
-import {useNavigation} from '@react-navigation/native';
 const {width, height} = Dimensions.get('window');
 
 function Attendance({navigation, route}) {
   let rout = '';
+
   if (typeof route.params == 'undefined') {
     rout = 'none';
   } else {
@@ -37,43 +41,39 @@ function Attendance({navigation, route}) {
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState();
   const [startDayMillometerReading, setStartDayMillometerReading] = useState(0);
-  const [startDayLocation, setStartDayLocation] = useState(null);
   const [startDayRemarks, setStartDayRemarks] = useState('');
-  const [startDayimageSource, setStartDayImageSource] = useState(null);
   const [startDayvisible, setstartDayVisible] = useState(false);
   const [startDay, setStartDay] = useState(true);
   const [endDay, setEndDay] = useState(false);
-  const [startDayLocationErrorMsg, setStartDayLocationErrorMsg] =
-    useState(null);
   const [startDayCurrentTime, setStartDayCurrentTime] = useState();
 
   const [endDate, setEndDate] = useState(new Date(Date.now()));
   const [endDayMillometerReading, setEndDayMillometerReading] = useState(0);
-  const [endDayCurrentLongitude, setEndDayCurrentLongitude] = useState('');
-  const [endDaycurrentLatitude, setEndDayCurrentLatitude] = useState('');
   const [endDayRemarks, setEndDayRemarks] = useState('');
-  const [endDayimageSource, setEndDayImageSource] = useState(null);
   const [endDayvisible, setEndDayVisible] = useState(false);
   const [endDayCurrentTime, setEndDayCurrentTime] = useState();
 
   const [vId, setVId] = useState();
+  const [image, setImage] = useState();
+  const [imageDetails, setImageDetails] = useState();
 
-  useEffect(() => {
-    getStartDay();
+  useLayoutEffect(() => {
     getLocation();
+    getStartDay();
   }, []);
 
   const getStartDay = async () => {
-    const user = await AsyncStorage.getItem('user');
+    setLoading(false);
     const data = {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
     };
-    const masterid = await AsyncStorage.getItem('masterid');
-    const compid = await AsyncStorage.getItem('companyCode');
-    const divid = await AsyncStorage.getItem('divisionCode');
+    const user = AuthStore?.user;
+    const masterid = AuthStore?.masterId;
+    const compid = AuthStore?.companyId;
+    const divid = AuthStore?.divisionId;
 
     await fetch(
       `${host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${new Date()}&end_date=${new Date()}`,
@@ -84,10 +84,10 @@ function Attendance({navigation, route}) {
         const obj = data.atd[data.atd.length - 1];
         let todayDate = moment(new Date()).format('YYYY-MM-DD');
         const date = obj?.Start_date?.substring(0, 10);
-        const endDate = obj?.end_date;
+        const end_Date = obj?.end_date;
         const id = obj?._id;
 
-        console.log(obj, data.atd.length, todayDate, date);
+        console.log(obj, todayDate, date);
         if (data.atd.length == 0) {
           setStartDay(true);
         } else {
@@ -106,14 +106,20 @@ function Attendance({navigation, route}) {
             setEndDay(false);
             setStartDay(true);
           }
-          if (date && endDate && todayDate == date) setEndDay(true);
+          if (date == date && end_Date == date && todayDate == date) {
+            console.log('End Day true ---> ', date, todayDate, end_Date);
+            setEndDay(true);
+          }
         }
+        setLoading(true);
+      })
+      .catch(e => {
+        console.log('Error on loading --> ', e);
+        setLoading(true);
       });
-
-    setLoading(true);
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const unsubscribe = navigation.addListener('focus', async () => {
       let todayDate = moment(new Date()).format('DD/MM/YYYY');
       var ampm = new Date().getHours() >= 12 ? 'PM' : 'AM';
@@ -123,12 +129,10 @@ function Attendance({navigation, route}) {
       setStartDate(todayDate);
       setStartDayCurrentTime(time);
       getLocation();
+      getStartDay();
     });
     return unsubscribe;
   }, [navigation]);
-
-  const [image, setImage] = useState();
-  const [imageDetails, setImageDetails] = useState();
 
   const pickImage = async () => {
     try {
@@ -142,7 +146,7 @@ function Attendance({navigation, route}) {
           setImage(image.path);
           setImageDetails(image);
           setstartDayVisible(false);
-          setEndDayVisible(false)
+          setEndDayVisible(false);
         })
         .catch(err => {
           console.log(err);
@@ -164,7 +168,7 @@ function Attendance({navigation, route}) {
           setImage(image.path);
           setImageDetails(image);
           setstartDayVisible(false);
-          setEndDayVisible(false)
+          setEndDayVisible(false);
         })
         .catch(err => {
           console.log(err);
@@ -176,92 +180,108 @@ function Attendance({navigation, route}) {
   };
 
   const getLocation = async () => {
-    Geolocation.requestAuthorization();
-    Geolocation.getCurrentPosition(
-      pos => {
-        setLocation(pos);
+    setLoading(false);
+    Geolocation.requestAuthorization(
+      success => {
+        Geolocation.getCurrentPosition(
+          pos => {
+            console.log('Location --> ', pos?.coords);
+            setLocation(pos);
+            setLoading(true);
+          },
+          error => {
+            Alert.alert('Permission to access location was denied');
+          },
+          {enableHighAccuracy: true},
+        );
       },
       error => {
-        setStartDayLocationErrorMsg('Permission to access location was denied');
+        Alert.alert('Permission to access location was denied');
       },
-      {enableHighAccuracy: true},
     );
   };
 
   // Submit Start Day Details
   const handleStartDaySubmit = async () => {
-    setLoading(false);
-    const data = new FormData();
-    const newImageUri = 'file:///' + imageDetails.path.split('file:/').join('');
-    const fileToUpload = imageDetails;
+    try {
+      setLoading(false);
+      const user = AuthStore?.user;
+      const masterid = AuthStore?.masterId;
+      const compid = AuthStore?.companyId;
+      const divid = AuthStore?.divisionId;
 
-    data.append('image', {
-      uri: imageDetails.path,
-      type: 'image/jpg', //imageDetails.type,
-      name: newImageUri.split('/').pop(),
-    });
+      const data = new FormData();
+      const newImageUri =
+        'file:///' + imageDetails?.path?.split('file:/')?.join('');
 
-    data.append('name', await AsyncStorage.getItem('user'));
-    data.append('att_time', startDayCurrentTime);
-    data.append('strt_dte', startDate);
-    data.append('millometer_reading', startDayMillometerReading);
-    data.append('remark', startDayRemarks);
-    data.append('usrnm', await AsyncStorage.getItem('user'));
-    data.append('photo', '');
-    data.append('end_day', 'End');
-    data.append('start_long', location?.coords?.longitude);
-    data.append('start_lat', location?.coords?.latitude);
-    data.append('co_code', await AsyncStorage.getItem('companyCode'));
-    data.append('div_code', await AsyncStorage.getItem('divisionCode'));
-    data.append('masterid', await AsyncStorage.getItem('masterid'));
-    data.append('filename', newImageUri.split('/').pop());
-
-    axios({
-      method: 'POST',
-      url: `${host}/attendance/startmobadd`,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      processData: false,
-      contentType: false,
-      data: data,
-    })
-      .then(respone => {
-        console.log('.hey', respone);
-        Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
-        let todayDate = moment(new Date()).format('DD/MM/YYYY');
-        var ampm = new Date().getHours() >= 12 ? 'PM' : 'AM';
-        let minutes = new Date().getMinutes();
-        if (minutes < 10) minutes = '0' + minutes;
-        var time = new Date().getHours() + ':' + minutes + ampm;
-        setEndDate(todayDate);
-        setEndDayCurrentTime(time);
-        setStartDayRemarks('');
-        setStartDayMillometerReading('');
-        // setLoading(true);
-        nav.goBack();
-        // getStartDay()
-        //      setImage(null)
-        //    setImageDetails(null)
-        // Updates.reloadAsync();
-      })
-      .then(error => {
-        console.log('err', error);
+      data.append('image', {
+        uri: imageDetails?.path,
+        type: 'image/jpg', //imageDetails.type,
+        name: newImageUri?.split('/')?.pop(),
       });
-    // };
-    // submitData();
+
+      data.append('name', user);
+      data.append('att_time', startDayCurrentTime);
+      data.append('strt_dte', startDate);
+      data.append('millometer_reading', startDayMillometerReading);
+      data.append('remark', startDayRemarks);
+      data.append('usrnm', user);
+      data.append('photo', '');
+      data.append('end_day', 'End');
+      data.append('start_long', location?.coords?.longitude);
+      data.append('start_lat', location?.coords?.latitude);
+      data.append('co_code', compid);
+      data.append('div_code', divid);
+      data.append('masterid', masterid);
+      data.append('filename', newImageUri?.split('/')?.pop());
+
+      console.log('Attendance body ----> ', JSON.stringify(data));
+
+      Axios({
+        method: 'POST',
+        url: `${host}/attendance/startmobadd`,
+        headers: {
+          // 'Accept': 'application/json',
+          'Content-Type': 'multipart/form-data',
+        },
+        processData: false,
+        contentType: false,
+        data: data,
+      })
+        .then(respone => {
+          console.log('.hey', respone);
+          let todayDate = moment(new Date()).format('DD/MM/YYYY');
+          var ampm = new Date().getHours() >= 12 ? 'PM' : 'AM';
+          let minutes = new Date().getMinutes();
+          if (minutes < 10) minutes = '0' + minutes;
+          var time = new Date().getHours() + ':' + minutes + ampm;
+          setEndDate(todayDate);
+          setEndDayCurrentTime(time);
+          setStartDayRemarks('');
+          setStartDayMillometerReading('');
+          setImageDetails({});
+          setImage(null);
+          setLoading(true);
+          Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
+          nav.goBack();
+        })
+        .catch(error => {
+          console.log('erron on startDay ---> ', JSON.stringify(error));
+          setLoading(true);
+          Toast.showWithGravity('Submit data failed', Toast.LONG, Toast.BOTTOM);
+        });
+    } catch (error) {
+      console.log('Error on catch --> ', error);
+    }
   };
 
   // Submit End Day Details
   const handleEndDaySubmit = async () => {
     setLoading(false);
-    // const location = await getLocation();
     const submitData = async () => {
-      let filename = imageDetails.path.split('/');
       const data = new FormData();
       const newImageUri =
         'file:///' + imageDetails.path.split('file:/').join('');
-      const fileToUpload = imageDetails;
 
       data.append('image', {
         uri: imageDetails.path,
@@ -279,13 +299,13 @@ function Attendance({navigation, route}) {
       data.append('end_long', location?.coords?.longitude);
       data.append('end_lat', location?.coords?.latitude);
 
-      data.append('co_code', await AsyncStorage.getItem('companyCode'));
-      data.append('div_code', await AsyncStorage.getItem('divisionCode'));
-      data.append('masterid', await AsyncStorage.getItem('masterid'));
+      data.append('co_code', AuthStore?.companyId);
+      data.append('div_code', AuthStore?.divisionId);
+      data.append('masterid', AuthStore?.masterId);
       data.append('filename', newImageUri.split('/').pop());
 
       console.log('data', data);
-      axios({
+      Axios({
         method: 'POST',
         url: `${host}/attendance/mobend_add`,
         headers: {
@@ -295,221 +315,226 @@ function Attendance({navigation, route}) {
         processData: false,
         contentType: false,
         data: data,
-      }).then(respone => {
-        console.log(respone);
-        Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
-        setStartDay(true);
-        nav.goBack();
-        // Updates.reloadAsync();
-      });
+      })
+        .then(respone => {
+          console.log(respone);
+          Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
+          setStartDay(true);
+          setStartDayRemarks('');
+          setStartDayMillometerReading('');
+          setImageDetails({});
+          setImage(null);
+          nav.goBack();
+        })
+        .catch(error => {
+          console.log('erron on startDay ---> ', JSON.stringify(error));
+          setLoading(true);
+          Toast.showWithGravity('Submit data failed', Toast.LONG, Toast.BOTTOM);
+        });
     };
     submitData();
     setLoading(true);
   };
 
   return (
-    <>
+    <View style={{flex: 1, justifyContent: 'center'}}>
       {loading ? (
-        <>
-          <ScrollView
-            keyboardShouldPersistTaps="always"
-            style={styles.container}>
-            <View style={styles.form}>
-              {!endDay && startDay && (
-                <View style={styles.card}>
-                  <Text style={styles.heading}>Start Day</Text>
-                  <View style={[styles.column, {top: 0}]}>
-                    <ImagePickerAvatar
-                      uri={startDay ? image : ''}
-                      onPress={() => setstartDayVisible(true)}
-                      editable={!startDay}
-                    />
-                  </View>
-
-                  <View style={[styles.column, {marginTop: 12}]}>
-                    <DatePicker
-                      conatinerStyles={{
-                        width: wp('42%'),
-                        height: 35,
-                        justifyContent: 'center',
-                        borderRadius: 5,
-                        marginTop: 5,
-                        // marginRight: 17,
-                        borderColor: '#ccc',
-                      }}
-                      date={startDate}
-                      isDisable={true}
-                      placeholder="Date"
-                      setDate={date => {
-                        setStartDate(date);
-                      }}
-                    />
-
-                    <TextInput
-                      keyboardType="numeric"
-                      style={[styles.input]}
-                      defaultValue={startDayCurrentTime}
-                      editable={false}
-                    />
-                  </View>
-
-                  <View style={[styles.column]}>
-                    <TextInput
-                      editable={startDay}
-                      keyboardType="numeric"
-                      style={[styles.input, {backgroundColor: '#D3FD7A'}]}
-                      placeholderTextColor="#BFBFBF"
-                      placeholder="Millometer Reading"
-                      defaultValue={startDayMillometerReading}
-                      onChangeText={text => setStartDayMillometerReading(text)}
-                    />
-                    <TextInput
-                      editable={startDay}
-                      style={[
-                        styles.input,
-                        {
-                          backgroundColor: '#D3FD7A',
-                          width: wp('82%'),
-                          flex: 0.97,
-                        },
-                      ]}
-                      placeholder="Remarks"
-                      placeholderTextColor="#BFBFBF"
-                      defaultValue={startDayRemarks}
-                      onChangeText={text => setStartDayRemarks(text)}
-                    />
-                  </View>
-
-                  <View style={[styles.column, {justifyContent: 'center'}]}>
-                    <TouchableOpacity
-                      onPress={() => handleStartDaySubmit()}
-                      style={styles.button1}
-                      disabled={!startDay}>
-                      <Text style={{color: 'white'}}>Submit</Text>
-                    </TouchableOpacity>
-                  </View>
+        <ScrollView keyboardShouldPersistTaps="always" style={styles.container}>
+          <View style={styles.form}>
+            {!endDay && startDay && (
+              <View style={styles.card}>
+                <Text style={styles.heading}>Start Day</Text>
+                <View style={[styles.column, {top: 0}]}>
+                  <ImagePickerAvatar
+                    uri={startDay ? image : ''}
+                    onPress={() => setstartDayVisible(true)}
+                    editable={!startDay}
+                  />
                 </View>
-              )}
-            </View>
 
-            <View style={styles.form}>
-              {!endDay && !startDay && (
-                <View style={styles.card}>
-                  <Text style={styles.heading}>End Day</Text>
+                <View style={[styles.column, {marginTop: 12}]}>
+                  <DatePicker
+                    conatinerStyles={{
+                      width: wp('42%'),
+                      height: 35,
+                      justifyContent: 'center',
+                      borderRadius: 5,
+                      marginTop: 5,
+                      // marginRight: 17,
+                      borderColor: '#ccc',
+                    }}
+                    date={startDate}
+                    isDisable={true}
+                    placeholder="Date"
+                    setDate={date => {
+                      setStartDate(date);
+                    }}
+                  />
 
-                  <View style={[styles.column, {top: 0}]}>
-                    <ImagePickerAvatar
-                      uri={!startDay ? image : ''}
-                      onPress={() => setstartDayVisible(true)}
-                      editable={startDay}
-                    />
-                    <ImagePickerModal
-                      isVisible={endDayvisible}
-                      onClose={() => setEndDayVisible(false)}
-                      onImageLibraryPress={pickImage}
-                      onCameraPress={pickFromCamera}
-                    />
-                  </View>
-
-                  <View style={[styles.column, {marginTop: 12}]}>
-                    <DatePicker
-                      conatinerStyles={{
-                        width: wp('42%'),
-                        height: 35,
-                        justifyContent: 'center',
-                        borderRadius: 5,
-                        marginTop: 5,
-                        // marginRight: 17,
-                        borderColor: '#ccc',
-                      }}
-                      date={endDate}
-                      isDisable={true}
-                      placeholder="Date"
-                      setDate={date => {
-                        setEndDate(date);
-                      }}
-                    />
-
-                    <TextInput
-                      keyboardType="numeric"
-                      style={[styles.input]}
-                      defaultValue={endDayCurrentTime}
-                      editable={false}
-                    />
-                  </View>
-
-                  <View style={[styles.column]}>
-                    <TextInput
-                      editable={!startDay}
-                      keyboardType="numeric"
-                      style={[styles.input, {backgroundColor: '#D3FD7A'}]}
-                      placeholderTextColor="#BFBFBF"
-                      placeholder="Millometer Reading"
-                      defaultValue={endDayMillometerReading}
-                      onChangeText={text => setEndDayMillometerReading(text)}
-                    />
-                    <TextInput
-                      style={[
-                        styles.input,
-                        {
-                          backgroundColor: '#D3FD7A',
-                          width: wp('82%'),
-                          flex: 0.97,
-                        },
-                      ]}
-                      placeholder="Remarks"
-                      placeholderTextColor="#BFBFBF"
-                      editable={!startDay}
-                      defaultValue={endDayRemarks}
-                      onChangeText={text => setEndDayRemarks(text)}
-                    />
-                  </View>
-
-                  <View style={[styles.column, {justifyContent: 'center'}]}>
-                    <TouchableOpacity
-                      onPress={() => handleEndDaySubmit()}
-                      style={styles.button1}
-                      disabled={startDay}>
-                      <Text style={{color: 'white'}}>Submit</Text>
-                    </TouchableOpacity>
-                  </View>
+                  <TextInput
+                    keyboardType="numeric"
+                    style={[styles.input]}
+                    defaultValue={startDayCurrentTime}
+                    editable={false}
+                  />
                 </View>
-              )}
-            </View>
 
-            {endDay && (
-              <Text
-                style={{
-                  fontWeight: 'bold',
-                  fontSize: 30,
-                  textAlign: 'center',
-                  color: '#222'
-                }}>
-                Your Day is Completed
-              </Text>
+                <View style={[styles.column]}>
+                  <TextInput
+                    editable={startDay}
+                    keyboardType="numeric"
+                    style={[styles.input, {backgroundColor: '#D3FD7A'}]}
+                    placeholderTextColor="#BFBFBF"
+                    placeholder="Millometer Reading"
+                    defaultValue={startDayMillometerReading}
+                    onChangeText={text => setStartDayMillometerReading(text)}
+                  />
+                  <TextInput
+                    editable={startDay}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: '#D3FD7A',
+                        width: wp('82%'),
+                        flex: 0.97,
+                      },
+                    ]}
+                    placeholder="Remarks"
+                    placeholderTextColor="#BFBFBF"
+                    defaultValue={startDayRemarks}
+                    onChangeText={text => setStartDayRemarks(text)}
+                  />
+                </View>
+
+                <View style={[styles.column, {justifyContent: 'center'}]}>
+                  <TouchableOpacity
+                    onPress={() => handleStartDaySubmit()}
+                    style={styles.button1}
+                    disabled={!startDay}>
+                    <Text style={{color: 'white'}}>Submit</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             )}
-            <ImagePickerModal
-              isVisible={startDayvisible}
-              onClose={() => setstartDayVisible(false)}
-              onImageLibraryPress={pickImage}
-              onCameraPress={pickFromCamera}
-            />
-            {/* <ImagePickerModal
+          </View>
+
+          <View style={styles.form}>
+            {!endDay && !startDay && (
+              <View style={styles.card}>
+                <Text style={styles.heading}>End Day</Text>
+
+                <View style={[styles.column, {top: 0}]}>
+                  <ImagePickerAvatar
+                    uri={!startDay ? image : ''}
+                    onPress={() => setstartDayVisible(true)}
+                    editable={startDay}
+                  />
+                  <ImagePickerModal
+                    isVisible={endDayvisible}
+                    onClose={() => setEndDayVisible(false)}
+                    onImageLibraryPress={pickImage}
+                    onCameraPress={pickFromCamera}
+                  />
+                </View>
+
+                <View style={[styles.column, {marginTop: 12}]}>
+                  <DatePicker
+                    conatinerStyles={{
+                      width: wp('42%'),
+                      height: 35,
+                      justifyContent: 'center',
+                      borderRadius: 5,
+                      marginTop: 5,
+                      // marginRight: 17,
+                      borderColor: '#ccc',
+                    }}
+                    date={endDate}
+                    isDisable={true}
+                    placeholder="Date"
+                    setDate={date => {
+                      setEndDate(date);
+                    }}
+                  />
+
+                  <TextInput
+                    keyboardType="numeric"
+                    style={[styles.input]}
+                    defaultValue={endDayCurrentTime}
+                    editable={false}
+                  />
+                </View>
+
+                <View style={[styles.column]}>
+                  <TextInput
+                    editable={!startDay}
+                    keyboardType="numeric"
+                    style={[styles.input, {backgroundColor: '#D3FD7A'}]}
+                    placeholderTextColor="#BFBFBF"
+                    placeholder="Millometer Reading"
+                    defaultValue={endDayMillometerReading}
+                    onChangeText={text => setEndDayMillometerReading(text)}
+                  />
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: '#D3FD7A',
+                        width: wp('82%'),
+                        flex: 0.97,
+                      },
+                    ]}
+                    placeholder="Remarks"
+                    placeholderTextColor="#BFBFBF"
+                    editable={!startDay}
+                    defaultValue={endDayRemarks}
+                    onChangeText={text => setEndDayRemarks(text)}
+                  />
+                </View>
+
+                <View style={[styles.column, {justifyContent: 'center'}]}>
+                  <TouchableOpacity
+                    onPress={() => handleEndDaySubmit()}
+                    style={styles.button1}
+                    disabled={startDay}>
+                    <Text style={{color: 'white'}}>Submit</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </View>
+
+          {endDay && (
+            <Text
+              style={{
+                fontWeight: 'bold',
+                fontSize: 30,
+                textAlign: 'center',
+                color: theme1.MEDIUM_ORANGE_COLOR,
+              }}>
+              Your Day is Completed
+            </Text>
+          )}
+          <ImagePickerModal
+            isVisible={startDayvisible}
+            onClose={() => setstartDayVisible(false)}
+            onImageLibraryPress={pickImage}
+            onCameraPress={pickFromCamera}
+          />
+          {/* <ImagePickerModal
               isVisible={endDayvisible}
               onClose={() => setEndDayVisible(false)}
               onImageLibraryPress={pickImage}
               onCameraPress={pickFromCamera}
             /> */}
-          </ScrollView>
-        </>
+        </ScrollView>
       ) : (
-        <ActivityIndicator color="skyblue" size={100} />
+        <ActivityIndicator color={theme1.DARK_ORANGE_COLOR} size={100} />
       )}
-    </>
+    </View>
   );
 }
 
-export default Attendance;
+export default observer(Attendance);
 
 const styles = StyleSheet.create({
   image: {
@@ -554,7 +579,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 350,
   },
-
   form: {
     flex: 1,
     marginHorizontal: 10,
@@ -572,7 +596,7 @@ const styles = StyleSheet.create({
     width: wp('40%'),
     top: 4,
     left: 0,
-    backgroundColor: theme1.DARK_BLUE_COLOR,
+    backgroundColor: theme1.DARK_ORANGE_COLOR,
     padding: 10,
     paddingHorizontal: 25,
     borderRadius: 10,
@@ -583,7 +607,7 @@ const styles = StyleSheet.create({
     width: wp('80%'),
     top: 4,
     left: 0,
-    backgroundColor: theme1.DARK_BLUE_COLOR,
+    backgroundColor: theme1.DARK_ORANGE_COLOR,
     padding: 10,
     paddingHorizontal: 25,
     borderRadius: 10,
@@ -640,7 +664,7 @@ const styles = StyleSheet.create({
   },
   heading: {
     flex: 1,
-    backgroundColor: theme1.LIGHT_BLUE_COLOR,
+    backgroundColor: theme1.LIGHT_ORANGE_COLOR,
     padding: 10,
     borderRadius: 10,
     textAlign: 'center',

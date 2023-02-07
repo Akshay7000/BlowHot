@@ -28,10 +28,10 @@ function SelectTwo({
       onItemSelect={(item) => {
         const Items = selectedItems;
         Items.push(item);
-        product ? handleId(item.id, product, i) : handleId(item);
-        product ? handleProduct(item.id, i, name, product) : console.log("");
+        product ? handleId(item?.id, product, i) : handleId(item);
+        product ? handleProduct(item?.id, i, name, product) : console.log("");
         setSelectedItems(Items);
-        setDef_index(items?.findIndex((a) => a.id === item.id));
+        setDef_index(items?.findIndex((a) => a?.id === item?.id));
       }}
       containerStyle={{ padding: 5, flex: 0.98, width: width }}
       itemStyle={{

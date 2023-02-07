@@ -1,5 +1,5 @@
-import axios from "axios";
-import React, { useEffect, useRef, useState } from "react";
+import axios from 'axios';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -7,29 +7,33 @@ import {
   TextInput,
   ToastAndroid,
   View,
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Col, Row } from "react-native-easy-grid";
-import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
-import SelectMultiple from "react-native-select-multiple";
-import SelectTwo from "../../components/SelectTwo";
-import theme1 from "../../components/styles/DarkTheme";
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {Col, Row} from 'react-native-easy-grid';
+import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
+import SelectMultiple from 'react-native-select-multiple';
+import SelectTwo from '../../components/SelectTwo';
+import theme1 from '../../components/styles/DarkTheme';
 // import * as Updates from "expo-updates";
-import {host} from '../../Constants/Host'
+import {host} from '../../Constants/Host';
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
-} from "../../responsiveLayout/ResponsiveLayout";
+} from '../../responsiveLayout/ResponsiveLayout';
+import {useNavigation} from '@react-navigation/native';
+import {observer} from 'mobx-react-lite';
+import AuthStore from '../../Mobx/AuthStore';
 
-function AddParty({ navigation, route }) {
+const AddParty = ({navigation, route}) => {
+  const nav = useNavigation();
   const checkList = [
-    { value: "Retails", label: "Retails" },
-    { value: "Dealer", label: "Dealer" },
-    { value: "Distributor", label: "Distributor" },
-    { value: "Customer", label: "Customer" },
+    {value: 'Retails', label: 'Retails'},
+    {value: 'Dealer', label: 'Dealer'},
+    {value: 'Distributor', label: 'Distributor'},
+    {value: 'Customer', label: 'Customer'},
   ];
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [disabled, setDisabled] = useState(true);
 
   const [name, setName] = useState();
@@ -61,7 +65,7 @@ function AddParty({ navigation, route }) {
 
   //Handle Ids
 
-  const handleCityId = (item) => {
+  const handleCityId = item => {
     setCityId(item.id);
   };
   useEffect(() => {
@@ -69,56 +73,37 @@ function AddParty({ navigation, route }) {
   }, []);
 
   const getCity = async () => {
-    console.log("hey");
+    console.log('hey');
     const URL = `${host}/c_visit_entry/mob_getcity`;
 
     axios
       .get(URL)
-      .then((response) => {
+      .then(response => {
         // console.log("response", response.data.results)
-        response.data.results.map((dat) =>
-          setCityItems((oldArray) => [
+        response.data.results.map(dat =>
+          setCityItems(oldArray => [
             ...oldArray,
-            { id: dat._id, name: dat.CityName },
-          ])
+            {id: dat._id, name: String(dat.CityName)},
+          ]),
         );
         setLoading(true);
       })
-      .catch((error) => console.log("error", error));
+      .catch(error => console.log('error', error));
   };
 
-  //OnFocus
-
-  const onFocusChange = (name, i) => {
-    if (name == "name") {
-      nameRef.current.setNativeProps({
-        style: { backgroundColor: "#FCFE8F" },
-      });
-    } else if (name == "mobile") {
-      mobileRef.current.setNativeProps({
-        style: { backgroundColor: "#FCFE8F" },
-      });
-    } else if (name == "address") {
-      addressRef.current.setNativeProps({
-        style: { backgroundColor: "#FCFE8F" },
-      });
-    }
-  };
-
-  const onBlurChange = (name, i) => {
-    if (name == "name") {
-      nameRef.current.setNativeProps({
-        style: { backgroundColor: "#D3FD7A" },
-      });
-    } else if (name == "mobile") {
-      mobileRef.current.setNativeProps({
-        style: { backgroundColor: "#D3FD7A" },
-      });
-    } else if (name == "address") {
-      addressRef.current.setNativeProps({
-        style: { backgroundColor: "#D3FD7A" },
-      });
-    }
+  const clear = () => {
+    setName('');
+    setAcCode('');
+    setPan('');
+    setMobile('');
+    setAddress('');
+    setArea('');
+    setGstin('');
+    setPincode('');
+    setAlt('');
+    setCityId('');
+    setSelectedCityItems([]);
+    setSelectedItems([]);
   };
 
   useEffect(() => {
@@ -129,17 +114,17 @@ function AddParty({ navigation, route }) {
 
   const handleSubmit = () => {
     const submit = async () => {
-      var string = "";
+      var string = '';
       selectedItems.map((item, i) => {
         if (i == 0) {
           string = string + item.value;
         } else {
-          string = string + "," + item.value;
+          string = string + ',' + item.value;
         }
       });
-      console.log("mob", mobile);
+      console.log('mob', mobile);
       if (!mobile) {
-        alert("Please Enter Mobile No.");
+        alert('Please Enter Mobile No.');
         return;
       }
 
@@ -159,25 +144,26 @@ function AddParty({ navigation, route }) {
         ac_phmob: mobile,
         ac_phres: resiNumber,
         ac_phfax: fax,
-        del: "N",
-        user: await AsyncStorage.getItem("user"),
-        masterid: await AsyncStorage.getItem("masterid"),
+        del: 'N',
+        user: AuthStore?.user,
+        masterid: AuthStore?.masterId,
       };
 
-      console.log("bodd", body);
+      console.log('bodd', body);
 
       axios({
-        method: "POST",
+        method: 'POST',
         url: `${host}/party_master/mobparty_master_add`,
         data: body,
-      }).then((respone) => {
-        console.log(respone, "resonse");
+      }).then(respone => {
+        console.log(respone, 'resonse');
         ToastAndroid.showWithGravity(
-          "Party Added",
+          'Party Added',
           ToastAndroid.SHORT,
-          ToastAndroid.CENTER
+          ToastAndroid.CENTER,
         );
-        // Updates.reloadAsync();
+        clear();
+        nav.goBack();
       });
     };
     submit();
@@ -185,20 +171,19 @@ function AddParty({ navigation, route }) {
     //Buyer Broker--R
   };
 
-  const onSelectionsChange = (selectedItems) => {
+  const onSelectionsChange = selectedItems => {
     console.log(selectedItems);
     // selectedFruits is array of { label, value }
     setSelectedItems(selectedItems);
   };
 
   return (
-    <>
+    <View style={{flex: 1, justifyContent: 'center'}}>
       {loading ? (
         <>
           <ScrollView
             keyboardShouldPersistTaps="always"
-            style={styles.container}
-          >
+            style={styles.container}>
             <SelectMultiple
               items={checkList}
               selectedItems={selectedItems}
@@ -207,73 +192,73 @@ function AddParty({ navigation, route }) {
             />
 
             <View style={styles.form}>
-              <Row style={{ marginBottom: 10 }}>
+              <Row style={{marginBottom: 10}}>
                 <TextInput
-                  style={[styles.input, { backgroundColor: "#D3FD7A" }]}
+                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
                   placeholder="AC. Code"
-                  placeholderTextColor={"#BBB"}
+                  placeholderTextColor={'#BBB'}
                   keyboardType="numeric"
                   defaultValue={acCode}
-                  onChangeText={(text) => setAcCode(text)}
+                  onChangeText={text => setAcCode(text)}
                 />
 
                 <TextInput
-                  style={[styles.input, { backgroundColor: "#D3FD7A" }]}
+                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
                   placeholder="Name"
-                  placeholderTextColor={"#BBB"}
+                  placeholderTextColor={'#BBB'}
                   defaultValue={name}
-                  onChangeText={(text) => setName(text)}
+                  onChangeText={text => setName(text)}
                 />
               </Row>
-              <Row style={{ marginBottom: 10 }}>
+              <Row style={{marginBottom: 10}}>
                 <TextInput
-                  style={[styles.input, { backgroundColor: "#D3FD7A" }]}
+                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
                   placeholder="Pan Number"
-                  placeholderTextColor={"#BBB"}
+                  placeholderTextColor={'#BBB'}
                   defaultValue={pan}
-                  onChangeText={(text) => setPan(text)}
+                  onChangeText={text => setPan(text)}
                 />
                 <TextInput
-                  style={[styles.input, { backgroundColor: "#D3FD7A" }]}
+                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
                   placeholder="Enter Address"
-                  placeholderTextColor={"#BBB"}
+                  placeholderTextColor={'#BBB'}
                   defaultValue={address}
-                  onChangeText={(text) => setAddress(text)}
+                  onChangeText={text => setAddress(text)}
                 />
               </Row>
-              <Row style={{ marginBottom: 10 }}>
+              <Row style={{marginBottom: 10}}>
                 <TextInput
-                  style={[styles.input, { backgroundColor: "#D3FD7A" }]}
+                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
                   placeholder="Area"
-                  placeholderTextColor={"#BBB"}
+                  placeholderTextColor={'#BBB'}
                   defaultValue={area}
-                  onChangeText={(text) => setArea(text)}
+                  onChangeText={text => setArea(text)}
                 />
                 <TextInput
-                  style={[styles.input, { backgroundColor: "#D3FD7A" }]}
+                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
                   placeholder="GSTIN"
-                  placeholderTextColor={"#BBB"}
+                  placeholderTextColor={'#BBB'}
                   defaultValue={gstin}
-                  onChangeText={(text) => setGstin(text)}
+                  onChangeText={text => setGstin(text)}
                 />
               </Row>
 
-              <Row style={{ marginBottom: 10 }}>
+              <Row style={{marginBottom: 10}}>
                 <SelectTwo
                   items={cityItems}
                   selectedItem={selectedCityItems}
                   handleId={handleCityId}
-                  width={wp("92%")}
+                  width={wp('92%')}
                   placeholder="City"
                   borderColor="#ccc"
                 />
                 <TextInput
-                  style={[styles.input, { backgroundColor: "#D3FD7A" }]}
+                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
                   placeholder="Pincode"
-                  placeholderTextColor={"#BBB"}
+                  placeholderTextColor={'#BBB'}
                   keyboardType="numeric"
                   defaultValue={pincode}
-                  onChangeText={(text) => setPincode(text)}
+                  onChangeText={text => setPincode(text)}
                 />
               </Row>
 
@@ -291,23 +276,23 @@ function AddParty({ navigation, route }) {
                   onChangeText={(text) => setEmail(text)}
                 />
               </Row> */}
-              
-              <Row style={{ marginBottom: 10 }}>
+
+              <Row style={{marginBottom: 10}}>
                 <TextInput
-                  style={[styles.input, { backgroundColor: "#D3FD7A" }]}
+                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
                   placeholder="Mobile no."
-                  placeholderTextColor={"#BBB"}
+                  placeholderTextColor={'#BBB'}
                   required
                   keyboardType="numeric"
                   defaultValue={mobile}
-                  onChangeText={(text) => setMobile(text)}
+                  onChangeText={text => setMobile(text)}
                 />
                 <TextInput
-                  style={[styles.input, { backgroundColor: "#D3FD7A" }]}
+                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
                   placeholder="No/Alt"
-                  placeholderTextColor={"#BBB"}
+                  placeholderTextColor={'#BBB'}
                   defaultValue={alt}
-                  onChangeText={(text) => setAlt(text)}
+                  onChangeText={text => setAlt(text)}
                 />
               </Row>
 
@@ -326,56 +311,55 @@ function AddParty({ navigation, route }) {
                 />
               </Row> */}
 
-              <View style={[styles.column, { justifyContent: "center" }]}>
+              <View style={[styles.column, {justifyContent: 'center'}]}>
                 <TouchableOpacity
                   onPress={() => handleSubmit()}
                   style={disabled ? styles.button : styles.button1}
-                  disabled={disabled}
-                >
-                  <Text style={{ color: "white" }}>Submit</Text>
+                  disabled={disabled}>
+                  <Text style={{color: 'white'}}>Submit</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </ScrollView>
         </>
       ) : (
-        <ActivityIndicator size="large" color="skyblue" />
+        <ActivityIndicator color={theme1.DARK_ORANGE_COLOR} size={100} />
       )}
-    </>
+    </View>
   );
-}
+};
 
-export default AddParty;
+export default observer(AddParty);
 
 const styles = StyleSheet.create({
   image: {
     flex: 1,
-    justifyContent: "center",
-    width: "40%",
-    height: "30%",
+    justifyContent: 'center',
+    width: '40%',
+    height: '30%',
     top: -10,
     left: 120,
   },
   dealnumber: {
-    display: "flex",
-    flexDirection: "row",
+    display: 'flex',
+    flexDirection: 'row',
   },
   column: {
-    display: "flex",
-    flexDirection: "row",
+    display: 'flex',
+    flexDirection: 'row',
   },
   item: {
-    display: "flex",
-    flexDirection: "column",
-    textAlign: "left",
+    display: 'flex',
+    flexDirection: 'column',
+    textAlign: 'left',
   },
   input: {
     height: 35,
     flex: 1,
-    width: wp("90%"),
+    width: wp('90%'),
     color: '#222',
     borderStartWidth: 2,
-    borderColor: "grey",
+    borderColor: 'grey',
     borderEndWidth: 0.5,
     borderTopWidth: 0.5,
     borderLeftWidth: 0.5,
@@ -386,8 +370,8 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   progress: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 35,
   },
 
@@ -401,38 +385,38 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    flexDirection: "column",
-    height: hp("100%"),
+    flexDirection: 'column',
+    height: hp('100%'),
   },
   button: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: wp("90%"),
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: wp('90%'),
     top: 4,
     left: 0,
-    backgroundColor: "lightgrey",
+    backgroundColor: theme1.GreyWhite,
     padding: 10,
     paddingHorizontal: 25,
     borderRadius: 10,
   },
   button1: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: wp("90%"),
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: wp('90%'),
     top: 4,
     left: 0,
-    backgroundColor: theme1.DARK_BLUE_COLOR,
+    backgroundColor: theme1.DARK_ORANGE_COLOR,
     padding: 10,
     paddingHorizontal: 25,
     borderRadius: 10,
   },
   card: {
-    backgroundColor: "white",
+    backgroundColor: 'white',
     borderRadius: 15,
     padding: 10,
     elevation: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 3},
     shadowOpacity: 0.5,
     shadowRadius: 5,
     padding: 10,

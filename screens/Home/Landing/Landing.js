@@ -9,10 +9,13 @@ import {
   widthPercentageToDP as wp,
 } from '../../responsiveLayout/ResponsiveLayout';
 import {host} from '../../Constants/Host';
-const Landing = props => {
-  const [admin, setAdmin] = useState();
-  const [sales, setSales] = useState();
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import theme1 from '../../components/styles/DarkTheme';
+import AuthStore from '../../Mobx/AuthStore';
+import {observer} from 'mobx-react-lite';
 
+const Landing = props => {
   const attendanceHandler = () => {
     props.navigation.navigate('Attendance');
   };
@@ -43,16 +46,13 @@ const Landing = props => {
 
   useEffect(() => {
     const use = async () => {
-      console.log('setting');
       var startDate = moment(await AsyncStorage.getItem('startingDate')).format(
         'DD/MM/YYYY',
       );
       var endDate = moment(await AsyncStorage.getItem('endDate')).format(
         'DD/MM/YYYY',
       );
-      var divisionCode = await AsyncStorage.getItem('divisionName');
-      setAdmin(await AsyncStorage.getItem('administrator'));
-      setSales(await AsyncStorage.getItem('salesTeam'));
+      var divisionCode = AuthStore?.divisionId;
       props.navigation.setOptions({
         headerTitle: () => {
           return (
@@ -63,6 +63,7 @@ const Landing = props => {
                   fontWeight: 'bold',
                   fontSize: wp('4.5%'),
                   marginTop: 5,
+                  color: theme1.GreyWhite,
                 }}>
                 Home
               </Text>
@@ -73,10 +74,10 @@ const Landing = props => {
                   alignItems: 'center',
                   marginLeft: 30,
                 }}>
-                <Text style={{fontWeight: 'bold', color: 'blue'}}>
+                <Text style={{fontWeight: 'bold', color: theme1.GreyWhite}}>
                   {divisionCode}
                 </Text>
-                <Text style={{fontWeight: 'bold', color: 'blue'}}>
+                <Text style={{fontWeight: 'bold', color: theme1.GreyWhite}}>
                   {startDate.substring(3, 10)}-{endDate.substring(3, 10)}
                 </Text>
               </View>
@@ -91,270 +92,103 @@ const Landing = props => {
   return (
     <>
       <ScrollView style={styles.container}>
-        {admin ? (
-          <Grid>
-            <Row
-              style={[
-                styles.container1,
-                {borderBottomColor: 'black', borderBottomWidth: 0.5},
-              ]}>
-              <Col
-                style={[
-                  styles.container1,
-                  {borderRigthColor: 'black', borderRightWidth: 0.5},
-                ]}>
-                <TouchableOpacity
-                  style={styles.icon}
-                  activeOpacity={0.8}
-                  onPress={() => attendanceHandler()}>
-                  <Image
-                    source={require('../../../assets/Deal.png')}
-                    style={styles.image}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.text}>Attendance</Text>
-                </TouchableOpacity>
-              </Col>
-              <Col
-                style={[
-                  styles.container1,
-                  {borderRigthColor: 'black', borderRightWidth: 0.5},
-                ]}>
-                <TouchableOpacity
-                  style={styles.icon}
-                  activeOpacity={0.8}
-                  onPress={() => callVisitEntryHandler()}>
-                  <Image
-                    source={require('../../../assets/contractentry.png')}
-                    style={styles.image}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.text}>Call Visit Entry</Text>
-                </TouchableOpacity>
-              </Col>
-            </Row>
+        <View>
+          <View style={[styles.container1, styles.row]}>
+            <View style={[styles.card]}>
+              <TouchableOpacity
+                style={[styles.icon]}
+                activeOpacity={0.8}
+                onPress={() => attendanceHandler()}>
+                <MaterialCommunityIcons
+                  name="handshake-outline"
+                  size={50}
+                  color={theme1.MEDIUM_ORANGE_COLOR}
+                />
 
-            <Row
-              style={[
-                styles.container1,
-                {borderBottomColor: 'black', borderBottomWidth: 0.5},
-              ]}>
-              <Col
-                style={[
-                  styles.container1,
-                  {borderRigthColor: 'black', borderRightWidth: 0.5},
-                ]}>
-                <TouchableOpacity
-                  style={styles.icon}
-                  activeOpacity={0.8}
-                  onPress={() => attendanceListHandler()}>
-                  <Image
-                    source={require('../../../assets/register.png')}
-                    style={styles.image}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.text}>Attendance List</Text>
-                </TouchableOpacity>
-              </Col>
-              <Col
-                style={[
-                  styles.container1,
-                  {borderRigthColor: 'black', borderRightWidth: 0.5},
-                ]}>
-                <TouchableOpacity
-                  style={styles.icon}
-                  activeOpacity={0.8}
-                  onPress={() => callVisitEntryListHandler()}>
-                  <Image
-                    source={require('../../../assets/billing.png')}
-                    style={styles.image}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.text}>Visit List</Text>
-                </TouchableOpacity>
-              </Col>
-            </Row>
+                <Text style={styles.text}>Attendance</Text>
+              </TouchableOpacity>
+            </View>
 
-            <Row
-              style={[
-                styles.container1,
-                {borderBottomColor: 'black', borderBottomWidth: 0.5},
-              ]}>
-              <Col
-                style={[
-                  styles.container1,
-                  {borderRigthColor: 'black', borderRightWidth: 0.5},
-                ]}>
-                <TouchableOpacity
-                  style={styles.icon}
-                  activeOpacity={0.8}
-                  onPress={() => callSummaryHandler()}>
-                  <Image
-                    source={require('../../../assets/register.png')}
-                    style={styles.image}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.text}>Call Summary</Text>
-                </TouchableOpacity>
-              </Col>
-              <Col
-                style={[
-                  styles.container1,
-                  {borderRigthColor: 'black', borderRightWidth: 0.5},
-                ]}>
-                <TouchableOpacity
-                  style={styles.icon}
-                  activeOpacity={0.8}
-                  onPress={() => comingSoonHandler()}>
-                  <Image
-                    source={require('../../../assets/billing.png')}
-                    style={styles.image}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.text}>Claim Status</Text>
-                </TouchableOpacity>
-              </Col>
-            </Row>
-          </Grid>
-        ) : (
-          <>
-            {!sales ? (
-              <Grid>
-                <Row
-                  style={[
-                    styles.container1,
-                    {borderBottomColor: 'black', borderBottomWidth: 0.5},
-                  ]}>
-                  <Col
-                    style={[
-                      styles.container1,
-                      {borderRigthColor: 'black', borderRightWidth: 0.5},
-                    ]}>
-                    <TouchableOpacity
-                      style={styles.icon}
-                      activeOpacity={0.8}
-                      onPress={() => attendanceHandler()}>
-                      <Image
-                        source={require('../../../assets/Deal.png')}
-                        style={styles.image}
-                        resizeMode="contain"
-                      />
-                      <Text style={styles.text}>Attendance</Text>
-                    </TouchableOpacity>
-                  </Col>
-                  <Col
-                    style={[
-                      styles.container1,
-                      {borderRigthColor: 'black', borderRightWidth: 0.5},
-                    ]}>
-                    <TouchableOpacity
-                      style={styles.icon}
-                      activeOpacity={0.8}
-                      onPress={() => callVisitEntryHandler()}>
-                      <Image
-                        source={require('../../../assets/contractentry.png')}
-                        style={styles.image}
-                        resizeMode="contain"
-                      />
-                      <Text style={styles.text}>Call Visit Entry</Text>
-                    </TouchableOpacity>
-                  </Col>
-                </Row>
+            <View style={[styles.card]}>
+              <TouchableOpacity
+                style={styles.icon}
+                activeOpacity={0.8}
+                onPress={() => callVisitEntryHandler()}>
+                <MaterialCommunityIcons
+                  name="file-document-edit-outline"
+                  size={50}
+                  color={theme1.MEDIUM_ORANGE_COLOR}
+                />
+                <Text style={styles.text}>Call Visit Entry</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
-                <Row
-                  style={[
-                    styles.container1,
-                    {borderBottomColor: 'black', borderBottomWidth: 0.5},
-                  ]}>
-                  <Col
-                    style={[
-                      styles.container1,
-                      {borderRigthColor: 'black', borderRightWidth: 0.5},
-                    ]}>
-                    <TouchableOpacity
-                      style={styles.icon}
-                      activeOpacity={0.8}
-                      onPress={() => attendanceListHandler()}>
-                      <Image
-                        source={require('../../../assets/register.png')}
-                        style={styles.image}
-                        resizeMode="contain"
-                      />
-                      <Text style={styles.text}>Attendance List</Text>
-                    </TouchableOpacity>
-                  </Col>
-                  <Col
-                    style={[
-                      styles.container1,
-                      {borderRigthColor: 'black', borderRightWidth: 0.5},
-                    ]}>
-                    <TouchableOpacity
-                      style={styles.icon}
-                      activeOpacity={0.8}
-                      onPress={() => callVisitEntryListHandler()}>
-                      <Image
-                        source={require('../../../assets/billing.png')}
-                        style={styles.image}
-                        resizeMode="contain"
-                      />
-                      <Text style={styles.text}>Visit List</Text>
-                    </TouchableOpacity>
-                  </Col>
-                </Row>
-              </Grid>
-            ) : (
-              <Grid>
-                <Row
-                  style={[
-                    styles.container1,
-                    {borderBottomColor: 'black', borderBottomWidth: 0.5},
-                  ]}>
-                  <Col
-                    style={[
-                      styles.container1,
-                      {borderRigthColor: 'black', borderRightWidth: 0.5},
-                    ]}>
-                    <TouchableOpacity
-                      style={styles.icon}
-                      activeOpacity={0.8}
-                      onPress={() => callSummaryHandler()}>
-                      <Image
-                        source={require('../../../assets/register.png')}
-                        style={styles.image}
-                        resizeMode="contain"
-                      />
-                      <Text style={styles.text}>Call Summary</Text>
-                    </TouchableOpacity>
-                  </Col>
-                  <Col
-                    style={[
-                      styles.container1,
-                      {borderRigthColor: 'black', borderRightWidth: 0.5},
-                    ]}>
-                    <TouchableOpacity
-                      style={styles.icon}
-                      activeOpacity={0.8}
-                      onPress={() => comingSoonHandler()}>
-                      <Image
-                        source={require('../../../assets/billing.png')}
-                        style={styles.image}
-                        resizeMode="contain"
-                      />
-                      <Text style={styles.text}>Claim Status</Text>
-                    </TouchableOpacity>
-                  </Col>
-                </Row>
-              </Grid>
-            )}
-          </>
-        )}
+          <View style={[styles.container1, styles.row]}>
+            <View style={[styles.card]}>
+              <TouchableOpacity
+                style={styles.icon}
+                activeOpacity={0.8}
+                onPress={() => attendanceListHandler()}>
+                <FontAwesome
+                  name="book"
+                  size={50}
+                  color={theme1.MEDIUM_ORANGE_COLOR}
+                />
+                <Text style={styles.text}>Attendance List</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.card]}>
+              <TouchableOpacity
+                style={styles.icon}
+                activeOpacity={0.8}
+                onPress={() => callVisitEntryListHandler()}>
+                <MaterialCommunityIcons
+                  name="notebook-check-outline"
+                  size={50}
+                  color={theme1.MEDIUM_ORANGE_COLOR}
+                />
+                <Text style={styles.text}>Visit List</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={[styles.container1, styles.row]}>
+            <View style={[styles.card]}>
+              <TouchableOpacity
+                style={styles.icon}
+                activeOpacity={0.8}
+                onPress={() => callSummaryHandler()}>
+                <MaterialCommunityIcons
+                  name="notebook"
+                  size={50}
+                  color={theme1.MEDIUM_ORANGE_COLOR}
+                />
+                <Text style={styles.text}>Call Summary</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.card]}>
+              <TouchableOpacity
+                style={styles.icon}
+                activeOpacity={0.8}
+                onPress={() => comingSoonHandler()}>
+                <MaterialCommunityIcons
+                  name="notebook-outline"
+                  size={50}
+                  color={theme1.MEDIUM_ORANGE_COLOR}
+                />
+                <Text style={styles.text}>Claim Status</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </ScrollView>
       <View style={{position: 'absolute', bottom: 0, width: '100%'}}>
         <View
           style={{
             textAlign: 'center',
             justifyContent: 'center',
-            backgroundColor: theme1.LIGHT_BLUE_COLOR,
+            backgroundColor: '#e75a19',
             height: hp('9%'),
             borderTopEndRadius: 20,
             borderTopStartRadius: 20,
@@ -382,7 +216,7 @@ const Landing = props => {
               style={{
                 textAlign: 'center',
                 fontSize: wp('3.5%'),
-                color: 'black',
+                color: '#E9E9E9',
                 fontWeight: 'bold',
               }}>
               {' '}
@@ -395,7 +229,7 @@ const Landing = props => {
   );
 };
 
-export default Landing;
+export default observer(Landing);
 
 const styles = StyleSheet.create({
   button: {
@@ -410,8 +244,8 @@ const styles = StyleSheet.create({
   },
   image: {
     justifyContent: 'center',
-    width: wp('15%'),
-    height: hp('10%'),
+    width: 50,
+    height: 50,
     borderRadius: 15,
     paddingRight: 0,
   },
@@ -455,24 +289,34 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginTop: 10,
   },
-
   container: {
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: '#4B77BE',
+    backgroundColor: '#E9E9E9',
     height: hp('100%'),
   },
   icon: {
-    marginBottom: 15,
-    width: wp('40%'),
-    padding: 5,
-    marginLeft: wp('15%'),
-    height: hp('14%'),
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   text: {
     fontSize: wp('4.2%'),
-    color: 'white',
-    top: 5,
-    left: -3,
+    color: theme1.MEDIUM_ORANGE_COLOR,
+    padding: 5,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    margin: 10,
+  },
+  card: {
+    width: '45%',
+    backgroundColor: '#E9E9E9',
+    borderWidth: 1.5,
+    borderColor: theme1.MEDIUM_ORANGE_COLOR,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
   },
 });

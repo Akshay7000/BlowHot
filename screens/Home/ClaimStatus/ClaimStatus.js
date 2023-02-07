@@ -24,6 +24,8 @@ import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from '../../responsiveLayout/ResponsiveLayout';
+import AuthStore from '../../Mobx/AuthStore';
+import { observer } from 'mobx-react-lite';
 
 function ClaimStatus({navigation, route}) {
   const [startDate, setStartDate] = useState();
@@ -75,16 +77,16 @@ function ClaimStatus({navigation, route}) {
   };
 
   const getTelphoneList = async () => {
-    const user = await AsyncStorage.getItem('user');
-    const masterid = await AsyncStorage.getItem('masterid');
-    const compid = await AsyncStorage.getItem('companyCode');
-    const divid = await AsyncStorage.getItem('divisionCode');
-    const service = await AsyncStorage.getItem('salesTeam');
+    const user = AuthStore?.user;
+    const masterid = AuthStore?.masterId;
+    const compid = AuthStore?.companyId;
+    const divid = AuthStore?.divisionId;
+    const service = AuthStore?.salesId;
     console.log(service);
     if (service) {
       const URL = `${host}/claim_status/mobgetclaimstatuslist`;
       Axios.post(URL, {
-        user: await AsyncStorage.getItem('user'),
+        user: user,
         masterid: masterid,
         divid: divid,
         compid: compid,
@@ -110,10 +112,10 @@ function ClaimStatus({navigation, route}) {
   };
 
   const getFilteredData = async (startDate, endDate) => {
-    const user = await AsyncStorage.getItem('user');
-    const masterid = await AsyncStorage.getItem('masterid');
-    const compid = await AsyncStorage.getItem('companyCode');
-    let divid = await AsyncStorage.getItem('divisionCode');
+    const user = AuthStore?.user;
+    const masterid = AuthStore?.masterId;
+    const compid = AuthStore?.companyId;
+    const divid = AuthStore?.divisionId;
 
     const URL = `${host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${startDate}&end_date=${endDate}`;
     console.log(URL);
@@ -571,7 +573,7 @@ function ClaimStatus({navigation, route}) {
   );
 }
 
-export default ClaimStatus;
+export default observer(ClaimStatus);
 
 const styles = StyleSheet.create({
   container: {flex: 1, padding: 16, paddingTop: 30, backgroundColor: '#fff'},

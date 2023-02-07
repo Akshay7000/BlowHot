@@ -20,70 +20,16 @@ import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from '../../responsiveLayout/ResponsiveLayout';
+import { observer } from 'mobx-react-lite';
+import AuthStore from '../../Mobx/AuthStore';
 
-function CallEntryList({navigation, route}) {
+function CallEntryList({navigation}) {
   const [loading, setLoading] = useState(true);
-
   const [tableData, setTableData] = useState();
-  const [length, setLength] = useState();
-  const [data, setData] = useState();
   const [searchName, setSearchName] = useState();
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState();
   const [filteredData, setFilteredData] = useState();
-  const [routeName, setRouteName] = useState();
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [visible, setVisible] = useState(false);
-
-  const [selectedBuyerItems, setSelectedBuyerItems] = useState([]);
-  const [selectedSellerItems, setSelectedSellerItems] = useState([]);
-  const [selectedBrokerItems, setSelectedBrokerItems] = useState([]);
-
-  const [buyerId, setBuyerId] = useState('');
-  const [selllerId, setSellerId] = useState('');
-  const [brokerId, setBrokerId] = useState('');
-
-  const [buyerItems, setBuyerItems] = useState([]);
-  const [sellerItems, setSellerItems] = useState([]);
-  const [brokeritems, setBrokerItems] = useState([]);
-  const [buyer, setBuyer] = useState();
-  const [seller, setSeller] = useState();
-  const [broker, setBroker] = useState();
-  const [count, setCount] = useState(0);
-
-  const handleBuyerId = item => {
-    setBuyer(item.name);
-    setBuyerId(item.id);
-  };
-
-  const handleSellerId = item => {
-    setSeller(item.name);
-    setSellerId(item.id);
-  };
-  const handleBrokerId = item => {
-    setBroker(item.name);
-    setBrokerId(item.id);
-  };
-
-  const clearAll = () => {
-    setBuyerId('');
-    setSellerId('');
-    setBrokerId('');
-    setBuyer('');
-    setSeller('');
-    setBroker('');
-    setCount(count + 1);
-  };
-
-  useEffect(() => {
-    // getDealerList(startDate,endDate,selectedIndex)
-  }, [count]);
-
-  const handleSingleIndexSelect = index => {
-    // For single Tab Selection SegmentedControlTab
-    setSelectedIndex(index);
-    getDealerList(startDate, endDate, index);
-  };
 
   var RBref = useRef();
 
@@ -96,30 +42,25 @@ function CallEntryList({navigation, route}) {
 
       setStartDate(date);
       setEndDate(todayDate);
-      setRouteName(route.name);
       getDealerList(date, todayDate, 0);
     });
     return unsubscribe;
   }, [navigation]);
 
-  const getDealerList = async (start, end, index) => {
+  const getDealerList = async (start, end) => {
     setLoading(true);
-    const user = await AsyncStorage.getItem('user');
-    const masterid = await AsyncStorage.getItem('masterid');
-    const compid = await AsyncStorage.getItem('companyCode');
-    const divid = await AsyncStorage.getItem('divisionCode');
+    const user = AuthStore?.user;
+    const masterid = AuthStore?.masterId;
+    const compid = AuthStore?.companyId;
+    const divid = AuthStore?.divisionId;
     Axios({
       method: 'GET',
       url: `${host}/c_visit_entry/mob_visitlist?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${start}&end_date=${end}`,
     }).then(response => {
       console.log(
-        'responsbe',
-        response.data.c_visit_entrySchema[
-          response.data.c_visit_entrySchema.length - 1
-        ],
+        'Call Visit Entry List ---->  ',
+        response.data.c_visit_entrySchema,
       );
-      setLength(response.data.c_visit_entrySchema.length);
-      setData(response.data.c_visit_entrySchema);
       setTableData(response.data.c_visit_entrySchema);
       setFilteredData(response.data.c_visit_entrySchema);
     });
@@ -127,6 +68,7 @@ function CallEntryList({navigation, route}) {
   };
 
   const filter = text => {
+    setSearchName(text);
     const array = [...tableData];
     const newArray = array.filter(
       table =>
@@ -205,6 +147,7 @@ function CallEntryList({navigation, route}) {
                 <List.Section style={{top: 8}}>
                   <List.Accordion
                     title={`Dealer Name:${dat.Ship_party?.ACName}`}
+                    titleStyle={{color: theme1.SemiBlack}}
                     description={`Call Type:${dat.ac_cty?.call}`}
                     left={props => (
                       <View
@@ -218,11 +161,7 @@ function CallEntryList({navigation, route}) {
                           {dat.vouc_code}.
                         </Text>
                         <Text style={{fontSize: 10, color: '#222'}}>
-                          {dat.so_date
-                            .substring(0, 10)
-                            .split('-')
-                            .reverse()
-                            .join('/')}
+                          {new Date(dat.so_date).toDateString()}
                         </Text>
                       </View>
                     )}>
@@ -242,7 +181,7 @@ function CallEntryList({navigation, route}) {
                           style={{
                             flex: 1,
                             flexDirection: 'row',
-                            backgroundColor: theme1.MEDIUM_BLUE_COLOR,
+                            backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
                           }}>
                           <List.Item
                             title="Product"
@@ -252,6 +191,7 @@ function CallEntryList({navigation, route}) {
                               marginTop: 5,
                               flex: 0.3,
                               borderRightWidth: 0.8,
+                              borderColor: theme1.GreyWhite
                             }}
                           />
                           <List.Item
@@ -262,6 +202,7 @@ function CallEntryList({navigation, route}) {
                               marginTop: 5,
                               flex: 0.3,
                               borderRightWidth: 0.8,
+                              borderColor: theme1.GreyWhite
                             }}
                           />
                           <List.Item
@@ -272,6 +213,7 @@ function CallEntryList({navigation, route}) {
                               marginTop: 5,
                               flex: 0.3,
                               borderRightWidth: 0.8,
+                              borderColor: theme1.GreyWhite
                             }}
                           />
                           <List.Item
@@ -299,9 +241,7 @@ function CallEntryList({navigation, route}) {
 
             <RBSheet
               animationType="fade"
-              ref={ref => {
-                RBref = ref;
-              }}
+              ref={RBref}
               openDuration={250}
               customStyles={{
                 container: {
@@ -345,12 +285,12 @@ function CallEntryList({navigation, route}) {
                     />
                   </View>
                   <View>
-                  <Text
-                    style={{
-                      marginVertical: 12,
-                      fontSize: wp('3%'),
-                      color: '#222',
-                    }}>
+                    <Text
+                      style={{
+                        marginVertical: 12,
+                        fontSize: wp('3%'),
+                        color: '#222',
+                      }}>
                       End Date:
                     </Text>
                     <DatePicker
@@ -372,12 +312,14 @@ function CallEntryList({navigation, route}) {
                   </View>
                 </View>
 
-                <View style={[styles.column, {justifyContent: 'center', marginTop: 10}]}>
+                <View
+                  style={[
+                    styles.column,
+                    {justifyContent: 'center', marginTop: 10},
+                  ]}>
                   <TouchableOpacity
                     style={styles.button1}
-                    onPress={() =>
-                      getDealerList(startDate, endDate, selectedIndex)
-                    }>
+                    onPress={() => getDealerList(startDate, endDate)}>
                     <Text style={{color: 'white'}}>Show</Text>
                   </TouchableOpacity>
                 </View>
@@ -386,13 +328,13 @@ function CallEntryList({navigation, route}) {
           </View>
         </>
       ) : (
-        <ActivityIndicator size="large" color="skyblue" />
+        <ActivityIndicator color={theme1.DARK_ORANGE_COLOR} size={100} />
       )}
     </ScrollView>
   );
 }
 
-export default CallEntryList;
+export default observer(CallEntryList);
 const styles = StyleSheet.create({
   container: {flex: 1, padding: 16, paddingTop: 30, backgroundColor: '#fff'},
   singleHead: {width: 80, height: 40, backgroundColor: '#c8e1ff'},

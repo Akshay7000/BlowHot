@@ -1,10 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { Button, Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { DataTable } from "react-native-paper";
 
-function Company(props) {
+function Company() {
+  const navigation = useNavigation();
   const [showDivision, setShowDivision] = useState(false);
   const [data, setData] = useState();
   const divisionhandler = (companycode) => {
@@ -19,7 +21,7 @@ function Company(props) {
     const getData = async () => {
       let dat = await AsyncStorage.getItem("data")
         .then((req) => JSON.parse(req))
-        .then((json) => console, log(json), setData(json))
+        .then((json) => console.log(json), setData(json))
         .catch((error) => console.log("error!"));
 
       setData(dat);
@@ -30,7 +32,9 @@ function Company(props) {
   const homeHandler = (divisionCode) => {
     const division = async () => {
       AsyncStorage.setItem("divisionCode", divisionCode);
-      props.navigation.navigate("Home");
+      navigation.navigate("HomeStack",{
+        screen: "Home"
+      });
     };
     division();
   };

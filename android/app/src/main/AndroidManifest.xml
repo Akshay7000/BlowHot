@@ -1,17 +1,18 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
   package="com.avigator003.blowhot">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.CAMERA" android:required="false" />
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
-    <uses-feature android:name="android.hardware.camera.front" android:required="false" />
-
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera.front" />
 
     <!-- Include this only if you are planning to use the camera roll -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:required="false" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:required="false" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" android:required="false" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:required="false" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
     <application
       android:name=".MainApplication"
@@ -20,6 +21,8 @@
       android:roundIcon="@mipmap/ic_launcher_round"
       android:allowBackup="false"
       android:usesCleartextTraffic="true"
+      tools:targetApi="28"
+      tools:ignore="GoogleAppIndexingWarning"
       android:theme="@style/AppTheme">
       <activity
         android:name=".MainActivity"

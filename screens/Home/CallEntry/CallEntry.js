@@ -1,7 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import moment from 'moment';
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -10,20 +9,23 @@ import {
   Text,
   TextInput,
   ToastAndroid,
-  View,
+  View
 } from 'react-native';
 
 import Geolocation from '@react-native-community/geolocation';
-import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
+import { useNavigation } from '@react-navigation/native';
+import { observer } from 'mobx-react-lite';
+import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import Toast from 'react-native-simple-toast';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import DatePicker from '../../components/DatePicker';
 import SelectTwo from '../../components/SelectTwo';
 import theme1 from '../../components/styles/DarkTheme';
-import {host} from '../../Constants/Host';
+import { host } from '../../Constants/Host';
+import AuthStore from '../../Mobx/AuthStore';
 import {
   heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
+  widthPercentageToDP as wp
 } from '../../responsiveLayout/ResponsiveLayout';
 
 const {width, height} = Dimensions.get('window');
@@ -36,23 +38,20 @@ function CallEntry({navigation, route}) {
   } else {
     rout = route.params.routing;
   }
+  const nav = useNavigation();
   const [mobileNumber, setMobileNumber] = useState('');
   const [searchedUser, setSearchedUser] = useState({});
   const [searchingCustomer, setSearchingCustomer] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [dealerItems, setDealerItems] = useState([]);
-  const [dealerId, setDealerId] = useState();
-  const [selectedDealerItems, setSelectedDealerItems] = useState([]);
 
   const [callTypeItems, setCallTypeItems] = useState([]);
   const [callTypeId, setCallTypeId] = useState();
-  const [selectedCallTypeItems, setSelectedCallTypeItems] = useState([]);
 
   const [remarks, setRemarks] = useState();
 
   const [date, setDate] = useState();
-  const [time, setTime] = useState();
   const [followUpDate, setFollowUpDate] = useState();
 
   const [sales_or_group, setProductList] = useState([
@@ -60,15 +59,9 @@ function CallEntry({navigation, route}) {
   ]);
 
   const [masterId, setMasterId] = useState();
-  const [sellerItems, setSellerItems] = useState([]);
-  const [brokeritems, setBrokerItems] = useState([]);
   const [productItems, setProductItems] = useState([]);
   const [brandItems, setBrandItems] = useState([]);
   const [modelItems, setModelItems] = useState([]);
-
-  const [selectedBuyerItems, setSelectedBuyerItems] = useState([]);
-  const [selectedSellerItems, setSelectedSellerItems] = useState([]);
-  const [selectedBrokerItems, setSelectedBrokerItems] = useState([]);
   const [selectedProductItems, setSelectedProductItems] = useState([]);
   const [selectedBrandItems, setSelectedBrandItems] = useState([]);
   const [selectedModelItems, setSelectedModelItems] = useState([]);
@@ -77,13 +70,6 @@ function CallEntry({navigation, route}) {
   const [brandId, setBrandId] = useState();
   const [modelId, setModelId] = useState();
 
-  const [brokerType, setBrokerType] = useState();
-  const [packItems, setPackItems] = useState([]);
-  const [packValue, setpackvalue] = useState();
-  const [weight, setWeight] = useState();
-
-  const [show, setShow] = useState(true);
-  const [show1, setShow1] = useState(true);
   const [location, setLocation] = useState();
 
   const onFocusChange = (name, i) => {
@@ -140,7 +126,13 @@ function CallEntry({navigation, route}) {
     return unsubscribe;
   }, [navigation]);
 
-  console.log(location);
+  const clear = () => {
+    setSearchedUser({});
+    setRemarks('');
+    setProductList([
+      {brandid: '', so_qty: '', so_disc: '', model: '', dsirn: ''},
+    ]);
+  };
 
   const onBlurChange = (name, i) => {
     if (name == 'dealOne') {
@@ -188,8 +180,6 @@ function CallEntry({navigation, route}) {
 
   useEffect(() => {
     const init = async () => {
-      masterid = await AsyncStorage.getItem('masterid');
-      setMasterId(masterid);
       PromisData(masterid);
     };
     init();
@@ -209,49 +199,48 @@ function CallEntry({navigation, route}) {
 
   //Dealers List
 
-  const PromisData = async masterid => {
+  const PromisData = async () => {
     setLoading(false);
 
-    var diler = getDealers(masterid);
-    var calls = getCallType(masterid);
-    var product = getProducts(masterid);
-    Promise.all([diler, calls, product]).then(values => {
-      setDealerItems(values[0]);
-      setCallTypeItems(values[1]);
-      setBrandItems(values[2].brand);
-      setProductItems(values[2].products);
-      setModelItems(values[2].model);
+    // var diler = getDealers(masterid);
+    var calls = getCallType(AuthStore?.masterId);
+    var product = getProducts(AuthStore?.masterId);
+    Promise.all([calls, product]).then(values => {
+      // setDealerItems(values[0]);
+      setCallTypeItems(values[0]);
+      setBrandItems(values[1]?.brand);
+      setProductItems(values[1]?.products);
+      setModelItems(values[1]?.model);
       setLoading(true);
     });
   };
 
-  const getDealers = async masterid => {
-    console.log('dealers');
+  // const getDealers = async masterid => {
+  //   console.log('dealers');
 
-    const data = {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-    return await fetch(
-      `${host}/c_visit_entry/mob_calldealer?masterid=${masterid}`,
-      data,
-    )
-      .then(response => response.json())
-      .then(data => {
-        // console.log("dtaa", data)
-        var responseData = [...dealerItems];
-        data.results.map(dat =>
-          responseData.push({id: dat._id, name: dat.ACName}),
-        );
-
-        return responseData;
-      });
-    getCallType();
-  };
+  //   const data = {
+  //     method: 'GET',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //   };
+  //   return await fetch(
+  //     `${host}/c_visit_entry/mob_calldealer?masterid=${masterid}`,
+  //     data,
+  //   )
+  //     .then(response => response.json())
+  //     .then(data => {
+  //       // console.log("dtaa", data)
+  //       var responseData = [...dealerItems];
+  //       data.results.map(dat =>
+  //         responseData.push({id: dat._id, name: dat.ACName}),
+  //       );
+  //       return responseData;
+  //     });
+  // };
 
   //Call Type List
+
   const getCallType = async masterid => {
     console.log('call');
 
@@ -275,8 +264,6 @@ function CallEntry({navigation, route}) {
 
         return responseData;
       });
-
-    getProducts();
   };
 
   // Product List
@@ -302,28 +289,15 @@ function CallEntry({navigation, route}) {
         data.brand.map(dat => brand.push({id: dat._id, name: dat.Description}));
         let model = [];
         data.model.map(dat => model.push({id: dat._id, name: dat.Description}));
-        console.log('model->>>>', data.model.length, model.length);
         return {brand, products, model};
         setBrandItems(brand);
         setProductItems(products);
         setModelItems(model);
       });
-
-    setLoading(true);
-
-    //       getBrands()
-  };
-
-  const handleDealerId = item => {
-    setDealerId(item.id);
   };
 
   const handleModelId = item => {
     setModelId(item.id);
-  };
-
-  const handleCallTypeId = item => {
-    setCallTypeId(item.id);
   };
 
   const handleBrandId = id => {
@@ -357,7 +331,7 @@ function CallEntry({navigation, route}) {
         setLocation(pos);
       },
       error => {
-        setStartDayLocationErrorMsg('Permission to access location was denied');
+        console.log('Permission to access location was denied');
       },
       {enableHighAccuracy: true},
     );
@@ -368,7 +342,10 @@ function CallEntry({navigation, route}) {
     if (!searchedUser?._id) {
       return Alert.alert('select User');
     }
-    // const location = await getLocation();
+    const user = AuthStore?.user;
+    const masterid = AuthStore?.masterId;
+    const compid = AuthStore?.companyId;
+    const divid = AuthStore?.divisionId;
 
     sales_or_group.map((item, index) => {
       item.dsirn = index + 1;
@@ -383,12 +360,12 @@ function CallEntry({navigation, route}) {
       Ship_party: searchedUser?._id,
       buy_rmks: remarks,
       ac_cty: callTypeId,
-      user: await AsyncStorage.getItem('user'),
-      compid: await AsyncStorage.getItem('companyCode'),
-      divid: await AsyncStorage.getItem('divisionCode'),
+      user: user,
+      compid: compid,
+      divid: divid,
       long: location?.coords?.longitude,
       lat: location?.coords?.latitude,
-      masterid: await AsyncStorage.getItem('masterid'),
+      masterid: masterid,
       sales_or_group: array,
     };
     // console.log("body", body)
@@ -401,7 +378,8 @@ function CallEntry({navigation, route}) {
       let todayDate = moment(new Date()).format('DD/MM/YYYY');
       setDate(todayDate);
       setFollowUpDate(todayDate);
-      // Updates.reloadAsync();
+      clear();
+      nav.navigate('Home');
     });
   };
 
@@ -448,86 +426,83 @@ function CallEntry({navigation, route}) {
   return (
     <>
       {loading ? (
-        <>
-          <ScrollView
-            keyboardShouldPersistTaps="always"
-            style={styles.container}>
-            <View style={styles.form}>
-              <View style={[styles.column]}>
-                <View
-                  style={{
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                  }}>
-                  <Text style={{color: '#222'}}>Date</Text>
-                  <DatePicker
-                    date={date}
-                    placeholder={'Select Date'}
-                    setDate={setDate}
-                    conatinerStyles={{
-                      width: wp('40%'),
-                      borderRadius: 5,
-                      margin: 10,
-                      borderColor: '#ccc',
-                    }}
-                  />
-                </View>
-                <View
-                  style={{
-                    flexDirection: 'column',
-
-                    alignItems: 'center',
-                  }}>
-                  <Text style={{color: '#222'}}>Follow Up Date</Text>
-                  <DatePicker
-                    date={followUpDate}
-                    placeholder={'Select Date'}
-                    setDate={setFollowUpDate}
-                    conatinerStyles={{
-                      width: wp('40%'),
-                      borderRadius: 5,
-                      margin: 10,
-                      borderColor: '#ccc',
-                    }}
-                  />
-                </View>
-              </View>
-
+        <ScrollView keyboardShouldPersistTaps="always" style={styles.container}>
+          <View style={styles.form}>
+            <View style={[styles.column]}>
               <View
-                style={[
-                  styles.column,
-                  {
-                    borderWidth: 1,
-                    borderColor: '#ccc',
+                style={{
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}>
+                <Text style={{color: '#222'}}>Date</Text>
+                <DatePicker
+                  date={date}
+                  placeholder={'Select Date'}
+                  setDate={setDate}
+                  conatinerStyles={{
+                    width: wp('40%'),
                     borderRadius: 5,
-                    justifyContent: 'space-between',
-                    marginHorizontal: 8,
-                    paddingHorizontal: 10,
-                    alignItems: 'center',
-                  },
-                ]}>
-                <TextInput
-                  style={{
-                    height: 40,
-                    width: '90%',
-                    color: '#222'
+                    margin: 10,
+                    borderColor: '#ccc',
                   }}
-                  keyboardType={'phone-pad'}
-                  returnKeyType="search"
-                  enablesReturnKeyAutomatically={true}
-                  placeholder="Customer Mobile"
-                  placeholderTextColor={"#BBB"}
-                  value={mobileNumber}
-                  onChangeText={text => setMobileNumber(text)}
                 />
-                {!searchingCustomer ? (
-                  <TouchableOpacity onPress={() => searchCustomer()}>
-                    <EvilIcons name={'search'} size={30} color="#222" />
-                  </TouchableOpacity>
-                ) : (
-                  <ActivityIndicator />
-                )}
-                {/* <SelectTwo
+              </View>
+              <View
+                style={{
+                  flexDirection: 'column',
+
+                  alignItems: 'center',
+                }}>
+                <Text style={{color: '#222'}}>Follow Up Date</Text>
+                <DatePicker
+                  date={followUpDate}
+                  placeholder={'Select Date'}
+                  setDate={setFollowUpDate}
+                  conatinerStyles={{
+                    width: wp('40%'),
+                    borderRadius: 5,
+                    margin: 10,
+                    borderColor: '#ccc',
+                  }}
+                />
+              </View>
+            </View>
+
+            <View
+              style={[
+                styles.column,
+                {
+                  borderWidth: 1,
+                  borderColor: '#ccc',
+                  borderRadius: 5,
+                  justifyContent: 'space-between',
+                  marginHorizontal: 8,
+                  paddingHorizontal: 10,
+                  alignItems: 'center',
+                },
+              ]}>
+              <TextInput
+                style={{
+                  height: 40,
+                  width: '90%',
+                  color: '#222',
+                }}
+                keyboardType={'phone-pad'}
+                returnKeyType="search"
+                enablesReturnKeyAutomatically={true}
+                placeholder="Customer Mobile"
+                placeholderTextColor={'#BBB'}
+                value={mobileNumber}
+                onChangeText={text => setMobileNumber(text)}
+              />
+              {!searchingCustomer ? (
+                <TouchableOpacity onPress={() => searchCustomer()}>
+                  <EvilIcons name={'search'} size={30} color="#222" />
+                </TouchableOpacity>
+              ) : (
+                <ActivityIndicator />
+              )}
+              {/* <SelectTwo
                   items={dealerItems}
                   selectedItem={selectedDealerItems}
                   handleId={handleDealerId}
@@ -536,179 +511,196 @@ function CallEntry({navigation, route}) {
                   placeholder="Mobile number"
                   borderColor="#ccc"
                 /> */}
-              </View>
-              <View style={styles.column}>
-                <TextInput
-                  style={{
-                    width: wp('85%'),
-                    borderWidth: 1,
-                    height: 40,
-                    borderRadius: 5,
-                    paddingHorizontal: 15,
-                    borderColor: '#ccc',
-                    color: '#222',
-                  }}
-                  editable={false}
-                  placeholder="Customer Name"
-                  placeholderTextColor={"#BBB"}
-                  value={searchedUser?.ACName}
-                />
-              </View>
-              <View style={styles.column}>
-                <TextInput
-                  style={{
-                    width: wp('40%'),
-                    borderWidth: 1,
-                    height: 40,
-                    borderRadius: 5,
-                    paddingHorizontal: 15,
-                    borderColor: '#ccc',
-                    color: '#222',
-                  }}
-                  editable={false}
-                  placeholder="State"
-                  placeholderTextColor={"#BBB"}
-                  value={searchedUser?.StateName?.StateName}
-                />
-                <TextInput
-                  style={{
-                    width: wp('40%'),
-                    borderWidth: 1,
-                    height: 40,
-                    borderRadius: 5,
-                    paddingHorizontal: 15,
-                    borderColor: '#ccc',
-                    color: '#222',
-                  }}
-                  editable={false}
-                  placeholder="City"
-                  placeholderTextColor={"#BBB"}
-                  value={searchedUser?.CityName?.CityName}
-                />
-              </View>
-
-              <View
-                style={{
-                  borderBottomColor: 'grey',
-                  borderBottomWidth: 1,
-                  marginTop: 5,
-                }}
-              />
-
-              <View style={{marginTop: 30}}>
-                {sales_or_group.map((item, i) => {
-                  return (
-                    <View style={styles.card}>
-                      <View style={styles.column}>
-                        <SelectTwo
-                          items={modelItems}
-                          name="model"
-                          selectedItem={selectedModelItems}
-                          handleId={handleModelId}
-                          handleProduct={handleProductDetails}
-                          //   width={wp("37%")}
-                          placeholder="Model"
-                          i={i}
-                          defaultValue={item.model}
-                          product={item}
-                          borderColor="#ccc"
-                        />
-
-                        <SelectTwo
-                          items={productItems}
-                          name="so_disc"
-                          selectedItem={selectedProductItems}
-                          handleId={handleProductId}
-                          handleProduct={handleProductDetails}
-                          //   width={wp("37%")}
-                          placeholder="Product"
-                          i={i}
-                          defaultValue={item.so_disc}
-                          product={item}
-                          borderColor="#ccc"
-                        />
-                      </View>
-                      <View style={styles.column}>
-                        <SelectTwo
-                          items={brandItems}
-                          name="brandid"
-                          selectedItem={selectedBrandItems}
-                          handleId={handleBrandId}
-                          handleProduct={handleProductDetails}
-                          width={wp('37%')}
-                          placeholder="Brand"
-                          i={i}
-                          defaultValue={item.brandid}
-                          product={item}
-                          borderColor="#ccc"
-                        />
-
-                        <TextInput
-                          keyboardType="numeric"
-                          name="so_qty"
-                          style={[
-                            styles.input,
-                            {
-                              backgroundColor: '#D3FD7A',
-                              width: wp('39%'),
-                              height: hp('5.5'),
-                              marginTop: 5,
-                              color: '#222'
-                            },
-                          ]}
-                          placeholder="Quantity"
-                          placeholderTextColor={"#BBB"}
-                          onFocus={() => onFocusChange('so_qty', i)}
-                          onBlur={() => onBlurChange('so_qty', i)}
-                          ref={element => (bagRefs.current[i] = element)}
-                          defaultValue={item.so_qty}
-                          onChangeText={value =>
-                            handleProductDetails(value, i, 'so_qty')
-                          }
-                        />
-                      </View>
-
-                      <View
-                        style={[
-                          styles.column,
-                          {
-                            justifyContent: 'space-around',
-                            marginBottom: 20,
-                          },
-                        ]}>
-                        {sales_or_group.length - 1 === i && (
-                          <TouchableOpacity
-                            onPress={() => handleProductClick(i)}
-                            style={[styles.button, {flex: 1}]}>
-                            <Text style={{color: 'white'}}>Add Product</Text>
-                          </TouchableOpacity>
-                        )}
-
-                        {sales_or_group.length !== 1 ? (
-                          <TouchableOpacity
-                            onPress={() => handleRemoveClick(i)}
-                            style={styles.button}>
-                            <Text style={{color: 'white'}}>Remove</Text>
-                          </TouchableOpacity>
-                        ) : (
-                          <></>
-                        )}
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-
-              <View style={[styles.column, {justifyContent: 'center'}]}>
-                <TouchableOpacity
-                  onPress={() => submitData()}
-                  style={styles.button1}>
-                  <Text style={{color: 'white'}}>Submit</Text>
-                </TouchableOpacity>
-              </View>
             </View>
-          </ScrollView>
-        </>
+            <View style={styles.column}>
+              <TextInput
+                style={{
+                  width: wp('85%'),
+                  borderWidth: 1,
+                  height: 40,
+                  borderRadius: 5,
+                  paddingHorizontal: 15,
+                  borderColor: '#ccc',
+                  color: '#222',
+                }}
+                editable={false}
+                placeholder="Customer Name"
+                placeholderTextColor={'#BBB'}
+                value={searchedUser?.ACName}
+              />
+            </View>
+            <View style={styles.column}>
+              <TextInput
+                style={{
+                  width: wp('40%'),
+                  borderWidth: 1,
+                  height: 40,
+                  borderRadius: 5,
+                  paddingHorizontal: 15,
+                  borderColor: '#ccc',
+                  color: '#222',
+                }}
+                editable={false}
+                placeholder="State"
+                placeholderTextColor={'#BBB'}
+                value={searchedUser?.StateName?.StateName}
+              />
+              <TextInput
+                style={{
+                  width: wp('40%'),
+                  borderWidth: 1,
+                  height: 40,
+                  borderRadius: 5,
+                  paddingHorizontal: 15,
+                  borderColor: '#ccc',
+                  color: '#222',
+                }}
+                editable={false}
+                placeholder="City"
+                placeholderTextColor={'#BBB'}
+                value={searchedUser?.CityName?.CityName}
+              />
+            </View>
+
+            <View style={styles.column}>
+              <TextInput
+                style={{
+                  width: wp('85%'),
+                  borderWidth: 1,
+                  height: 40,
+                  borderRadius: 5,
+                  paddingHorizontal: 15,
+                  borderColor: '#ccc',
+                  color: '#222',
+                }}
+                placeholder="Remarks"
+                placeholderTextColor={'#BBB'}
+                value={remarks}
+                onChangeText={text => setRemarks(text)}
+              />
+            </View>
+
+            <View
+              style={{
+                borderBottomColor: 'grey',
+                borderBottomWidth: 1,
+                marginTop: 5,
+              }}
+            />
+
+            <View style={{marginTop: 30}}>
+              {sales_or_group.map((item, i) => {
+                return (
+                  <View key={i} style={styles.card}>
+                    <View style={styles.column}>
+                      <SelectTwo
+                        items={modelItems}
+                        name="model"
+                        selectedItem={selectedModelItems}
+                        handleId={handleModelId}
+                        handleProduct={handleProductDetails}
+                        //   width={wp("37%")}
+                        placeholder="Model"
+                        i={i}
+                        defaultValue={item.model}
+                        product={item}
+                        borderColor="#ccc"
+                      />
+
+                      <SelectTwo
+                        items={productItems}
+                        name="so_disc"
+                        selectedItem={selectedProductItems}
+                        handleId={handleProductId}
+                        handleProduct={handleProductDetails}
+                        //   width={wp("37%")}
+                        placeholder="Product"
+                        i={i}
+                        defaultValue={item.so_disc}
+                        product={item}
+                        borderColor="#ccc"
+                      />
+                    </View>
+                    <View style={styles.column}>
+                      <SelectTwo
+                        items={brandItems}
+                        name="brandid"
+                        selectedItem={selectedBrandItems}
+                        handleId={handleBrandId}
+                        handleProduct={handleProductDetails}
+                        width={wp('37%')}
+                        placeholder="Brand"
+                        i={i}
+                        defaultValue={item.brandid}
+                        product={item}
+                        borderColor="#ccc"
+                      />
+
+                      <TextInput
+                        keyboardType="numeric"
+                        name="so_qty"
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: '#D3FD7A',
+                            width: wp('39%'),
+                            height: hp('5.5'),
+                            marginTop: 5,
+                            color: '#222',
+                          },
+                        ]}
+                        placeholder="Quantity"
+                        placeholderTextColor={'#BBB'}
+                        onFocus={() => onFocusChange('so_qty', i)}
+                        onBlur={() => onBlurChange('so_qty', i)}
+                        ref={element => (bagRefs.current[i] = element)}
+                        defaultValue={item.so_qty}
+                        onChangeText={value =>
+                          handleProductDetails(value, i, 'so_qty')
+                        }
+                      />
+                    </View>
+
+                    <View
+                      style={[
+                        styles.column,
+                        {
+                          justifyContent: 'space-around',
+                          marginBottom: 20,
+                        },
+                      ]}>
+                      {sales_or_group.length - 1 === i && (
+                        <TouchableOpacity
+                          onPress={() => handleProductClick(i)}
+                          style={[styles.button, {flex: 1}]}>
+                          <Text style={{color: 'white'}}>Add Product</Text>
+                        </TouchableOpacity>
+                      )}
+
+                      {sales_or_group.length !== 1 ? (
+                        <TouchableOpacity
+                          onPress={() => handleRemoveClick(i)}
+                          style={styles.button}>
+                          <Text style={{color: 'white'}}>Remove</Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <></>
+                      )}
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+
+            <View style={[styles.column, {justifyContent: 'center'}]}>
+              <TouchableOpacity
+                onPress={() => submitData()}
+                style={styles.button1}>
+                <Text style={{color: 'white'}}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
       ) : (
         <View
           style={{
@@ -716,14 +708,14 @@ function CallEntry({navigation, route}) {
             justifyContent: 'center',
             alignItems: 'center',
           }}>
-          <ActivityIndicator size="large" color="skyblue" />
+          <ActivityIndicator color={theme1.DARK_ORANGE_COLOR} size={100} />
         </View>
       )}
     </>
   );
 }
 
-export default CallEntry;
+export default observer(CallEntry);
 
 const styles = StyleSheet.create({
   image: {
@@ -785,7 +777,7 @@ const styles = StyleSheet.create({
     width: wp('40%'),
     top: 4,
     left: 0,
-    backgroundColor: theme1.DARK_BLUE_COLOR,
+    backgroundColor: theme1.DARK_ORANGE_COLOR,
     padding: 10,
     paddingHorizontal: 25,
     borderRadius: 10,
@@ -796,7 +788,7 @@ const styles = StyleSheet.create({
     width: wp('80%'),
     top: 4,
     left: 0,
-    backgroundColor: theme1.DARK_BLUE_COLOR,
+    backgroundColor: theme1.DARK_ORANGE_COLOR,
     padding: 10,
     paddingHorizontal: 25,
     borderRadius: 10,

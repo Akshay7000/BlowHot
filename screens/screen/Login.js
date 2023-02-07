@@ -1,23 +1,30 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import axios from 'axios';
-import { FormControl, Input } from 'native-base';
-import React, { useEffect, useState } from 'react';
+import {FormControl, Input} from 'native-base';
+import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Button,
-  Image, ScrollView, StyleSheet,
-  Text, TouchableOpacity, View
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { DataTable } from 'react-native-paper';
+import {DataTable} from 'react-native-paper';
 import Toast from 'react-native-simple-toast';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
-import { host } from '../Constants/Host';
-import { widthPercentageToDP as wp } from '../responsiveLayout/ResponsiveLayout';
+import {host} from '../Constants/Host';
+import {widthPercentageToDP as wp} from '../responsiveLayout/ResponsiveLayout';
+import AuthStore from '../Mobx/AuthStore';
+import theme1 from '../components/styles/DarkTheme';
+import { observer } from 'mobx-react-lite';
 
-FontAwesomeIcon.loadFont()
+FontAwesomeIcon.loadFont();
 
-const Login = ({setU}) => {
+const Login = () => {
   const navigation = useNavigation();
   const [userName, setUserName] = useState();
   const [password, setPassword] = useState();
@@ -25,7 +32,6 @@ const Login = ({setU}) => {
   const [showDivision, setShowDivision] = useState(false);
   const [showCompany, setShowCompany] = useState(false);
   const [responseData, setResponseData] = useState([]);
-  const [showLogin, setShowLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState();
 
@@ -43,7 +49,7 @@ const Login = ({setU}) => {
     const division = async () => {
       await AsyncStorage.setItem('divisionCode', divisionCode);
       await AsyncStorage.setItem('divisionName', divName);
-      setU(user);
+      AuthStore.setIsLoggedIn(true);
     };
     division();
   };
@@ -78,9 +84,12 @@ const Login = ({setU}) => {
               'salesTeam',
               respone.data.userright.service_team,
             );
+            AuthStore.setIsAdmin(
+              respone?.data?.userright?.administrator === 'Yes',
+            );
+            AuthStore.setIsSales(respone.data.userright.service_team === 'Yes');
             setUser(respone.data.user_name);
             setResponseData(respone.data);
-            setShowLogin(false);
             setShowCompany(true);
             setLoading(false);
           };
@@ -102,10 +111,8 @@ const Login = ({setU}) => {
     const unsubscribe = navigation.addListener('focus', async () => {
       let u = await AsyncStorage.getItem('user');
       setUser(await AsyncStorage.getItem('user'));
-      console.log(await AsyncStorage.getItem('responseData'), 'response');
       if (u) {
         setResponseData(JSON.parse(await AsyncStorage.getItem('responseData')));
-        setShowLogin(false);
         setShowCompany(true);
         navigation.setOptions({
           title: 'Shift Company/Division',
@@ -117,7 +124,6 @@ const Login = ({setU}) => {
         navigation.setOptions({
           title: 'Login ',
         });
-        setShowLogin(true);
         setShowCompany(false);
       }
     });
@@ -129,14 +135,17 @@ const Login = ({setU}) => {
     };
   }, []);
 
-  // return <View>
-  //   <Text>Hello</Text>
-  // </View>
-
   return (
-    <View style={{flex: 1}}>
-      {loading && <ActivityIndicator color="skyblue" size={100} />}
-      {!user && (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: theme1.White,
+        justifyContent: 'center',
+      }}>
+      {loading && (
+        <ActivityIndicator color={theme1.DARK_ORANGE_COLOR} size={100} />
+      )}
+      {!user && !loading && (
         <View style={styles.container}>
           <View style={styles.form}>
             <Image
@@ -147,8 +156,9 @@ const Login = ({setU}) => {
               resizeMode="contain"
             />
 
-            <View style={{width: '90%'}} >
-              <FormControl.Label style={{color: '#e75a19', fontWeight: 'bold'}}>
+            <View style={{width: '90%'}}>
+              <FormControl.Label
+                style={{color: theme1.DARK_ORANGE_COLOR, fontWeight: 'bold'}}>
                 Username
               </FormControl.Label>
               <Input
@@ -159,7 +169,8 @@ const Login = ({setU}) => {
             </View>
 
             <View style={{width: '90%'}}>
-              <FormControl style={{color: '#e75a19', fontWeight: 'bold'}}>
+              <FormControl
+                style={{color: theme1.DARK_ORANGE_COLOR, fontWeight: 'bold'}}>
                 Password
               </FormControl>
               <Input
@@ -206,7 +217,7 @@ const Login = ({setU}) => {
                 </Text>
               </TouchableOpacity>
             </View>
-            <Text style={{top: 10}}>Forgot Password ?</Text>
+            <Text style={{top: 10, color: '#222'}}>Forgot Password ?</Text>
           </View>
         </View>
       )}
@@ -232,6 +243,7 @@ const Login = ({setU}) => {
                 </DataTable.Cell>
                 <DataTable.Cell>
                   <Button
+                    color={theme1.DARK_ORANGE_COLOR}
                     onPress={() =>
                       divisionhandler(dat._id, dat.sdate, dat.edate)
                     }
@@ -246,9 +258,6 @@ const Login = ({setU}) => {
             <>
               <View
                 style={{
-                  borderBottomColor: 'grey',
-                  borderBottomWidth: 1,
-                  marginBottom: 0,
                   padding: 20,
                   margin: 10,
                 }}
@@ -257,13 +266,14 @@ const Login = ({setU}) => {
                 style={{
                   fontSize: 23,
                   fontWeight: '800',
-                  paddingLeft: 85,
-                  backgroundColor: '#D9EDF7',
+                  // paddingLeft: 85,
+                  backgroundColor: theme1.LIGHT_ORANGE_COLOR,
                   width: '100%',
                   height: 50,
                   borderRadius: 10,
-                  textAlign: 'left',
+                  textAlign: 'center',
                   paddingTop: 10,
+                  color: theme1.White
                 }}>
                 Division
               </Text>
@@ -281,6 +291,7 @@ const Login = ({setU}) => {
                     <DataTable.Cell>{dat.div_code}</DataTable.Cell>
                     <DataTable.Cell>
                       <Button
+                        color={theme1.DARK_ORANGE_COLOR}
                         title="Enter  "
                         onPress={() => homeHandler(dat._id, dat.div_code)}
                       />
@@ -296,7 +307,7 @@ const Login = ({setU}) => {
   );
 };
 
-export default Login;
+export default observer(Login);
 
 const styles = StyleSheet.create({
   image: {
@@ -308,7 +319,7 @@ const styles = StyleSheet.create({
     // justifyContent: "center",
     alignItems: 'center',
     margin: 25,
-    backgroundColor: '#E9E9E9',
+    backgroundColor: theme1.LIGHT_ORANGE_COLOR,
     borderRadius: 20,
   },
   container: {

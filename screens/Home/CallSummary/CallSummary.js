@@ -36,6 +36,8 @@ import {host, oldHost} from '../../Constants/Host';
 import {useNavigation} from '@react-navigation/native';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AuthStore from '../../Mobx/AuthStore';
+import { observer } from 'mobx-react-lite';
 
 let height = Dimensions.get('window').height;
 
@@ -53,8 +55,59 @@ function CallSummary({navigation, route}) {
   const [productName, setProductName] = useState();
   const [modelName, setModelName] = useState();
   const [uniqueId, setUniqueId] = useState();
-
   const [fromTime, setFromTime] = useState(false);
+
+  // Assigned to Asc
+  const [technician, setTechnician] = useState('');
+  const [complaintDate, setComplaintDate] = useState();
+  const [complaintRemarks, setComplaintRemarks] = useState('');
+  const [fromDate, setFromDate] = useState(new Date(1598051730000));
+  const [toTime, setToTime] = useState(false);
+  const [toDate, setToDate] = useState(new Date(1598051730000));
+
+  // Add Alloted to Engineer
+  const [SingleData, setSingleData] = useState({});
+  const [charges, setCharges] = useState('');
+  const [engineerDate, setEngineerDate] = useState(new Date(Date.now()));
+  const [engineerRemarks, setEngineerRemarks] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [ta, setTa] = useState(0);
+  const [status, setStatus] = useState('');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [warrantyType, setWarrantyType] = useState('');
+  const [show, setShow] = useState(true);
+
+  const [visit_group, setArray] = useState([
+    {
+      visit_qty: '',
+      visit_spare_part: '',
+      visit_rate: '',
+      visit_status: '',
+      visit_model: '',
+      visit_product: '',
+    },
+  ]);
+
+  const [productItems, setProductItems] = useState([]);
+  const [brandItems, setBrandItems] = useState([]);
+  const [modelItems, setModelItems] = useState([]);
+
+  const [selectedProductItems, setSelectedProductItems] = useState([]);
+  const [selectedBrandItems, setSelectedBrandItems] = useState([]);
+  const [selectedModelItems, setSelectedModelItems] = useState([]);
+
+  const [productId, setProductId] = useState();
+  const [brandId, setBrandId] = useState();
+  const [modelId, setModelId] = useState();
+
+  const [imageModal, setImageModal] = useState(false);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [AutoSelectedImages, setAutoSelectedImages] = useState([]);
+  const [happyCode, setHappyCode] = useState('');
+
+  // Signature
+  const signatureRef = useRef();
+  const [text, setText] = useState('her');
 
   const handleProductId = item => {
     setProductId(item.id);
@@ -89,17 +142,24 @@ function CallSummary({navigation, route}) {
       setStartDate(date);
       setEndDate(todayDate);
       getDealerList(date, todayDate, 0);
+      getProducts();
+      getModels();
     });
     return unsubscribe;
   }, [navigation]);
 
+  useEffect(() => {
+    getProducts();
+    getModels();
+  }, []);
+
   const getDealerList = async (start, end, index) => {
     setLoading(true);
-    const masterid = await AsyncStorage.getItem('masterid');
-    const compid = await AsyncStorage.getItem('companyCode');
-    const divid = await AsyncStorage.getItem('divisionCode');
-    const administrator = await AsyncStorage.getItem('administrator');
-    const user = await AsyncStorage.getItem('user');
+    const user = AuthStore?.user;
+    const masterid = AuthStore?.masterId;
+    const compid = AuthStore?.companyId;
+    const divid = AuthStore?.divisionId;
+    const administrator = AuthStore?.adminId;
     let arr = [
       'Assigned to Asc',
       'Alloted to engineer',
@@ -123,33 +183,20 @@ function CallSummary({navigation, route}) {
       .post(`${host}/call_summary/mobcall_summary`, body)
       .then(function (response) {
         // console.log("res -> ", JSON.stringify(response.data.s_call));
-        setTableData(response.data.s_call);
-        setFilteredData(response.data.s_call);
-      })
-      .then(function (response) {
-        if (loaded && index !== 0) {
-          getProducts();
-        } else {
-          if (productItems.length !== 0) {
-            setLoaded(false);
-            setLoading(false);
-          } else {
-            setLoaded(true);
-            setLoading(false);
-          }
-        }
+        setTableData(response?.data?.s_call);
+        setFilteredData(response?.data?.s_call);
+        setLoading(false);
       })
       .catch(function (error) {
         console.log('erro', error);
+        setLoading(false);
       });
   };
 
   const getProducts = async () => {
-    console.log('products');
-
     axios
       .post(`${host}/call_summary/mobgetproduct`, {
-        masterid: await AsyncStorage.getItem('masterid'),
+        masterid: AuthStore?.masterId,
       })
       .then(function (response) {
         let products = [...productItems];
@@ -159,9 +206,6 @@ function CallSummary({navigation, route}) {
         });
         setProductItems(products);
       })
-      .then(function (response) {
-        getModels();
-      })
       .catch(function (error) {
         console.log(error, 'error');
       });
@@ -170,7 +214,7 @@ function CallSummary({navigation, route}) {
   const getModels = async () => {
     axios
       .post(`${host}/call_summary/mobgetmodel`, {
-        masterid: await AsyncStorage.getItem('masterid'),
+        masterid: AuthStore?.masterId,
       })
       .then(function (response) {
         let models = [...modelItems];
@@ -179,10 +223,6 @@ function CallSummary({navigation, route}) {
           models[index] = {...dat, id: dat._id, name: dat.Description};
         });
         setModelItems(models);
-      })
-      .then(function (response) {
-        setLoaded(false);
-        setLoading(false);
       })
       .catch(function (error) {
         console.log(error, 'error');
@@ -226,6 +266,7 @@ function CallSummary({navigation, route}) {
         setUniqueId(data?.unique_id);
         setModelName(data?.s_mdl.Description);
         setAutoSelectedImages(data?.filepath);
+        setSelectedImages([]);
 
         let brand = [...brandItems];
         response.data.rawMat_mast.map((dat, index) => {
@@ -267,20 +308,11 @@ function CallSummary({navigation, route}) {
     const array = [...tableData];
     const newArray = array.filter(
       table =>
-        (table?.s_cus.ACName).toLowerCase().includes(text.toLowerCase()) ||
-        (table.s_cus?.Address1).toLowerCase().includes(text.toLowerCase()),
+        table?.s_cus?.ACName?.toLowerCase()?.includes(text?.toLowerCase()) ||
+        table.s_cus?.Address1?.toLowerCase()?.includes(text?.toLowerCase()),
     );
     setFilteredData(newArray);
   };
-
-  // Assigned to Asc
-  const [technician, setTechnician] = useState('');
-  const [complaintDate, setComplaintDate] = useState();
-  const [complaintRemarks, setComplaintRemarks] = useState('');
-  const [fromDate, setFromDate] = useState(new Date(1598051730000));
-
-  const [toTime, setToTime] = useState(false);
-  const [toDate, setToDate] = useState(new Date(1598051730000));
 
   const handleFromChange = (event, selectedDate) => {
     const currentDate = selectedDate || fromDate;
@@ -305,25 +337,30 @@ function CallSummary({navigation, route}) {
 
   const handleAppoitmentSubmit = async () => {
     setLoading(true);
-    const submitData = async () => {
-      const body = {
-        first_time: `${fromDate.getHours()}:${fromDate.getMinutes()}`,
-        end_time: `${toDate.getHours()}:${toDate.getMinutes()}`,
-        appointment_technician: technician,
-        appointment_date: complaintDate,
-        appointment_remark: complaintRemarks,
-        vhpxappointment: SingleData?._id,
-        user: await AsyncStorage.getItem('user'),
-        compid: await AsyncStorage.getItem('companyCode'),
-        divid: await AsyncStorage.getItem('divisionCode'),
-        masterid: await AsyncStorage.getItem('masterid'),
-      };
+    const user = AuthStore?.user;
+    const masterid = AuthStore?.masterId;
+    const compid = AuthStore?.companyId;
+    const divid = AuthStore?.divisionId;
 
-      Axios({
-        method: 'POST',
-        url: `${host}/s_call/mobappointment_add`,
-        data: body,
-      }).then(respone => {
+    const body = {
+      first_time: `${fromDate.getHours()}:${fromDate.getMinutes()}`,
+      end_time: `${toDate.getHours()}:${toDate.getMinutes()}`,
+      appointment_technician: technician,
+      appointment_date: complaintDate,
+      appointment_remark: complaintRemarks,
+      vhpxappointment: SingleData?._id,
+      user: user,
+      compid: compid,
+      divid: divid,
+      masterid: masterid,
+    };
+
+    Axios({
+      method: 'POST',
+      url: `${host}/s_call/mobappointment_add`,
+      data: body,
+    })
+      .then(respone => {
         Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
         const todayDate = moment(new Date()).format('DD/MM/YYYY');
         setFromDate(new Date(1598051730000));
@@ -333,54 +370,14 @@ function CallSummary({navigation, route}) {
         setComplaintDate(todayDate);
         setComplaintRemarks('');
         setTechnician('');
+        setLoading(false);
         nav.goBack();
+      })
+      .catch(error => {
+        Toast.showWithGravity('Data Submit Failed.', Toast.LONG, Toast.BOTTOM);
+        setLoading(false);
       });
-    };
-    submitData();
-    setLoading(false);
   };
-
-  // Add Alloted to Engineer
-  const [SingleData, setSingleData] = useState({});
-  const [charges, setCharges] = useState('');
-  const [engineerDate, setEngineerDate] = useState(Date.now());
-  const [engineerRemarks, setEngineerRemarks] = useState('');
-  const [feedback, setFeedback] = useState('');
-  const [ta, setTa] = useState(0);
-  const [status, setStatus] = useState('');
-  const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [warrantyType, setWarrantyType] = useState('');
-  const [show, setShow] = useState(true);
-
-  const [visit_group, setArray] = useState([
-    {
-      visit_qty: '',
-      visit_spare_part: '',
-      visit_rate: '',
-      visit_status: '',
-      visit_model: '',
-      visit_product: '',
-    },
-  ]);
-
-  const [productItems, setProductItems] = useState([]);
-  const [brandItems, setBrandItems] = useState([]);
-  const [modelItems, setModelItems] = useState([]);
-
-  const [selectedProductItems, setSelectedProductItems] = useState([]);
-  const [selectedBrandItems, setSelectedBrandItems] = useState([]);
-  const [selectedModelItems, setSelectedModelItems] = useState([]);
-
-  const [productId, setProductId] = useState();
-  const [brandId, setBrandId] = useState();
-  const [modelId, setModelId] = useState();
-
-  const [imageModal, setImageModal] = useState(false);
-  const [selectedImages, setSelectedImages] = useState([]);
-  const [AutoSelectedImages, setAutoSelectedImages] = useState([]);
-  const [happyCode, setHappyCode] = useState('');
-  // const [packValue, setpackvalue] = useState();
-  // const [weight, setWeight] = useState();
 
   const handleProductClick = i => {
     setArray([
@@ -415,10 +412,6 @@ function CallSummary({navigation, route}) {
   const handleBrandId = id => {
     setBrandId(id);
   };
-
-  // Signature
-  const signatureRef = useRef();
-  const [text, setText] = useState('her');
 
   // Called after ref.current.readSignature() reads a non-empty base64 string
   const handleOK = signature => {
@@ -460,7 +453,10 @@ function CallSummary({navigation, route}) {
     }
     setLoading(true);
     const data = new FormData();
-    // let array = [];
+    const user = AuthStore?.user;
+    const masterid = AuthStore?.masterId;
+    const compid = AuthStore?.companyId;
+    const divid = AuthStore?.divisionId;
 
     if (selectedImages?.path) {
       const newImageUri =
@@ -486,12 +482,6 @@ function CallSummary({navigation, route}) {
         });
       });
     }
-
-    // visit_group.map((item, index) => {
-    //   let object = Object.assign(item, { visit: index });
-    //   array.push(object);
-    //   // data.append("visit_group", JSON.stringify(object));
-    // });
     let array = visit_group;
     data.append('visit_date', engineerDate);
     data.append('warranty_type', warrantyType);
@@ -508,22 +498,23 @@ function CallSummary({navigation, route}) {
     data.append('vhpxvisit', SingleData?._id);
     data.append('vunique_id', uniqueId);
     data.append('ac_phmob', SingleData?.s_cus?.MobileNo);
-    data.append('user', await AsyncStorage.getItem('user'));
-    data.append('compid', await AsyncStorage.getItem('companyCode'));
-    data.append('divid', await AsyncStorage.getItem('divisionCode'));
-    data.append('masterid', await AsyncStorage.getItem('masterid'));
+    data.append('user', user);
+    data.append('compid', compid);
+    data.append('divid', divid);
+    data.append('masterid', masterid);
 
-    console.log('body ----> ', JSON.stringify(data));
     await Axios({
       method: 'POST',
       url: `${host}/s_call/mobvisit_add`,
       headers: {
-        'Content-Type': 'multipart/form-data; charset=utf-8;',
+        // 'Accept': 'application/json',
+        'Content-Type': 'multipart/form-data',
       },
+      processData: false,
+      contentType: false,
       data: data,
     })
       .then(response => {
-        // console.log("data", response.data);
         Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
         const todayDate = moment(new Date()).format('DD/MM/YYYY');
         RBref.current.close();
@@ -583,10 +574,11 @@ function CallSummary({navigation, route}) {
         <SegmentedControlTab
           values={[
             'Assigned to Asc',
-            'Alloted to Engineer',
+            'Visit Schedule',
             'Part Pending',
             'Tech Advice',
           ]}
+          tabTextStyle={{color: theme1.DARK_ORANGE_COLOR}}
           selectedIndex={selectedIndex}
           tabStyle={styles.tabStyle}
           activeTabStyle={styles.activeTabStyle}
@@ -660,11 +652,7 @@ function CallSummary({navigation, route}) {
                 justifyContent: 'center',
               }}
               onPress={() => RBref.current.close()}>
-              <Icon
-                name="filter"
-                size={wp('7%')}
-                color="black"
-              />
+              <Icon name="filter" size={wp('7%')} color="black" />
             </TouchableOpacity>
           </View>
           <View
@@ -677,7 +665,7 @@ function CallSummary({navigation, route}) {
             }}
           />
 
-          <View style={{height: '85%'}}>
+          <View style={{height: height - 200}}>
             <FlatList
               data={filteredData}
               initialNumToRender={10}
@@ -902,7 +890,7 @@ function CallSummary({navigation, route}) {
                           flex: 0.4,
                           marginTop: 22,
                           fontSize: wp('3%'),
-                          color: '#222'
+                          color: '#222',
                         }}>
                         Time ({fromDate?.getHours()} Hrs:
                         {fromDate?.getMinutes()} Min)
@@ -914,7 +902,7 @@ function CallSummary({navigation, route}) {
                             borderRadius: 20,
                             padding: 10,
                             marginVertical: 10,
-                            color: '#222'
+                            color: '#222',
                           }}>
                           Select From Time
                         </Text>
@@ -927,7 +915,7 @@ function CallSummary({navigation, route}) {
                           flex: 0.2,
                           marginTop: 22,
                           fontSize: wp('3%'),
-                          color: '#222'
+                          color: '#222',
                         }}>
                         To
                       </Text>
@@ -940,7 +928,7 @@ function CallSummary({navigation, route}) {
                           flex: 0.3,
                           marginTop: 22,
                           fontSize: wp('3%'),
-                          color: '#222'
+                          color: '#222',
                         }}>
                         Time ({toDate?.getHours()} Hrs:{toDate?.getMinutes()}{' '}
                         Min)
@@ -952,7 +940,7 @@ function CallSummary({navigation, route}) {
                             borderRadius: 20,
                             padding: 10,
                             marginVertical: 10,
-                            color: '#222'
+                            color: '#222',
                           }}>
                           Select To Time
                         </Text>
@@ -972,7 +960,7 @@ function CallSummary({navigation, route}) {
                         flex: 0.3,
                         marginTop: 15,
                         fontSize: wp('3%'),
-                        color: '#222'
+                        color: '#222',
                       }}>
                       Technician
                     </Text>
@@ -1005,7 +993,7 @@ function CallSummary({navigation, route}) {
                         flex: 0.45,
                         marginTop: 22,
                         fontSize: wp('3%'),
-                        color: '#222'
+                        color: '#222',
                       }}>
                       Date:
                     </Text>
@@ -1038,7 +1026,7 @@ function CallSummary({navigation, route}) {
                         flex: 0.3,
                         marginTop: 15,
                         fontSize: wp('3%'),
-                        color: '#222'
+                        color: '#222',
                       }}>
                       Remark{' '}
                     </Text>
@@ -1178,7 +1166,7 @@ function CallSummary({navigation, route}) {
                       ]}
                       placeholder="Invoice No."
                       placeholderTextColor="#bbb"
-                      value={invoiceNumber}
+                      defaultValue={invoiceNumber?.toString()}
                       onChangeText={text => setInvoiceNumber(text)}
                     />
                   </View>
@@ -1451,7 +1439,7 @@ function CallSummary({navigation, route}) {
                               ]}
                               placeholder="Quantity"
                               placeholderTextColor="#bbb"
-                              defaultValue={Number(x?.visit_qty)}
+                              defaultValue={x?.visit_qty?.toString()}
                               onChangeText={value =>
                                 handleProductDetails(value, i, 'visit_qty')
                               }
@@ -1472,7 +1460,7 @@ function CallSummary({navigation, route}) {
                               ]}
                               placeholder="Rate"
                               placeholderTextColor="#bbb"
-                              defaultValue={x.visit_rate}
+                              value={x?.visit_rate?.toString()}
                               onChangeText={value =>
                                 handleProductDetails(value, i, 'visit_rate')
                               }
@@ -1488,7 +1476,7 @@ function CallSummary({navigation, route}) {
                                 margin: 10,
                               },
                             ]}>
-                            {visit_group.length - 1 === i && (
+                            {visit_group?.length - 1 === i && (
                               <TouchableOpacity
                                 onPress={() => handleProductClick(i)}
                                 style={[
@@ -1501,7 +1489,7 @@ function CallSummary({navigation, route}) {
                               </TouchableOpacity>
                             )}
 
-                            {visit_group.length !== 1 && (
+                            {visit_group?.length !== 1 && (
                               <TouchableOpacity
                                 onPress={() => handleRemoveClick(i)}
                                 style={styles.button}>
@@ -1570,7 +1558,7 @@ function CallSummary({navigation, route}) {
                             ]}
                             placeholder="Charges"
                             placeholderTextColor="#bbb"
-                            value={charges}
+                            value={charges?.toString()}
                             onChangeText={text => setCharges(text)}
                           />
 
@@ -1587,7 +1575,7 @@ function CallSummary({navigation, route}) {
                             ]}
                             placeholder="TA (in km)"
                             placeholderTextColor="#bbb"
-                            value={ta}
+                            value={ta?.toString()}
                             onChangeText={text => setTa(text)}
                           />
                         </View>
@@ -1611,7 +1599,7 @@ function CallSummary({navigation, route}) {
                             ]}
                             placeholder="Remarks"
                             placeholderTextColor="#bbb"
-                            value={engineerRemarks}
+                            value={engineerRemarks?.toString()}
                             onChangeText={text => setEngineerRemarks(text)}
                           />
 
@@ -1628,7 +1616,7 @@ function CallSummary({navigation, route}) {
                             ]}
                             placeholder="Feedback"
                             placeholderTextColor="#bbb"
-                            value={feedback}
+                            value={feedback?.toString()}
                             onChangeText={text => setFeedback(text)}
                           />
                         </View>
@@ -1687,7 +1675,7 @@ function CallSummary({navigation, route}) {
   );
 }
 
-export default CallSummary;
+export default observer(CallSummary);
 
 const styles = StyleSheet.create({
   container: {flex: 1, padding: 16, paddingTop: 30, backgroundColor: '#fff'},
@@ -1714,17 +1702,17 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   tabStyle: {
-    borderColor: theme1.MEDIUM_BLUE_COLOR,
+    borderColor: theme1.MEDIUM_ORANGE_COLOR,
   },
   activeTabStyle: {
-    backgroundColor: theme1.MEDIUM_BLUE_COLOR,
+    backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
   },
   button1: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     width: wp('40%'),
-    backgroundColor: theme1.DARK_BLUE_COLOR,
+    backgroundColor: theme1.DARK_ORANGE_COLOR,
     padding: 10,
     paddingHorizontal: 25,
     marginHorizontal: 20,
@@ -1741,7 +1729,7 @@ const styles = StyleSheet.create({
     width: wp('40%'),
     top: 4,
     left: 0,
-    backgroundColor: theme1.DARK_BLUE_COLOR,
+    backgroundColor: theme1.DARK_ORANGE_COLOR,
     padding: 10,
     paddingHorizontal: 25,
     borderRadius: 10,
@@ -1776,7 +1764,7 @@ const styles = StyleSheet.create({
   ListButton: {
     width: '30%',
     height: 45,
-    backgroundColor: theme1.MEDIUM_BLUE_COLOR,
+    backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
     borderRadius: 7,
     marginTop: 5,
     justifyContent: 'center',
