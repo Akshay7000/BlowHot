@@ -1,48 +1,71 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import axios, {Axios} from 'axios';
+import {observer} from 'mobx-react-lite';
 import moment from 'moment';
 import React, {useEffect, useState} from 'react';
 import {Image, Linking, StyleSheet, Text, View} from 'react-native';
-import {Col, Grid, Row} from 'react-native-easy-grid';
 import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import theme1 from '../../components/styles/DarkTheme';
+import {host} from '../../Constants/Host';
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from '../../responsiveLayout/ResponsiveLayout';
-import {host} from '../../Constants/Host';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import theme1 from '../../components/styles/DarkTheme';
 import AuthStore from '../../Mobx/AuthStore';
-import {observer} from 'mobx-react-lite';
 
-const Landing = props => {
+const Landing = () => {
+  const navigation = useNavigation();
+  const isFocused = navigation?.isFocused();
+  const [AllData, setAllData] = useState([]);
+
   const attendanceHandler = () => {
-    props.navigation.navigate('Attendance');
+    navigation.navigate('Attendance');
   };
 
   const attendanceListHandler = () => {
-    props.navigation.navigate('Attendance List');
+    navigation.navigate('Attendance List');
   };
 
   const callVisitEntryHandler = () => {
-    props.navigation.navigate('Call Visit Entry');
+    navigation.navigate('Call Visit Entry');
   };
 
   const callVisitEntryListHandler = () => {
-    props.navigation.navigate('Call Visit Entry List');
+    navigation.navigate('Call Visit Entry List');
   };
 
   const callSummaryHandler = () => {
-    props.navigation.navigate('Call Summary');
+    navigation.navigate('Call Summary');
   };
 
   const claimStatusHandler = () => {
-    props.navigation.navigate('Claim Status');
+    navigation.navigate('Claim Status');
   };
 
   const comingSoonHandler = () => {
-    props.navigation.navigate('Claim Status');
+    navigation.navigate('Claim Status');
   };
+
+  const getAllData = async () => {
+    try {
+      axios
+        .post(
+          `${host}/call_summary/mobcall_summarydb?masterid=${AuthStore?.masterId}&user=${AuthStore?.user}&compid=${AuthStore?.companyId}&divid=${AuthStore?.divisionId}&administrator=${AuthStore?.adminId}`,
+        )
+        .then(res => {
+          setAllData(res?.data?.s_call);
+        });
+    } catch (error) {
+      console.log('Error on get All Data --> ', error);
+    }
+  };
+
+  useEffect(() => {
+    getAllData();
+  }, [isFocused, AuthStore?.divisionId]);
 
   useEffect(() => {
     const use = async () => {
@@ -52,8 +75,8 @@ const Landing = props => {
       var endDate = moment(await AsyncStorage.getItem('endDate')).format(
         'DD/MM/YYYY',
       );
-      var divisionCode = AuthStore?.divisionId;
-      props.navigation.setOptions({
+      var divisionCode = await AsyncStorage.getItem('divisionName');
+      navigation.setOptions({
         headerTitle: () => {
           return (
             <View style={{diplay: 'flex', flexDirection: 'row'}}>
@@ -181,6 +204,40 @@ const Landing = props => {
               </TouchableOpacity>
             </View>
           </View>
+          <View>
+            {AllData?.length > 0 && (
+              <View
+                style={{
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  borderColor: theme1.LIGHT_ORANGE_COLOR,
+                  width: '90%',
+                  alignSelf: 'center',
+                  marginTop: 10,
+                }}>
+                {AllData?.map((d, i) => {
+                  return (
+                    <View
+                      key={i}
+                      style={{
+                        flexDirection: 'row',
+                        marginLeft: 10,
+                        marginVertical: 5,
+                      }}>
+                      <Text
+                        style={[
+                          styles.text,
+                          {width: '45%'},
+                        ]}>{`${d?._id?.call_pending} : -`}</Text>
+                      <Text style={[styles.text, {width: '45%'}]}>
+                        {d.count}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
         </View>
       </ScrollView>
       <View style={{position: 'absolute', bottom: 0, width: '100%'}}>
@@ -188,7 +245,7 @@ const Landing = props => {
           style={{
             textAlign: 'center',
             justifyContent: 'center',
-            backgroundColor: '#e75a19',
+            backgroundColor: theme1.DARK_ORANGE_COLOR,
             height: hp('9%'),
             borderTopEndRadius: 20,
             borderTopStartRadius: 20,
@@ -307,7 +364,7 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     margin: 10,
   },
   card: {

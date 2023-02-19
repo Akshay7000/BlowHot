@@ -50,25 +50,31 @@ const Stack = createStackNavigator();
 const App = () => {
   useEffect(() => {
     const unsubscribe = async () => {
-      const usr = await AsyncStorage.getItem('user');
-      const masterid = await AsyncStorage.getItem('masterid');
-      const compid = await AsyncStorage.getItem('companyCode');
-      const divid = await AsyncStorage.getItem('divisionCode');
-      const admin = await AsyncStorage.getItem('administrator');
-      const service = await AsyncStorage.getItem('salesTeam');
-      AuthStore.setIsLoggedIn(usr !== null);
-      AuthStore.setUser(usr);
-      AuthStore.setMasterId(masterid);
-      AuthStore.setCompanyId(compid);
-      AuthStore.setDivisionId(divid);
-      AuthStore.setAdmin(admin);
-      AuthStore.setSales(service);
-      AuthStore.setLoading(false);
+      try {
+        const usr = await AsyncStorage.getItem('user');
+        if (usr !== null) {
+          const masterid = await AsyncStorage.getItem('masterid');
+          const compid = await AsyncStorage.getItem('companyCode');
+          const divid = await AsyncStorage.getItem('divisionCode');
+          const admin = await AsyncStorage.getItem('administrator');
+          const service = await AsyncStorage.getItem('salesTeam');
+          AuthStore.setIsLoggedIn(usr !== null);
+          AuthStore.setUser(usr);
+          AuthStore.setMasterId(masterid);
+          AuthStore.setCompanyId(compid);
+          AuthStore.setDivisionId(divid);
+          AuthStore.setAdmin(admin);
+          AuthStore.setSales(service);
+        }
+        AuthStore.setLoading(false);
+      } catch (error) {
+        console.log('Error on set All Data ---> ', JSON.stringify(error));
+      }
     };
     unsubscribe();
-  }, []);
+  }, [AuthStore?.isLoggedIn]);
 
-  if (AuthStore.isLoading) {
+  if (AuthStore?.isLoading) {
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
         <Image source={SPLASH} alt="Logo" />
@@ -78,10 +84,10 @@ const App = () => {
 
   return (
     <NativeBaseProvider>
-      {!AuthStore.isLoading && (
+      {!AuthStore?.isLoading && (
         <View style={styles.container}>
           <Toast />
-          {AuthStore.isLoggedIn ? <AdminDrawer /> : <LoginDrawer />}
+          {AuthStore?.isLoggedIn ? <AdminDrawer /> : <LoginDrawer />}
         </View>
       )}
     </NativeBaseProvider>

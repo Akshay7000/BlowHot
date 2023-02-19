@@ -1,33 +1,28 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Axios from 'axios';
-import React, {useEffect, useRef, useState} from 'react';
+import { observer } from 'mobx-react-lite';
+import moment from 'moment';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  FlatList,
-  Linking,
-  StyleSheet,
+  FlatList, StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import DatePicker from '../../components/DatePicker';
-import {Col, Grid, Row} from 'react-native-easy-grid';
-import {ScrollView, TextInput} from 'react-native-gesture-handler';
-import Modal from 'react-native-modal';
-import {Button, Searchbar} from 'react-native-paper';
+import { Col, Grid, Row } from 'react-native-easy-grid';
+import { ScrollView } from 'react-native-gesture-handler';
+import { Searchbar } from 'react-native-paper';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import Icon from 'react-native-vector-icons/Feather';
-import SelectTwo from '../../components/SelectTwo';
-import {host} from '../../Constants/Host';
+import DatePicker from '../../components/DatePicker';
 import theme1 from '../../components/styles/DarkTheme';
+import { sortArrayByDate } from '../../Constants/array';
+import { host } from '../../Constants/Host';
+import AuthStore from '../../Mobx/AuthStore';
 import {
   heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
+  widthPercentageToDP as wp
 } from '../../responsiveLayout/ResponsiveLayout';
-import {sortArrayByDate} from '../../Constants/array';
-import moment from 'moment';
-import AuthStore from '../../Mobx/AuthStore';
-import {observer} from 'mobx-react-lite';
 
 function AttendanceList({navigation}) {
   const [startDate, setStartDate] = useState();
@@ -72,10 +67,6 @@ function AttendanceList({navigation}) {
       setData(response?.data?.atd);
       setTableData(response?.data?.atd);
       setFilteredData(sortArrayByDate(response?.data?.atd, 'Start_date'));
-      console.log(
-        'Attendance List --> ',
-        JSON.stringify(sortArrayByDate(response?.data?.atd, 'Start_date')),
-      );
       setLoading(false);
 
       // getSellers();
@@ -139,7 +130,7 @@ function AttendanceList({navigation}) {
     const divid = AuthStore?.divisionId;
 
     const URL = `http://103.231.46.238:5000/attendance/mobattd_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${startDate}&end_date=${endDate}`;
-    // console.log(URL);
+    
     Axios.get(URL).then(response => {
       setData(response?.data?.atd);
       setFilteredData(sortArrayByDate(response?.data?.atd, 'Start_date'));
@@ -151,14 +142,28 @@ function AttendanceList({navigation}) {
 
   const filter = text => {
     const array = [...tableData];
-    const newArray = array.filter(table =>
-      table.name.ACName.toLowerCase().includes(text.toLowerCase()),
-    );
+    const newArray = array.filter(table => {
+      if (
+        table.name.ACName.toLowerCase().includes(text?.toLowerCase()) ||
+        moment(new Date(table?.Start_date).toDateString())
+          .format('DD-MM-YYYY')
+          .includes(text) ||
+        moment(new Date(table?.end_date).toDateString())
+          .format('DD-MM-YYYY')
+          .includes(text) ||
+        String(table?.MilloMeterReading)?.includes(text) ||
+        String(table?.end_millometer_reading)?.includes(text) ||
+        table?.Remark?.toLowerCase()?.includes(text?.toLowerCase()) ||
+        table?.end_remark?.toLowerCase()?.includes(text?.toLowerCase()) 
+      ) {
+        return table;
+      }
+    });
     setFilteredData(newArray);
   };
 
   return (
-    <ScrollView keyboardShouldPersistTaps="always" style={{flex: 1}}>
+    <ScrollView style={{flex: 1}}>
       {!loading ? (
         <>
           <View
@@ -464,8 +469,6 @@ function AttendanceList({navigation}) {
                   </>
                 )}
                 keyExtractor={(item, index) => index}
-                // onEndReached={()=>fetchMoreTelephone()}
-                // onEndReachedThreshold={0.1}
               />
             </Grid>
           </ScrollView>
@@ -478,6 +481,7 @@ function AttendanceList({navigation}) {
 }
 
 export default observer(AttendanceList);
+
 const styles = StyleSheet.create({
   container: {flex: 1, padding: 16, paddingTop: 30, backgroundColor: '#fff'},
   singleHead: {width: 80, height: 40, backgroundColor: '#c8e1ff'},

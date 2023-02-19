@@ -37,7 +37,7 @@ import {useNavigation} from '@react-navigation/native';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AuthStore from '../../Mobx/AuthStore';
-import { observer } from 'mobx-react-lite';
+import {observer} from 'mobx-react-lite';
 
 let height = Dimensions.get('window').height;
 
@@ -55,15 +55,24 @@ function CallSummary({navigation, route}) {
   const [productName, setProductName] = useState();
   const [modelName, setModelName] = useState();
   const [uniqueId, setUniqueId] = useState();
-  const [fromTime, setFromTime] = useState(false);
 
   // Assigned to Asc
   const [technician, setTechnician] = useState('');
+  const [technicianContact, setTechnicianContact] = useState('');
   const [complaintDate, setComplaintDate] = useState();
   const [complaintRemarks, setComplaintRemarks] = useState('');
   const [fromDate, setFromDate] = useState(new Date(1598051730000));
+  const [fromTime, setFromTime] = useState(false);
   const [toTime, setToTime] = useState(false);
   const [toDate, setToDate] = useState(new Date(1598051730000));
+
+  //Reschedule
+  const [firstTime, setFirstTime] = useState(new Date(1598051730000));
+  const [firstTimeShow, setFirstTimeShow] = useState(false);
+  const [secondTimeShow, setSecondTimeShow] = useState(false);
+  const [secondTime, setSecondTime] = useState(new Date(1598051730000));
+  const [reScheduleDate, setRescheduleDate] = useState();
+  const [reScheduleRemark, setRescheduleRemark] = useState();
 
   // Add Alloted to Engineer
   const [SingleData, setSingleData] = useState({});
@@ -85,6 +94,8 @@ function CallSummary({navigation, route}) {
       visit_status: '',
       visit_model: '',
       visit_product: '',
+      visit_warranty: '',
+      visit_consumption: '',
     },
   ]);
 
@@ -104,8 +115,11 @@ function CallSummary({navigation, route}) {
   const [selectedImages, setSelectedImages] = useState([]);
   const [AutoSelectedImages, setAutoSelectedImages] = useState([]);
   const [happyCode, setHappyCode] = useState('');
+  const [ReScheduleUser, setReScheduleUser] = useState();
 
   // Signature
+  const RBref = useRef();
+  const RBref2 = useRef();
   const signatureRef = useRef();
   const [text, setText] = useState('her');
 
@@ -122,8 +136,6 @@ function CallSummary({navigation, route}) {
   //   setBroker("");
   //   setCount(count + 1);
   // };
-
-  var RBref = useRef();
 
   const handleSingleIndexSelect = index => {
     // For single Tab Selection SegmentedControlTab
@@ -163,6 +175,7 @@ function CallSummary({navigation, route}) {
     let arr = [
       'Assigned to Asc',
       'Alloted to engineer',
+      'Re-Schedule',
       'Part-Pending',
       'Technical-Advice',
     ];
@@ -182,7 +195,7 @@ function CallSummary({navigation, route}) {
     axios
       .post(`${host}/call_summary/mobcall_summary`, body)
       .then(function (response) {
-        // console.log("res -> ", JSON.stringify(response.data.s_call));
+        // console.log('res -> ', JSON.stringify(response.data.s_call));
         setTableData(response?.data?.s_call);
         setFilteredData(response?.data?.s_call);
         setLoading(false);
@@ -230,13 +243,12 @@ function CallSummary({navigation, route}) {
   };
 
   const getParticularData = id => {
-    console.log(`${host}/s_call/mobs_call_update/${id}`);
+    // console.log("URL --> ", `${host}/s_call/mobs_call_update/${id}`);
     axios
       .get(`${host}/s_call/mobs_call_update/${id}`)
       .then(function (response) {
-        const data = response.data.s_call;
-
-        console.log('Response Data --> ', JSON.stringify(data));
+        const data = response?.data?.s_call;
+        // console.log("Response mobs_call_update --> ", JSON.stringify(response?.data?.s_call));
         setSingleData(data);
         setCharges(data?.visit_charges);
         setTa(data?.ta_km);
@@ -251,25 +263,29 @@ function CallSummary({navigation, route}) {
             ? data?.visit_group
             : [
                 {
-                  visit_model: '',
-                  visit_product: '',
-                  visit_spare_part: '',
                   visit_qty: '',
+                  visit_spare_part: '',
                   visit_rate: '',
                   visit_status: '',
+                  visit_model: '',
+                  visit_product: '',
+                  visit_warranty: '',
+                  visit_consumption: '',
                 },
               ],
         );
-        setProductId(data?.s_prod._id);
-        setModelId(data?.s_mdl._id);
-        setProductName(data?.s_prod.Fg_Des);
-        setUniqueId(data?.unique_id);
-        setModelName(data?.s_mdl.Description);
-        setAutoSelectedImages(data?.filepath);
+        setProductId(data?.s_prod?._id || "");
+        setModelId(data?.s_mdl?._id || "");
+        setProductName(data?.s_prod?.Fg_Des || "");
+        setUniqueId(data?.unique_id || "");
+        setModelName(data?.s_mdl.Description || "");
+        setAutoSelectedImages(data?.filepath || "");
         setSelectedImages([]);
 
+        // console.log('Visit Group --> ', JSON.stringify(data?.visit_group));
+
         let brand = [...brandItems];
-        response.data.rawMat_mast.map((dat, index) => {
+        response?.data?.rawMat_mast?.map((dat, index) => {
           brand[index] = {
             ...brand[index],
             id: dat?.raw_matrl_nm?._id,
@@ -309,7 +325,11 @@ function CallSummary({navigation, route}) {
     const newArray = array.filter(
       table =>
         table?.s_cus?.ACName?.toLowerCase()?.includes(text?.toLowerCase()) ||
-        table.s_cus?.Address1?.toLowerCase()?.includes(text?.toLowerCase()),
+        table?.s_cus?.Address1?.toLowerCase()?.includes(text?.toLowerCase()) ||
+        table?.s_cus?.CityName?.CityName?.toLowerCase()?.includes(
+          text?.toLowerCase(),
+        ) ||
+        String(table?.s_cus?.MobileNo)?.includes(text),
     );
     setFilteredData(newArray);
   };
@@ -318,6 +338,63 @@ function CallSummary({navigation, route}) {
     const currentDate = selectedDate || fromDate;
     setFromDate(currentDate);
     setFromTime(false);
+  };
+
+  const handleFirstTime = (event, selectedDate) => {
+    const currentDate = selectedDate || firstTime;
+    setFirstTime(currentDate);
+    setFirstTimeShow(false);
+  };
+
+  const handleSecondTime = (event, selectedDate) => {
+    const currentDate = selectedDate || secondTime;
+    setSecondTime(currentDate);
+    setSecondTimeShow(false);
+  };
+
+  const handleRescheduleChanges = () => {
+    setLoading(true);
+    const user = AuthStore?.user;
+    const masterid = AuthStore?.masterId;
+    const compid = AuthStore?.companyId;
+    const divid = AuthStore?.divisionId;
+
+    const body = {
+      first_time: `${fromDate.getHours()}:${fromDate.getMinutes()}`,
+      end_time: `${toDate.getHours()}:${toDate.getMinutes()}`,
+      appointment_technician: technician,
+      technician_mobno: technicianContact,
+      appointment_date: complaintDate,
+      appointment_remark: complaintRemarks,
+      vhpxappointment: SingleData?._id,
+      user: user,
+      compid: compid,
+      divid: divid,
+      masterid: masterid,
+    };
+
+    Axios({
+      method: 'POST',
+      url: `${host}/s_call/mobreschedule_add?reschedule_date=${reScheduleDate}&first_time=${firstTime}&second_time=${secondTime}&rescheduleremark=${reScheduleRemark}`,
+    })
+      .then(respone => {
+        Toast.showWithGravity(
+          'Appointment Rescheduled.',
+          Toast.LONG,
+          Toast.BOTTOM,
+        );
+
+        setLoading(false);
+        nav.goBack();
+      })
+      .catch(error => {
+        Toast.showWithGravity(
+          'Reschedule Appointment Failed.',
+          Toast.LONG,
+          Toast.BOTTOM,
+        );
+        setLoading(false);
+      });
   };
 
   //To Time
@@ -335,7 +412,7 @@ function CallSummary({navigation, route}) {
     }
   };
 
-  const handleAppoitmentSubmit = async () => {
+  const handleAppointmentSubmit = async () => {
     setLoading(true);
     const user = AuthStore?.user;
     const masterid = AuthStore?.masterId;
@@ -346,6 +423,7 @@ function CallSummary({navigation, route}) {
       first_time: `${fromDate.getHours()}:${fromDate.getMinutes()}`,
       end_time: `${toDate.getHours()}:${toDate.getMinutes()}`,
       appointment_technician: technician,
+      technician_mobno: technicianContact,
       appointment_date: complaintDate,
       appointment_remark: complaintRemarks,
       vhpxappointment: SingleData?._id,
@@ -568,6 +646,24 @@ function CallSummary({navigation, route}) {
     }
   };
 
+  const resendHappyCode = async () => {
+    try {
+      Axios.post(`${host}/s_call/re_sms`, {
+        mob_no: SingleData?.s_cus?.MobileNo,
+        unique_id: uniqueId,
+        mongid: SingleData?._id,
+      }).then(res => {
+        Toast.showWithGravity(
+          'Code Sent Successfully',
+          Toast.LONG,
+          Toast.BOTTOM,
+        );
+      });
+    } catch (e) {
+      console.log('Error on resend Happy Code --> ', e);
+    }
+  };
+
   return (
     <View>
       <View style={{backgroundColor: '#CBD9F5', borderRadius: 6, margin: 10}}>
@@ -575,6 +671,7 @@ function CallSummary({navigation, route}) {
           values={[
             'Assigned to Asc',
             'Visit Schedule',
+            'Re-Schedule',
             'Part Pending',
             'Tech Advice',
           ]}
@@ -692,7 +789,7 @@ function CallSummary({navigation, route}) {
 
                           <View
                             style={{
-                              backgroundColor: theme1.LIGHT_BLUE_COLOR,
+                              backgroundColor: theme1.LIGHT_ORANGE_COLOR,
                             }}>
                             <List.Item
                               title="Model"
@@ -737,18 +834,46 @@ function CallSummary({navigation, route}) {
                           padding: 10,
                           borderRightWidth: 0.6,
                         }}>
-                        <Text
+                        <View
                           style={{
-                            fontSize: 14,
-                            backgroundColor: theme1.MEDIUM_BLUE_COLOR,
-                            borderRadius: 5,
-                            color: '#FFF',
-                            paddingLeft: 10,
-                            height: 30,
-                            textAlignVertical: 'center',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
                           }}>
-                          {item?.unique_id}.
-                        </Text>
+                          <Text
+                            style={{
+                              fontSize: 14,
+                              backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
+                              borderRadius: 5,
+                              color: '#FFF',
+                              paddingLeft: 10,
+                              height: 30,
+                              textAlignVertical: 'center',
+                              width: '65%',
+                            }}>
+                            {item?.unique_id}.
+                          </Text>
+                          {selectedIndex !== 0 && (
+                            <TouchableOpacity
+                              style={{
+                                backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
+                                height: 30,
+                                width: '30%',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                borderRadius: 5,
+                              }}
+                              onPress={() => {
+                                setReScheduleUser(item);
+                                RBref2.current.open();
+                              }}>
+                              <View>
+                                <Text style={styles.ListButtonText}>
+                                  Re-Schedule
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          )}
+                        </View>
 
                         <View
                           style={{
@@ -990,6 +1115,40 @@ function CallSummary({navigation, route}) {
                     <Text
                       style={{
                         width: wp('10%'),
+                        flex: 0.3,
+                        marginTop: 15,
+                        fontSize: wp('3%'),
+                        color: '#222',
+                      }}>
+                      Technician Mob No.
+                    </Text>
+                    <TextInput
+                      style={[
+                        styles.input,
+                        {
+                          backgroundColor: '#D3FD7A',
+                          width: wp('82%'),
+                          flex: 0.9,
+                          marginRight: wp('6.5%'),
+                          color: '#222',
+                        },
+                      ]}
+                      placeholder="Technician Mob No."
+                      keyboardType="decimal-pad"
+                      placeholderTextColor="#bbb"
+                      defaultValue={technicianContact}
+                      onChangeText={text => setTechnicianContact(text)}
+                    />
+                  </View>
+                  <View
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      paddingLeft: 10,
+                    }}>
+                    <Text
+                      style={{
+                        width: wp('10%'),
                         flex: 0.45,
                         marginTop: 22,
                         fontSize: wp('3%'),
@@ -1003,11 +1162,9 @@ function CallSummary({navigation, route}) {
                         height: 40,
                         justifyContent: 'center',
                         borderRadius: 5,
-                        // marginLeft: 8,
+                        marginLeft: 8,
                         marginRight: 17,
                         borderColor: '#ccc',
-                        marginTop: 0,
-                        // marginTop: 10,
                       }}
                       date={complaintDate}
                       placeholder="Date"
@@ -1055,7 +1212,7 @@ function CallSummary({navigation, route}) {
                     ]}>
                     <TouchableOpacity
                       style={styles.button1}
-                      onPress={() => handleAppoitmentSubmit()}>
+                      onPress={() => handleAppointmentSubmit()}>
                       <Text style={{color: 'white'}}>Save Changes</Text>
                     </TouchableOpacity>
                   </View>
@@ -1063,9 +1220,8 @@ function CallSummary({navigation, route}) {
               </RBSheet>
             )}
 
-            {(selectedIndex == 1 || selectedIndex == 2) && (
+            {selectedIndex !== 0 && (
               <RBSheet
-                height={hp('100%')}
                 animationType="none"
                 ref={RBref}
                 dragFromTopOnly={true}
@@ -1075,8 +1231,8 @@ function CallSummary({navigation, route}) {
                   container: {
                     borderTopEndRadius: 20,
                     borderTopStartRadius: 20,
-                    backgroundColor: theme1.LIGHT_BLUE_COLOR,
-                    height: hp('100%'),
+                    backgroundColor: theme1.LIGHT_ORANGE_COLOR,
+                    height: hp('60%'),
                   },
                 }}>
                 <ScrollView
@@ -1234,6 +1390,7 @@ function CallSummary({navigation, route}) {
                         display: 'flex',
                         flexDirection: 'row',
                         paddingLeft: 10,
+                        alignItems: 'center',
                       }}>
                       <TextInput
                         style={[
@@ -1263,6 +1420,22 @@ function CallSummary({navigation, route}) {
                           }
                         }}
                       />
+                      <TouchableOpacity
+                        onPress={() => {
+                          resendHappyCode();
+                        }}
+                        style={{
+                          height: 30,
+                          backgroundColor: theme1.DARK_ORANGE_COLOR,
+                          marginRight: 15,
+                          justifyContent: 'center',
+                          paddingHorizontal: 10,
+                          borderRadius: 8,
+                        }}>
+                        <View>
+                          <Text style={{color: theme1.White}}>Resend Code</Text>
+                        </View>
+                      </TouchableOpacity>
                     </View>
                   )}
 
@@ -1418,6 +1591,81 @@ function CallSummary({navigation, route}) {
                               }
                               name="visit_status"
                               placeholder="Select Status"
+                              placeholderStyle={{color: '#BBB'}}
+                              style={{left: -5, backgroundColor: 'transparent'}}
+                            />
+                          </View>
+                          <View style={styles.column}>
+                            <DropDownPicker
+                              items={[
+                                {label: 'Own', value: 'Own'},
+                                {label: 'Company', value: 'Company'},
+                              ]}
+                              defaultValue={x?.visit_consumption}
+                              containerStyle={{
+                                height: 40,
+                                // width: wp('30%'),
+                                top: hp('0.8%'),
+                                marginLeft: 10,
+                                flex: 1,
+                                borderColor: '#BBB',
+                                zIndex: 1000,
+                                marginBottom: 10,
+                              }}
+                              itemStyle={{}}
+                              activeItemStyle={{backgroundColor: '#BBB'}}
+                              labelStyle={{color: '#222'}}
+                              dropDownStyle={{
+                                backgroundColor: '#fafafa',
+                                width: wp('37%'),
+                                marginTop: 5,
+                              }}
+                              onChangeItem={item =>
+                                handleProductDetails(
+                                  item.value,
+                                  i,
+                                  'visit_consumption',
+                                )
+                              }
+                              name="visit_consumption"
+                              placeholder="Select Consumption"
+                              placeholderStyle={{color: '#BBB'}}
+                              style={{left: -5, backgroundColor: 'transparent'}}
+                            />
+
+                            <DropDownPicker
+                              items={[
+                                {label: 'In-Warranty', value: 'In-Warranty'},
+                                {label: 'Out-Warranty', value: 'Out-Warranty'},
+                              ]}
+                              defaultValue={x?.visit_warranty}
+                              containerStyle={{
+                                height: 40,
+                                // width: wp('30%'),
+                                top: hp('0.8%'),
+                                marginLeft: 10,
+                                flex: 1,
+                                borderColor: '#BBB',
+                                zIndex: 1000,
+                                marginBottom: 10,
+                              }}
+                              itemStyle={{}}
+                              activeItemStyle={{backgroundColor: '#BBB'}}
+                              labelStyle={{color: '#222'}}
+                              dropDownStyle={{
+                                backgroundColor: '#fafafa',
+                                width: wp('37%'),
+                                marginTop: 5,
+                              }}
+                              onChangeItem={item =>
+                                handleProductDetails(
+                                  item.value,
+                                  i,
+                                  'visit_warranty',
+                                )
+                              }
+                              name="visit_warranty"
+                              placeholder="Select Warranty"
                               placeholderStyle={{color: '#BBB'}}
                               style={{left: -5, backgroundColor: 'transparent'}}
                             />
@@ -1622,7 +1870,7 @@ function CallSummary({navigation, route}) {
                         </View>
                         <View style={{flex: 1}}>
                           <SignatureScreen
-                            //     ref={signatureRef}
+                            ref={signatureRef}
                             onEnd={handleEnd}
                             onOK={handleOK}
                             onEmpty={handleEmpty}
@@ -1662,6 +1910,206 @@ function CallSummary({navigation, route}) {
                 </ScrollView>
               </RBSheet>
             )}
+
+            <RBSheet
+              animationType="none"
+              ref={RBref2}
+              dragFromTopOnly={true}
+              closeOnPressMask={false}
+              onClose={a => console.log('close -> ', a)}
+              customStyles={{
+                container: {
+                  borderTopEndRadius: 20,
+                  borderTopStartRadius: 20,
+                  backgroundColor: theme1.LIGHT_ORANGE_COLOR,
+                  height: hp('60%'),
+                },
+              }}>
+              <ScrollView
+                style={{flex: 1}}
+                scrollEnabled
+                keyboardShouldPersistTaps="always">
+                <View
+                  style={{
+                    padding: 8,
+                    textAlign: 'center',
+                    alignItems: 'center',
+                    borderBottomWidth: 1,
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}>
+                  <View />
+                  <Text style={{fontSize: 17, fontWeight: 'bold'}}>
+                    {`Reschedule - ${ReScheduleUser?.s_cus?.ACName}`}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      RBref2.current.close();
+                      setReScheduleUser({});
+                    }}
+                    style={{
+                      marginRight: 20,
+                      height: 30,
+                      width: 30,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}>
+                    <FIcon name="close" size={20} />
+                  </TouchableOpacity>
+                </View>
+
+                <View>
+                  {firstTimeShow && (
+                    <DateTimePicker
+                      value={firstTime}
+                      mode="time"
+                      is24Hour={true}
+                      display="default"
+                      onChange={handleFirstTime}
+                    />
+                  )}
+                  {secondTimeShow && (
+                    <DateTimePicker
+                      value={secondTime}
+                      mode="time"
+                      is24Hour={true}
+                      display="default"
+                      onChange={handleSecondTime}
+                    />
+                  )}
+                </View>
+                <View
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    // paddingLeft: 10,
+                    justifyContent: 'space-around',
+                  }}>
+                  <View style={{flex: 0.4}}>
+                    <Text
+                      style={{
+                        width: wp('50%'),
+                        flex: 0.4,
+                        marginTop: 22,
+                        fontSize: wp('3%'),
+                        color: '#222',
+                        marginLeft: 30,
+                      }}>
+                      Time ({firstTime?.getHours()} Hrs:
+                      {firstTime?.getMinutes()} Min)
+                    </Text>
+                    <TouchableOpacity onPress={() => setFirstTimeShow(true)}>
+                      <Text
+                        style={{
+                          borderWidth: 1,
+                          borderRadius: 20,
+                          padding: 10,
+                          paddingRight: 5,
+                          marginVertical: 10,
+                          color: '#222',
+                        }}>
+                        Reschedule From Time
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={{flex: 0.4}}>
+                    <Text
+                      style={{
+                        width: wp('50%'),
+                        flex: 0.4,
+                        marginTop: 22,
+                        fontSize: wp('3%'),
+                        color: '#222',
+                        marginLeft: 30,
+                      }}>
+                      Time ({secondTime?.getHours()} Hrs:
+                      {secondTime?.getMinutes()} Min)
+                    </Text>
+                    <TouchableOpacity onPress={() => setSecondTimeShow(true)}>
+                      <Text
+                        style={{
+                          borderWidth: 1,
+                          borderRadius: 20,
+                          padding: 10,
+                          marginVertical: 10,
+                          color: '#222',
+                        }}>
+                        Reschedule To Time
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                <View
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    paddingLeft: 10,
+                    width: '90%',
+                    justifyContent: 'space-around',
+                    alignSelf: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      // borderWidth: 1,
+                      borderRadius: 20,
+                      padding: 10,
+                      marginVertical: 10,
+                      color: '#222',
+                    }}>
+                    Reschedule Date:
+                  </Text>
+                  <DatePicker
+                    conatinerStyles={{
+                      width: wp('42%'),
+                      height: 40,
+                      justifyContent: 'center',
+                      borderRadius: 5,
+                      marginLeft: 8,
+                      marginRight: 17,
+                      borderColor: '#222',
+                    }}
+                    date={reScheduleDate}
+                    placeholderTextColor={'#222'}
+                    placeholder="Date"
+                    setDate={setRescheduleDate}
+                  />
+                </View>
+                <TextInput
+                  value={reScheduleRemark}
+                  onChangeText={text => {
+                    if(text.length <= 100){
+                    setRescheduleRemark(text);
+                    }
+                  }}
+                  numberOfLines={3}
+                  placeholder={'Reschedule Remark'}
+                  placeholderTextColor={"#444"}
+                  style={{
+                    width: '90%',
+                    height: 70,
+                    color: '#222',
+                    alignSelf: 'center',
+                    borderWidth: 1,
+                    borderRadius: 7,
+
+                  }}
+                />
+                <Text style={{marginLeft: 20}}>{`${reScheduleRemark?.length || 0}/100`}</Text>
+                <View
+                  style={[
+                    styles.column,
+                    {justifyContent: 'center', marginTop: hp('2%')},
+                  ]}>
+                  <TouchableOpacity
+                    style={styles.button1}
+                    onPress={() => handleRescheduleChanges()}>
+                    <Text style={{color: 'white'}}>Save Changes</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </RBSheet>
           </View>
           <ImagePickerModal
             isVisible={imageModal}

@@ -1,28 +1,27 @@
 import axios from 'axios';
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
   Text,
   TextInput,
   ToastAndroid,
-  View,
+  View
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {Col, Row} from 'react-native-easy-grid';
-import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
+import { Row } from 'react-native-easy-grid';
+import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import SelectMultiple from 'react-native-select-multiple';
 import SelectTwo from '../../components/SelectTwo';
 import theme1 from '../../components/styles/DarkTheme';
 // import * as Updates from "expo-updates";
-import {host} from '../../Constants/Host';
+import { useNavigation } from '@react-navigation/native';
+import { observer } from 'mobx-react-lite';
+import { host } from '../../Constants/Host';
+import AuthStore from '../../Mobx/AuthStore';
 import {
   heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
+  widthPercentageToDP as wp
 } from '../../responsiveLayout/ResponsiveLayout';
-import {useNavigation} from '@react-navigation/native';
-import {observer} from 'mobx-react-lite';
-import AuthStore from '../../Mobx/AuthStore';
 
 const AddParty = ({navigation, route}) => {
   const nav = useNavigation();

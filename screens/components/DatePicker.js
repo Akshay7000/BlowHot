@@ -4,6 +4,7 @@ import {StyleSheet, TextInput, TouchableOpacity, View} from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+
 const DatePicker = ({
   date,
   setDate,
@@ -35,36 +36,7 @@ const DatePicker = ({
     setDate(dateTime);
     hideDatePicker();
   };
-  const styles = StyleSheet.create({
-    mainContainer: {
-      width: '48%',
-      height: 40,
-      marginTop: 2,
-      justifyContent: 'space-between',
-      borderBottomWidth: 1,
-      borderRadius: 5,
-      borderWidth: 1,
-    },
-    textInput: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-around',
-    },
-    text: {
-      // flex: 1,
-      // height: 40,
-      textAlignVertical: 'center',
-      fontSize: 14,
-      fontWeight: '600',
-      letterSpacing: 0.1,
-      color: 'black',
-      borderRadius: 14,
-    },
-    heading: {
-      color: '#6C6C6C',
-      fontSize: 10,
-    },
-  });
+
   return (
     <View style={[styles.mainContainer, conatinerStyles]}>
       <TouchableOpacity disabled={isDisable} onPress={() => showDatePicker()}>
@@ -106,3 +78,35 @@ const DatePicker = ({
 };
 
 export default DatePicker;
+
+const styles = StyleSheet.create({
+  mainContainer: {
+    width: '48%',
+    height: 40,
+    marginTop: 2,
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderRadius: 5,
+    borderWidth: 1,
+  },
+  textInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  text: {
+    flex: 1,
+    paddingLeft: 10,
+    height: 40,
+    textAlignVertical: 'center',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.1,
+    color: 'black',
+    borderRadius: 14,
+  },
+  heading: {
+    color: '#6C6C6C',
+    fontSize: 10,
+  },
+});

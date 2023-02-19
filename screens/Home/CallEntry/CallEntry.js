@@ -1,6 +1,6 @@
 import axios from 'axios';
 import moment from 'moment';
-import React, { useEffect, useRef, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -9,23 +9,23 @@ import {
   Text,
   TextInput,
   ToastAndroid,
-  View
+  View,
 } from 'react-native';
 
 import Geolocation from '@react-native-community/geolocation';
-import { useNavigation } from '@react-navigation/native';
-import { observer } from 'mobx-react-lite';
-import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
+import {useNavigation} from '@react-navigation/native';
+import {observer} from 'mobx-react-lite';
+import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
 import Toast from 'react-native-simple-toast';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import DatePicker from '../../components/DatePicker';
 import SelectTwo from '../../components/SelectTwo';
 import theme1 from '../../components/styles/DarkTheme';
-import { host } from '../../Constants/Host';
+import {host} from '../../Constants/Host';
 import AuthStore from '../../Mobx/AuthStore';
 import {
   heightPercentageToDP as hp,
-  widthPercentageToDP as wp
+  widthPercentageToDP as wp,
 } from '../../responsiveLayout/ResponsiveLayout';
 
 const {width, height} = Dimensions.get('window');
@@ -40,12 +40,14 @@ function CallEntry({navigation, route}) {
   }
   const nav = useNavigation();
   const [mobileNumber, setMobileNumber] = useState('');
+  const [searchedCity, setSearchedCity] = useState('');
+  const [searchedName, setSearchedName] = useState('');
   const [searchedUser, setSearchedUser] = useState({});
+  const [searchedUserList, setSearchedUserList] = useState([]);
+  const [filteredUserList, setFilteredUserList] = useState([]);
   const [searchingCustomer, setSearchingCustomer] = useState(false);
+  const [searchingCustomerCity, setSearchingCustomerCity] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const [dealerItems, setDealerItems] = useState([]);
-
   const [callTypeItems, setCallTypeItems] = useState([]);
   const [callTypeId, setCallTypeId] = useState();
 
@@ -242,8 +244,6 @@ function CallEntry({navigation, route}) {
   //Call Type List
 
   const getCallType = async masterid => {
-    console.log('call');
-
     const data = {
       method: 'GET',
       headers: {
@@ -268,8 +268,6 @@ function CallEntry({navigation, route}) {
 
   // Product List
   const getProducts = async masterid => {
-    console.log('products');
-
     const data = {
       method: 'GET',
       headers: {
@@ -290,9 +288,6 @@ function CallEntry({navigation, route}) {
         let model = [];
         data.model.map(dat => model.push({id: dat._id, name: dat.Description}));
         return {brand, products, model};
-        setBrandItems(brand);
-        setProductItems(products);
-        setModelItems(model);
       });
   };
 
@@ -392,12 +387,14 @@ function CallEntry({navigation, route}) {
       setSearchingCustomer(true);
       axios
         .get(
-          `${host}/c_visit_entry/mob_calldealermob?MobileNo=${mobileNumber}&masterid=${masterId}`,
+          `${host}/c_visit_entry/mob_calldealermob?MobileNo=${mobileNumber}&masterid=${AuthStore?.masterId}`,
         )
         .then(res => {
-          console.log('Mobile Response --> ', res.data.results);
           if (res.data.results.length > 0) {
-            setSearchedUser(res.data.results[0]);
+            setSearchedUser({
+              _id: res?.data?.results[0]?._id,
+              ACName: res?.data?.results[0]?.ACName,
+            });
             setSearchingCustomer(false);
           } else {
             setSearchingCustomer(false);
@@ -412,7 +409,8 @@ function CallEntry({navigation, route}) {
           }
         })
         .catch(e => {
-          console.log('Mobile Res Error --> ', res);
+          setSearchingCustomer(false);
+          console.log('Mobile Res Error --> ', e);
         });
     } else {
       ToastAndroid.showWithGravity(
@@ -420,6 +418,41 @@ function CallEntry({navigation, route}) {
         ToastAndroid.SHORT,
         ToastAndroid.TOP,
       );
+    }
+  };
+
+  const searchCustomerByCity = () => {
+    if (searchedCity.length > 1) {
+      setSearchingCustomerCity(true);
+      axios
+        .get(
+          `${host}/c_visit_entry/mob_calldealercity?masterid=${AuthStore?.masterId}&cityname=${searchedCity}`,
+        )
+        .then(res => {
+          if (res?.data?.results?.length > 0) {
+            setSearchedUserList(res?.data?.results);
+            setFilteredUserList(res?.data?.results);
+            setSearchingCustomerCity(false);
+          } else {
+            setSearchingCustomerCity(false);
+          }
+        })
+        .catch(e => {
+          setSearchingCustomerCity(false);
+          ``;
+          console.log('City Res Error --> ', e);
+        });
+    }
+  };
+
+  const searchByName = name => {
+    if (name?.length > 0) {
+      const data = searchedUserList?.filter(a =>
+        a.ACName.toLowerCase().includes(name?.toLowerCase()),
+      );
+      setFilteredUserList(data);
+    }else{
+      
     }
   };
 
@@ -487,6 +520,118 @@ function CallEntry({navigation, route}) {
                   width: '90%',
                   color: '#222',
                 }}
+                // keyboardType={'phone-pad'}
+                returnKeyType="search"
+                enablesReturnKeyAutomatically={true}
+                placeholder="Search by City"
+                placeholderTextColor={'#BBB'}
+                value={searchedCity}
+                onChangeText={text => setSearchedCity(text)}
+                onEndEditing={() => {
+                  searchCustomerByCity();
+                }}
+              />
+              {!searchingCustomerCity ? (
+                <TouchableOpacity onPress={() => searchCustomerByCity()}>
+                  <EvilIcons name={'search'} size={30} color="#222" />
+                </TouchableOpacity>
+              ) : (
+                <ActivityIndicator />
+              )}
+            </View>
+            {searchedUserList.length > 0 && (
+              <View
+                style={[
+                  styles.column,
+                  {
+                    borderWidth: 1,
+                    borderColor: '#ccc',
+                    borderRadius: 5,
+                    justifyContent: 'space-between',
+                    marginHorizontal: 8,
+                    paddingHorizontal: 10,
+                    alignItems: 'center',
+                  },
+                ]}>
+                <TextInput
+                  style={{
+                    height: 40,
+                    width: '90%',
+                    color: '#222',
+                  }}
+                  // keyboardType={'phone-pad'}
+                  returnKeyType="search"
+                  enablesReturnKeyAutomatically={true}
+                  placeholder="Search by name"
+                  placeholderTextColor={'#BBB'}
+                  value={searchedName}
+                  onChangeText={text => {
+                    searchByName(text);
+                    setSearchedName(text);
+                  }}
+                />
+              </View>
+            )}
+            {filteredUserList?.length > 0 && (
+              <ScrollView
+                style={{
+                  height: 200,
+                  backgroundColor: theme1.White,
+                  borderRadius: 8,
+                  borderColor: theme1.LIGHT_ORANGE_COLOR,
+                }}>
+                {filteredUserList?.map((singleUser, ind) => (
+                  <TouchableOpacity
+                    key={ind}
+                    onPress={() => {
+                      setSearchedUser(singleUser);
+                      setSearchedUserList([]);
+                      setFilteredUserList([]);
+                    }}>
+                    <View
+                      style={{
+                        backgroundColor: theme1.LIGHT_ORANGE_COLOR,
+                        flexDirection: 'row',
+                        width: '90%',
+                        alignSelf: 'center',
+                        height: 40,
+                        borderRadius: 8,
+                        margin: 5,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}>
+                      <Text
+                        style={{
+                          color: theme1?.White,
+                          backgroundColor: theme1?.LIGHT_ORANGE_COLOR,
+                          // width: '30%',
+                        }}>
+                        {singleUser?.ACName}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+            <View
+              style={[
+                styles.column,
+                {
+                  borderWidth: 1,
+                  borderColor: '#ccc',
+                  borderRadius: 5,
+                  justifyContent: 'space-between',
+                  marginHorizontal: 8,
+                  paddingHorizontal: 10,
+                  alignItems: 'center',
+                },
+              ]}>
+              <TextInput
+                style={{
+                  height: 40,
+                  width: '90%',
+                  color: '#222',
+                }}
                 keyboardType={'phone-pad'}
                 returnKeyType="search"
                 enablesReturnKeyAutomatically={true}
@@ -502,15 +647,6 @@ function CallEntry({navigation, route}) {
               ) : (
                 <ActivityIndicator />
               )}
-              {/* <SelectTwo
-                  items={dealerItems}
-                  selectedItem={selectedDealerItems}
-                  handleId={handleDealerId}
-                  keyboardType
-                  width={wp("80%")}
-                  placeholder="Mobile number"
-                  borderColor="#ccc"
-                /> */}
             </View>
             <View style={styles.column}>
               <TextInput
@@ -529,7 +665,7 @@ function CallEntry({navigation, route}) {
                 value={searchedUser?.ACName}
               />
             </View>
-            <View style={styles.column}>
+            {/* <View style={styles.column}>
               <TextInput
                 style={{
                   width: wp('40%'),
@@ -560,7 +696,7 @@ function CallEntry({navigation, route}) {
                 placeholderTextColor={'#BBB'}
                 value={searchedUser?.CityName?.CityName}
               />
-            </View>
+            </View> */}
 
             <View style={styles.column}>
               <TextInput

@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from '@react-native-community/geolocation';
 import {useNavigation} from '@react-navigation/native';
 import Axios from 'axios';
-import { observer } from 'mobx-react-lite';
+import {observer} from 'mobx-react-lite';
 import moment from 'moment';
 import React, {useLayoutEffect, useState} from 'react';
 import {
@@ -185,12 +185,11 @@ function Attendance({navigation, route}) {
       success => {
         Geolocation.getCurrentPosition(
           pos => {
-            console.log('Location --> ', pos?.coords);
             setLocation(pos);
             setLoading(true);
           },
           error => {
-            Alert.alert('Permission to access location was denied');
+            Alert.alert('Cannot get current location');
           },
           {enableHighAccuracy: true},
         );
@@ -441,11 +440,10 @@ function Attendance({navigation, route}) {
                   <DatePicker
                     conatinerStyles={{
                       width: wp('42%'),
-                      height: 35,
+                      height: 40,
                       justifyContent: 'center',
                       borderRadius: 5,
                       marginTop: 5,
-                      // marginRight: 17,
                       borderColor: '#ccc',
                     }}
                     date={endDate}
