@@ -4,8 +4,6 @@ import moment from 'moment';
 import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
-  FlatList,
   Linking,
   StyleSheet,
   Text,
@@ -26,7 +24,7 @@ import {
 import {observer} from 'mobx-react-lite';
 import AuthStore from '../../Mobx/AuthStore';
 
-function CallEntryList({navigation}) {
+function CallEntryListold({navigation}) {
   const [loading, setLoading] = useState(true);
   const [tableData, setTableData] = useState();
   const [searchName, setSearchName] = useState();
@@ -77,17 +75,25 @@ function CallEntryList({navigation}) {
       table =>
         table?.Ship_party?.ACName?.toLowerCase()?.includes(
           text.toLowerCase(),
-        ) ||
-        table?.ac_cty?.call?.toLowerCase()?.includes(text.toLowerCase()) ||
-        String(table?.vouc_code)?.includes(text),
+        ) || table?.ac_cty?.call?.toLowerCase()?.includes(text.toLowerCase()),
     );
     setFilteredData(newArray);
   };
 
   return (
-    <View>
+    <ScrollView keyboardShouldPersistTaps="always">
       {!loading ? (
         <>
+          <View
+            style={{
+              borderBottomColor: 'grey',
+              borderBottomWidth: 0.5,
+              marginBottom: 0,
+              padding: 0,
+              margin: 0,
+            }}
+          />
+
           <View
             style={{
               display: 'flex',
@@ -108,6 +114,23 @@ function CallEntryList({navigation}) {
                 borderRadius: 10,
               }}
             />
+            <TouchableOpacity
+              style={{
+                height: hp('6%'),
+                flex: 0.1,
+                marginLeft: 10,
+                backgroundColor: '#D9D9D9',
+                borderRadius: 10,
+                marginTop: 5,
+                paddingLeft: 10,
+                paddingRight: 10,
+                marginRight: 8,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onPress={() => RBref.open()}>
+              <Icon name="filter" size={wp('7%')} color="black" />
+            </TouchableOpacity>
           </View>
           <View
             style={{
@@ -119,122 +142,122 @@ function CallEntryList({navigation}) {
             }}
           />
 
-          <View style={{height: Dimensions.get('screen').height - 205}}>
-            <FlatList
-              data={filteredData}
-              initialNumToRender={10}
-              keyExtractor={item => item?.vouc_code}
-              renderItem={({item}) => (
-                <View
-                  style={{
-                    width: '90%',
-                    // height: 175,
-                    backgroundColor: theme1.LIGHT_ORANGE_COLOR,
-                    alignSelf: 'center',
-                    marginTop: 10,
-                    borderRadius: 18,
-                  }}>
-                  <View
-                    style={{
-                      width: '90%',
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignSelf: 'center',
-                      alignItems: 'center',
-                      marginTop: 5,
-                    }}>
-                    <Text style={{fontSize: 15, color: '#FFF'}}>
-                      {item?.vouc_code}.
-                    </Text>
-                    <Text style={{fontSize: 12, color: '#FFF'}}>
-                      {moment(new Date(item?.so_date).toDateString()).format(
-                        'DD-MM-YYYY',
-                      )}
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      borderBottomWidth: 1,
-                      borderBottomColor: theme1.GreyWhite,
-                      flexDirection: 'row',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      alignSelf: 'center',
-                      width: '90%',
-                    }}>
-                    <Text
-                      style={{
-                        fontSize: 15,
-                        color: '#FFF',
-                        marginRight: 20,
-                        width: '85%',
-                      }}
-                      numberOfLines={1}>{`${item?.Ship_party?.ACName}`}</Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        item?.Ship_party?.MobileNo &&
-                          Linking.openURL(
-                            `tel:${item?.Ship_party?.MobileNo}`,
-                          ).catch(err => {
-                            console.error('An error occurred', err);
-                          });
-                      }}>
+          <View>
+            {filteredData?.map(dat => (
+              <>
+                <List.Section style={{top: 8}}>
+                  <List.Accordion
+                    title={`Dealer Name:${dat.Ship_party?.ACName}`}
+                    titleStyle={{color: theme1.SemiBlack}}
+                    description={`Call Type:${dat.ac_cty?.call}`}
+                    left={props => (
                       <View
                         style={{
-                          width: 25,
-                          height: 25,
-                          backgroundColor: 'green',
-                          borderRadius: 15,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          marginBottom: 10,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          padding: 10,
+                          borderRightWidth: 0.6,
                         }}>
-                        <Icon name="phone" color={theme1.White} size={15} />
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                  {item?.sales_or_group.map((SG, index) => (
-                    <View
-                      key={index}
-                      style={{width: '90%', alignSelf: 'center'}}>
-                      <View style={styles.SgView}>
-                        <Text style={styles.SgLabel}>Product: - </Text>
-                        <Text style={styles.SgValue}>
-                          {SG?.so_disc?.Fg_Des}
+                        <Text style={{fontSize: 15, color: '#222'}}>
+                          {dat.vouc_code}.
+                        </Text>
+                        <Text style={{fontSize: 10, color: '#222'}}>
+                          {new Date(dat.so_date).toDateString()}
                         </Text>
                       </View>
-                      <View style={styles.SgView}>
-                        <Text style={styles.SgLabel}>Brand: - </Text>
-                        <Text style={styles.SgValue}>
-                          {SG?.brandid?.Description}
-                        </Text>
-                      </View>
-                      <View style={styles.SgView}>
-                        <Text style={styles.SgLabel}>Model: - </Text>
-                        <Text style={styles.SgValue}>
-                          {SG?.model?.Description}
-                        </Text>
-                      </View>
-                      <View style={styles.SgView}>
-                        <Text style={styles.SgLabel}>Quantity: - </Text>
-                        <Text style={styles.SgValue}>{SG?.so_qty}</Text>
-                      </View>
+                    )}>
+                    {dat.sales_or_group.map((prod, i) => (
+                      <>
+                        <View
+                          style={{
+                            borderBottomColor: 'black',
+                            borderBottomWidth: 1,
+                            marginBottom: 0,
+                            padding: 0,
+                            margin: 0,
+                          }}
+                        />
+
+                        <View
+                          style={{
+                            flex: 1,
+                            flexDirection: 'row',
+                            backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
+                          }}>
+                          <List.Item
+                            title="Product"
+                            description={prod.so_disc?.Fg_Des}
+                            index={i}
+                            style={{
+                              marginTop: 5,
+                              flex: 0.3,
+                              borderRightWidth: 0.8,
+                              borderColor: theme1.GreyWhite,
+                            }}
+                          />
+                          <List.Item
+                            title="Brand"
+                            index={i}
+                            description={prod.brandid?.Description}
+                            style={{
+                              marginTop: 5,
+                              flex: 0.3,
+                              borderRightWidth: 0.8,
+                              borderColor: theme1.GreyWhite,
+                            }}
+                          />
+                          <List.Item
+                            title="Model"
+                            index={i}
+                            description={prod.model?.Description}
+                            style={{
+                              marginTop: 5,
+                              flex: 0.3,
+                              borderRightWidth: 0.8,
+                              borderColor: theme1.GreyWhite,
+                            }}
+                          />
+                          <List.Item
+                            title="Quantity"
+                            index={i}
+                            description={prod.so_qty}
+                            style={{marginTop: 5, flex: 0.3}}
+                          />
+                        </View>
+                      </>
+                    ))}
+                  </List.Accordion>
+                  <TouchableOpacity
+                    style={styles.ListButton}
+                    onPress={() => {
+                      dat?.Ship_party?.MobileNo &&
+                        Linking.openURL(
+                          `tel:${dat?.Ship_party?.MobileNo}`,
+                        ).catch(err => {
+                          console.error('An error occurred', err);
+                        });
+                    }}>
+                    <View>
+                      <Text style={styles.ListButtonText}>
+                        {dat?.Ship_party?.MobileNo}
+                      </Text>
                     </View>
-                  ))}
-                  <View
-                    style={[
-                      styles.SgView,
-                      {width: '90%', alignSelf: 'center', marginBottom: 10},
-                    ]}>
-                    <Text style={styles.SgLabel}>Contact: - </Text>
-                    <Text style={styles.SgValue}>
-                      {item?.Ship_party?.MobileNo}
-                    </Text>
-                  </View>
-                </View>
-              )}
-            />
-            {/* <RBSheet
+                  </TouchableOpacity>
+                </List.Section>
+
+                <View
+                  style={{
+                    borderBottomColor: 'grey',
+                    borderBottomWidth: 0.5,
+                    marginBottom: 0,
+                    padding: 0,
+                    margin: 0,
+                  }}
+                />
+              </>
+            ))}
+
+            <RBSheet
               animationType="fade"
               ref={RBref}
               openDuration={250}
@@ -319,17 +342,17 @@ function CallEntryList({navigation}) {
                   </TouchableOpacity>
                 </View>
               </ScrollView>
-            </RBSheet> */}
+            </RBSheet>
           </View>
         </>
       ) : (
         <ActivityIndicator color={theme1.DARK_ORANGE_COLOR} size={100} />
       )}
-    </View>
+    </ScrollView>
   );
 }
 
-export default observer(CallEntryList);
+export default observer(CallEntryListold);
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -401,24 +424,11 @@ const styles = StyleSheet.create({
     marginTop: 5,
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'center',
+    alignSelf: 'center'
   },
   ListButtonText: {
     textAlignVertical: 'center',
     fontSize: 14,
     color: '#FFF',
-  },
-  SgView: {
-    flexDirection: 'row',
-    marginTop: 3,
-  },
-  SgLabel: {
-    width: '25%',
-    fontSize: 13,
-    color: theme1.White,
-  },
-  SgValue: {
-    fontSize: 13,
-    color: theme1.White,
   },
 });

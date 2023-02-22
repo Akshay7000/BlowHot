@@ -51,13 +51,20 @@ const Landing = () => {
 
   const getAllData = async () => {
     try {
-      axios
-        .post(
+      if (AuthStore?.masterId) {
+        console.log(
+          '=> ',
           `${host}/call_summary/mobcall_summarydb?masterid=${AuthStore?.masterId}&user=${AuthStore?.user}&compid=${AuthStore?.companyId}&divid=${AuthStore?.divisionId}&administrator=${AuthStore?.adminId}`,
-        )
-        .then(res => {
-          setAllData(res?.data?.s_call);
-        });
+        );
+        axios
+          .post(
+            `${host}/call_summary/mobcall_summarydb?masterid=${AuthStore?.masterId}&user=${AuthStore?.user}&compid=${AuthStore?.companyId}&divid=${AuthStore?.divisionId}&administrator=${AuthStore?.adminId}`,
+          )
+          .then(res => {
+            console.log('All data --> ', res?.data?.s_call);
+            setAllData(res?.data?.s_call);
+          });
+      }
     } catch (error) {
       console.log('Error on get All Data --> ', error);
     }
@@ -65,7 +72,7 @@ const Landing = () => {
 
   useEffect(() => {
     getAllData();
-  }, [isFocused, AuthStore?.divisionId]);
+  }, [AuthStore?.divisionId, isFocused]);
 
   useEffect(() => {
     const use = async () => {
@@ -115,7 +122,7 @@ const Landing = () => {
   return (
     <>
       <ScrollView style={styles.container}>
-        <View>
+        <View style={{paddingBottom: 20}}>
           <View style={[styles.container1, styles.row]}>
             <View style={[styles.card]}>
               <TouchableOpacity
@@ -351,6 +358,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     backgroundColor: '#E9E9E9',
     height: hp('100%'),
+    marginBottom: 60
   },
   icon: {
     height: 100,

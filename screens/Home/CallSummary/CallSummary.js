@@ -8,6 +8,7 @@ import {
   Dimensions,
   FlatList,
   Image,
+  KeyboardAvoidingView,
   Linking,
   Modal,
   StyleSheet,
@@ -38,8 +39,10 @@ import ImageCropPicker from 'react-native-image-crop-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AuthStore from '../../Mobx/AuthStore';
 import {observer} from 'mobx-react-lite';
+import {Modalize} from 'react-native-modalize';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
-let height = Dimensions.get('window').height;
+const height = Dimensions.get('window').height;
 
 function CallSummary({navigation, route}) {
   const nav = useNavigation();
@@ -274,12 +277,12 @@ function CallSummary({navigation, route}) {
                 },
               ],
         );
-        setProductId(data?.s_prod?._id || "");
-        setModelId(data?.s_mdl?._id || "");
-        setProductName(data?.s_prod?.Fg_Des || "");
-        setUniqueId(data?.unique_id || "");
-        setModelName(data?.s_mdl.Description || "");
-        setAutoSelectedImages(data?.filepath || "");
+        setProductId(data?.s_prod?._id || '');
+        setModelId(data?.s_mdl?._id || '');
+        setProductName(data?.s_prod?.Fg_Des || '');
+        setUniqueId(data?.unique_id || '');
+        setModelName(data?.s_mdl.Description || '');
+        setAutoSelectedImages(data?.filepath || '');
         setSelectedImages([]);
 
         // console.log('Visit Group --> ', JSON.stringify(data?.visit_group));
@@ -375,7 +378,7 @@ function CallSummary({navigation, route}) {
 
     Axios({
       method: 'POST',
-      url: `${host}/s_call/mobreschedule_add?reschedule_date=${reScheduleDate}&first_time=${firstTime}&second_time=${secondTime}&rescheduleremark=${reScheduleRemark}`,
+      url: `${host}/s_call/mobreschedule_add?reschedule_date=${reScheduleDate}&first_time=${firstTime}&second_time=${secondTime}&rescheduleremark=${reScheduleRemark}&vhpxappointment=${SingleData?._id}`,
     })
       .then(respone => {
         Toast.showWithGravity(
@@ -385,7 +388,7 @@ function CallSummary({navigation, route}) {
         );
 
         setLoading(false);
-        nav.goBack();
+        RBref2.current.close();
       })
       .catch(error => {
         Toast.showWithGravity(
@@ -449,7 +452,8 @@ function CallSummary({navigation, route}) {
         setComplaintRemarks('');
         setTechnician('');
         setLoading(false);
-        nav.goBack();
+        RBref.current.close();
+        // nav.goBack();
       })
       .catch(error => {
         Toast.showWithGravity('Data Submit Failed.', Toast.LONG, Toast.BOTTOM);
@@ -596,7 +600,7 @@ function CallSummary({navigation, route}) {
         Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
         const todayDate = moment(new Date()).format('DD/MM/YYYY');
         RBref.current.close();
-        nav.reset({index: 0, routes: [{name: 'Home'}]});
+        // nav.reset({index: 0, routes: [{name: 'Home'}]});
         setLoading(false);
       })
       .catch(e => {
@@ -666,8 +670,11 @@ function CallSummary({navigation, route}) {
 
   return (
     <View>
-      <View style={{backgroundColor: '#CBD9F5', borderRadius: 6, margin: 10}}>
-        <SegmentedControlTab
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{marginVertical: 5}}>
+        {/* <SegmentedControlTab
           values={[
             'Assigned to Asc',
             'Visit Schedule',
@@ -680,8 +687,33 @@ function CallSummary({navigation, route}) {
           tabStyle={styles.tabStyle}
           activeTabStyle={styles.activeTabStyle}
           onTabPress={handleSingleIndexSelect}
-        />
-      </View>
+        /> */}
+        {[
+          'Assigned to Asc',
+          'Visit Schedule',
+          'Re-Schedule',
+          'Part Pending',
+          'Tech Advice',
+        ].map((item, index) => (
+          <TouchableOpacity onPress={() => handleSingleIndexSelect(index)}>
+            <View
+              style={
+                selectedIndex === index
+                  ? styles.activeTabStyle
+                  : styles.tabStyle
+              }>
+              <Text
+                style={
+                  selectedIndex === index
+                    ? {color: theme1.White, padding: 10}
+                    : {color: theme1.LightBlack, padding: 10}
+                }>
+                {item}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
 
       <Modal
         visible={loading}
@@ -706,16 +738,6 @@ function CallSummary({navigation, route}) {
         <>
           <View
             style={{
-              borderBottomColor: 'grey',
-              borderBottomWidth: 0.5,
-              marginBottom: 0,
-              padding: 0,
-              margin: 0,
-            }}
-          />
-
-          <View
-            style={{
               display: 'flex',
               flexDirection: 'row',
               justifyContent: 'space-around',
@@ -734,23 +756,6 @@ function CallSummary({navigation, route}) {
                 borderRadius: 10,
               }}
             />
-            <TouchableOpacity
-              style={{
-                height: hp('6%'),
-                flex: 0.1,
-                marginLeft: 10,
-                backgroundColor: '#D9D9D9',
-                borderRadius: 10,
-                marginTop: 5,
-                paddingLeft: 10,
-                paddingRight: 10,
-                marginRight: 8,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              onPress={() => RBref.current.close()}>
-              <Icon name="filter" size={wp('7%')} color="black" />
-            </TouchableOpacity>
           </View>
           <View
             style={{
@@ -762,157 +767,78 @@ function CallSummary({navigation, route}) {
             }}
           />
 
-          <View style={{height: height - 200}}>
+          <View style={{height: height - 210}}>
             <FlatList
               data={filteredData}
               initialNumToRender={10}
               renderItem={({item, index}) => {
                 return (
-                  <View key={index}>
-                    <List.Section>
-                      <List.Accordion
-                        title={`${item.s_cus?.ACName},${item?.s_cus?.CityName?.CityName}`}
-                        description={`${item.s_cus?.Address1},${item.s_cus?.MobileNo}`}
-                        handleLeft={() => {
-                          handleNewComplaint(item._id);
-                        }}>
-                        <View key={index + 'a'}>
-                          <View
-                            style={{
-                              borderBottomColor: 'black',
-                              borderBottomWidth: 0.5,
-                              marginBottom: 0,
-                              padding: 0,
-                              margin: 0,
-                            }}
-                          />
-
-                          <View
-                            style={{
-                              backgroundColor: theme1.LIGHT_ORANGE_COLOR,
-                            }}>
-                            <List.Item
-                              title="Model"
-                              description={item.s_mdl?.Description}
-                              style={{
-                                borderRightWidth: 0.8,
-                                fontSize: 8,
-                              }}
-                            />
-                            <List.Item
-                              title="Product"
-                              description={item.s_prod?.Fg_Des}
-                              style={{
-                                borderRightWidth: 0.8,
-                              }}
-                            />
-                            <List.Item
-                              title="Brand"
-                              description={item.s_bnd?.Description}
-                              style={{
-                                borderRightWidth: 0.8,
-                              }}
-                            />
-                            <List.Item
-                              title="Qty."
-                              description={item?.s_qty}
-                              style={{
-                                borderRightWidth: 0.8,
-                              }}
-                            />
-                            <List.Item
-                              title="Status"
-                              description={item?.s_stus}
-                            />
-                          </View>
-                        </View>
-                      </List.Accordion>
-                      <View
+                  <View
+                    style={{
+                      width: '90%',
+                      backgroundColor: theme1.LIGHT_ORANGE_COLOR,
+                      alignSelf: 'center',
+                      marginTop: 10,
+                      borderRadius: 18,
+                    }}>
+                    <View
+                      style={{
+                        width: '90%',
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignSelf: 'center',
+                        alignItems: 'center',
+                        marginTop: 5,
+                      }}>
+                      <Text style={{fontSize: 15, color: '#FFF'}}>
+                        {item?.unique_id}.
+                      </Text>
+                      <Text style={{fontSize: 12, color: '#FFF'}}>
+                        {moment(new Date(item?.so_date).toDateString()).format(
+                          'DD-MM-YYYY',
+                        )}
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        alignSelf: 'center',
+                        width: '90%',
+                      }}>
+                      <Text
                         style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          padding: 10,
-                          borderRightWidth: 0.6,
-                        }}>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
+                          fontSize: 15,
+                          color: '#FFF',
+                          marginRight: 20,
+                          width: '85%',
+                        }}>{`${item.s_cus?.ACName}, ${item.s_cus?.Address1}, ${item?.s_cus?.CityName?.CityName}`}</Text>
+                      <View>
+                        <TouchableOpacity
+                          onPress={() => {
+                            item?.s_cus?.MobileNo &&
+                              Linking.openURL(
+                                `tel:${item?.s_cus?.MobileNo}`,
+                              ).catch(err => {
+                                console.error('An error occurred', err);
+                              });
                           }}>
-                          <Text
+                          <View
                             style={{
-                              fontSize: 14,
-                              backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
-                              borderRadius: 5,
-                              color: '#FFF',
-                              paddingLeft: 10,
-                              height: 30,
-                              textAlignVertical: 'center',
-                              width: '65%',
+                              width: 25,
+                              height: 25,
+                              backgroundColor: 'green',
+                              borderRadius: 15,
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              marginBottom: 10,
                             }}>
-                            {item?.unique_id}.
-                          </Text>
-                          {selectedIndex !== 0 && (
-                            <TouchableOpacity
-                              style={{
-                                backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
-                                height: 30,
-                                width: '30%',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                borderRadius: 5,
-                              }}
-                              onPress={() => {
-                                setReScheduleUser(item);
-                                RBref2.current.open();
-                              }}>
-                              <View>
-                                <Text style={styles.ListButtonText}>
-                                  Re-Schedule
-                                </Text>
-                              </View>
-                            </TouchableOpacity>
-                          )}
-                        </View>
-
-                        <View
-                          style={{
-                            width: '100%',
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                          }}>
+                            <Icon name="phone" color={theme1.White} size={15} />
+                          </View>
+                        </TouchableOpacity>
+                        {!!item.s_cus?.ac_altno && (
                           <TouchableOpacity
-                            style={styles.ListButton}
-                            onPress={() => {
-                              if (item?._id) {
-                                setLoading(true);
-                                getParticularData(item?._id);
-                              }
-                            }}>
-                            <View>
-                              <Text style={styles.ListButtonText}>Submit</Text>
-                            </View>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity
-                            style={styles.ListButton}
-                            onPress={() => {
-                              item?.s_cus?.MobileNo &&
-                                Linking.openURL(
-                                  `tel:${item?.s_cus?.MobileNo}`,
-                                ).catch(err => {
-                                  console.error('An error occurred', err);
-                                });
-                            }}>
-                            <View>
-                              <Text style={styles.ListButtonText}>
-                                {item?.s_cus?.MobileNo}
-                              </Text>
-                            </View>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity
-                            style={styles.ListButton}
                             onPress={() => {
                               item?.s_cus?.ac_altno &&
                                 Linking.openURL(
@@ -921,43 +847,139 @@ function CallSummary({navigation, route}) {
                                   console.error('An error occurred', err);
                                 });
                             }}>
-                            <View>
-                              <Text style={styles.ListButtonText}>
-                                {item?.s_cus?.ac_altno}
-                              </Text>
+                            <View
+                              style={{
+                                width: 25,
+                                height: 25,
+                                backgroundColor: 'green',
+                                borderRadius: 15,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                marginBottom: 10,
+                              }}>
+                              <Icon
+                                name="phone"
+                                color={theme1.White}
+                                size={15}
+                              />
                             </View>
                           </TouchableOpacity>
-                        </View>
+                        )}
                       </View>
-                    </List.Section>
-
+                    </View>
                     <View
                       style={{
-                        borderBottomColor: 'grey',
-                        borderBottomWidth: 0.5,
-                        marginBottom: 0,
-                        padding: 0,
-                        margin: 0,
-                      }}
-                    />
+                        borderBottomWidth: 1,
+                        borderBottomColor: theme1.GreyWhite,
+                        width: '90%',
+                        alignSelf: 'center',
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: 15,
+                          color: '#FFF',
+                        }}>
+                        {`Contact: - ${item.s_cus?.MobileNo}`}
+                        {!!item.s_cus?.ac_altno && `, ${item.s_cus?.ac_altno}`}
+                      </Text>
+                    </View>
+                    <View
+                      key={index}
+                      style={{width: '90%', alignSelf: 'center'}}>
+                      <View style={styles.SgView}>
+                        <Text style={styles.SgLabel}>Product: - </Text>
+                        <Text
+                          style={[styles.SgValue, {width: '80%'}]}
+                          numberOfLines={1}>
+                          {item?.s_prod?.Fg_Des}
+                        </Text>
+                      </View>
+                      <View style={styles.SgView}>
+                        <Text style={styles.SgLabel}>Brand: - </Text>
+                        <Text
+                          style={[styles.SgValue, {width: '80%'}]}
+                          numberOfLines={1}>
+                          {item?.s_bnd?.Description}
+                        </Text>
+                      </View>
+                      <View style={styles.SgView}>
+                        <Text style={styles.SgLabel}>Model: - </Text>
+                        <Text
+                          style={[styles.SgValue, {width: '80%'}]}
+                          numberOfLines={1}>
+                          {item?.s_mdl?.Description}
+                        </Text>
+                      </View>
+                      <View style={{flexDirection: 'row', width: '100%'}}>
+                        <View style={styles.SgView}>
+                          <Text style={[styles.SgLabel, {width: '50%'}]}>
+                            Quantity: -{' '}
+                          </Text>
+                          <Text style={styles.SgValue}>{item?.s_qty}</Text>
+                        </View>
+                        <View style={styles.SgView}>
+                          <Text style={[styles.SgLabel, {width: '35%'}]}>
+                            Status: -{' '}
+                          </Text>
+                          <Text style={styles.SgValue}>{item?.s_stus}</Text>
+                        </View>
+                      </View>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        width: '90%',
+                        alignSelf: 'center',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginVertical: 10,
+                      }}>
+                      <TouchableOpacity
+                        style={styles.ListButton}
+                        onPress={() => {
+                          if (item?._id) {
+                            setLoading(true);
+                            getParticularData(item?._id);
+                          }
+                        }}>
+                        <View>
+                          <Text style={styles.ListButtonText}>Submit</Text>
+                        </View>
+                      </TouchableOpacity>
+                      {selectedIndex !== 0 && (
+                        <TouchableOpacity
+                          style={styles.ListButton}
+                          onPress={() => {
+                            setReScheduleUser(item);
+                            RBref2.current.open();
+                          }}>
+                          <View>
+                            <Text style={styles.ListButtonText}>
+                              Re-Schedule
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
                 );
               }}
             />
-
-            {selectedIndex === 0 && (
-              <RBSheet
-                animationType="fade"
-                ref={RBref}
-                openDuration={250}
-                customStyles={{
-                  container: {
-                    borderTopEndRadius: 20,
-                    borderTopStartRadius: 20,
-                    backgroundColor: theme1.LIGHT_BLUE_COLOR,
-                    height: hp('63%'),
-                  },
-                }}>
+          </View>
+          {selectedIndex === 0 && (
+            <Modalize ref={RBref} withHandle={false} modalHeight={height - 25}>
+              <KeyboardAwareScrollView
+                automaticallyAdjustKeyboardInsets
+                contentContainerStyle={{
+                  height: height,
+                  borderTopRightRadius: 8,
+                  borderTopLeftRadius: 8,
+                }}
+                bounces={false}
+                showsVerticalScrollIndicator={false}
+                enableOnAndroid={true}
+                scrollEnabled={true}
+                keyboardShouldPersistTaps={'always'}>
                 <View
                   style={{
                     padding: 8,
@@ -965,9 +987,9 @@ function CallSummary({navigation, route}) {
                     alignItems: 'center',
                     borderBottomWidth: 1,
                     flexDirection: 'row',
+                    backgroundColor: theme1.LIGHT_ORANGE_COLOR,
                     justifyContent: 'space-between',
                   }}>
-                  <View />
                   <Text
                     style={{fontSize: 17, fontWeight: 'bold', color: '#222'}}>
                     Add Assigned to Asc{' '}
@@ -978,957 +1000,257 @@ function CallSummary({navigation, route}) {
                     <FIcon name="close" size={20} color="#222" />
                   </TouchableOpacity>
                 </View>
+                {fromTime && (
+                  <DateTimePicker
+                    value={fromDate}
+                    mode="time"
+                    is24Hour={true}
+                    display="default"
+                    onChange={handleFromChange}
+                  />
+                )}
 
-                <ScrollView
-                  keyboardShouldPersistTaps="always"
-                  nestedScrollEnabled>
-                  {fromTime && (
-                    <DateTimePicker
-                      value={fromDate}
-                      mode="time"
-                      is24Hour={true}
-                      display="default"
-                      onChange={handleFromChange}
-                    />
-                  )}
+                {toTime && (
+                  <DateTimePicker
+                    value={toDate}
+                    mode="time"
+                    is24Hour={true}
+                    display="default"
+                    onChange={handleToChange}
+                  />
+                )}
 
-                  {toTime && (
-                    <DateTimePicker
-                      value={toDate}
-                      mode="time"
-                      is24Hour={true}
-                      display="default"
-                      onChange={handleToChange}
-                    />
-                  )}
-
-                  <View
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      paddingLeft: 10,
-                    }}>
-                    <View style={{flex: 0.35}}>
-                      <Text
-                        style={{
-                          width: wp('50%'),
-                          flex: 0.4,
-                          marginTop: 22,
-                          fontSize: wp('3%'),
-                          color: '#222',
-                        }}>
-                        Time ({fromDate?.getHours()} Hrs:
-                        {fromDate?.getMinutes()} Min)
-                      </Text>
-                      <TouchableOpacity onPress={() => setFromTime(true)}>
-                        <Text
-                          style={{
-                            borderWidth: 1,
-                            borderRadius: 20,
-                            padding: 10,
-                            marginVertical: 10,
-                            color: '#222',
-                          }}>
-                          Select From Time
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                    <View style={{flex: 0.2}}>
-                      <Text
-                        style={{
-                          width: wp('10%'),
-                          flex: 0.2,
-                          marginTop: 22,
-                          fontSize: wp('3%'),
-                          color: '#222',
-                        }}>
-                        To
-                      </Text>
-                    </View>
-
-                    <View style={{flex: 0.35}}>
-                      <Text
-                        style={{
-                          width: wp('50%'),
-                          flex: 0.3,
-                          marginTop: 22,
-                          fontSize: wp('3%'),
-                          color: '#222',
-                        }}>
-                        Time ({toDate?.getHours()} Hrs:{toDate?.getMinutes()}{' '}
-                        Min)
-                      </Text>
-                      <TouchableOpacity onPress={() => setToTime(true)}>
-                        <Text
-                          style={{
-                            borderWidth: 1,
-                            borderRadius: 20,
-                            padding: 10,
-                            marginVertical: 10,
-                            color: '#222',
-                          }}>
-                          Select To Time
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-
-                  <View
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      paddingLeft: 10,
-                    }}>
+                <View
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    paddingLeft: 10,
+                  }}>
+                  <View style={{flex: 0.35}}>
                     <Text
                       style={{
-                        width: wp('10%'),
-                        flex: 0.3,
-                        marginTop: 15,
-                        fontSize: wp('3%'),
-                        color: '#222',
-                      }}>
-                      Technician
-                    </Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        {
-                          backgroundColor: '#D3FD7A',
-                          width: wp('82%'),
-                          flex: 0.9,
-                          marginRight: wp('6.5%'),
-                          color: '#222',
-                        },
-                      ]}
-                      placeholder="Technician"
-                      placeholderTextColor="#bbb"
-                      defaultValue={technician}
-                      onChangeText={text => setTechnician(text)}
-                    />
-                  </View>
-                  <View
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      paddingLeft: 10,
-                    }}>
-                    <Text
-                      style={{
-                        width: wp('10%'),
-                        flex: 0.3,
-                        marginTop: 15,
-                        fontSize: wp('3%'),
-                        color: '#222',
-                      }}>
-                      Technician Mob No.
-                    </Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        {
-                          backgroundColor: '#D3FD7A',
-                          width: wp('82%'),
-                          flex: 0.9,
-                          marginRight: wp('6.5%'),
-                          color: '#222',
-                        },
-                      ]}
-                      placeholder="Technician Mob No."
-                      keyboardType="decimal-pad"
-                      placeholderTextColor="#bbb"
-                      defaultValue={technicianContact}
-                      onChangeText={text => setTechnicianContact(text)}
-                    />
-                  </View>
-                  <View
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      paddingLeft: 10,
-                    }}>
-                    <Text
-                      style={{
-                        width: wp('10%'),
-                        flex: 0.45,
+                        width: wp('50%'),
+                        flex: 0.4,
                         marginTop: 22,
                         fontSize: wp('3%'),
                         color: '#222',
                       }}>
-                      Date:
+                      Time ({fromDate?.getHours()} Hrs:
+                      {fromDate?.getMinutes()} Min)
                     </Text>
-                    <DatePicker
-                      conatinerStyles={{
-                        width: wp('42%'),
-                        height: 40,
-                        justifyContent: 'center',
-                        borderRadius: 5,
-                        marginLeft: 8,
-                        marginRight: 17,
-                        borderColor: '#ccc',
-                      }}
-                      date={complaintDate}
-                      placeholder="Date"
-                      setDate={setComplaintDate}
-                    />
+                    <TouchableOpacity onPress={() => setFromTime(true)}>
+                      <Text
+                        style={{
+                          borderWidth: 1,
+                          borderRadius: 20,
+                          padding: 10,
+                          marginVertical: 10,
+                          color: '#222',
+                        }}>
+                        Select From Time
+                      </Text>
+                    </TouchableOpacity>
                   </View>
-                  <View
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      paddingLeft: 10,
-                    }}>
+                  <View style={{flex: 0.2}}>
                     <Text
                       style={{
                         width: wp('10%'),
-                        flex: 0.3,
-                        marginTop: 15,
+                        flex: 0.2,
+                        marginTop: 22,
                         fontSize: wp('3%'),
                         color: '#222',
                       }}>
-                      Remark{' '}
+                      To
                     </Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        {
-                          backgroundColor: '#D3FD7A',
-                          width: wp('82%'),
-                          flex: 0.9,
-                          marginRight: wp('6.5%'),
-                          color: '#222',
-                        },
-                      ]}
-                      placeholder="Remarks"
-                      placeholderTextColor="#bbb"
-                      defaultValue={complaintRemarks}
-                      onChangeText={text => setComplaintRemarks(text)}
-                    />
                   </View>
 
-                  <View
-                    style={[
-                      styles.column,
-                      {justifyContent: 'center', marginTop: hp('2%')},
-                    ]}>
-                    <TouchableOpacity
-                      style={styles.button1}
-                      onPress={() => handleAppointmentSubmit()}>
-                      <Text style={{color: 'white'}}>Save Changes</Text>
-                    </TouchableOpacity>
-                  </View>
-                </ScrollView>
-              </RBSheet>
-            )}
-
-            {selectedIndex !== 0 && (
-              <RBSheet
-                animationType="none"
-                ref={RBref}
-                dragFromTopOnly={true}
-                closeOnPressMask={false}
-                onClose={a => console.log('close -> ', a)}
-                customStyles={{
-                  container: {
-                    borderTopEndRadius: 20,
-                    borderTopStartRadius: 20,
-                    backgroundColor: theme1.LIGHT_ORANGE_COLOR,
-                    height: hp('60%'),
-                  },
-                }}>
-                <ScrollView
-                  style={{flex: 1}}
-                  scrollEnabled
-                  keyboardShouldPersistTaps="always">
-                  <View
-                    style={{
-                      padding: 8,
-                      textAlign: 'center',
-                      alignItems: 'center',
-                      borderBottomWidth: 1,
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                    }}>
-                    <View />
-                    <Text style={{fontSize: 17, fontWeight: 'bold'}}>
-                      {selectedIndex == 1
-                        ? 'Add Alloted to Engineer'
-                        : 'Part-Pending'}{' '}
-                      -{uniqueId}{' '}
+                  <View style={{flex: 0.35}}>
+                    <Text
+                      style={{
+                        width: wp('50%'),
+                        flex: 0.3,
+                        marginTop: 22,
+                        fontSize: wp('3%'),
+                        color: '#222',
+                      }}>
+                      Time ({toDate?.getHours()} Hrs:{toDate?.getMinutes()} Min)
                     </Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        RBref.current.close();
-                      }}
-                      style={{
-                        marginRight: 20,
-                        height: 30,
-                        width: 30,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}>
-                      <FIcon name="close" size={20} />
-                    </TouchableOpacity>
-                  </View>
-
-                  <View
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      paddingLeft: 10,
-                    }}>
-                    <DropDownPicker
-                      items={[
-                        {label: 'In-Warranty', value: 'in-warranty'},
-                        {label: 'Out-Warranty', value: 'out-warranty'},
-                        {label: 'New', value: 'new'},
-                      ]}
-                      containerStyle={{
-                        height: 40,
-                        width: wp('37%'),
-                        top: hp('0.8%'),
-                        marginLeft: 10,
-                        flex: 1.25,
-                        borderColor: '#BBB',
-                        zIndex: 1000,
-                      }}
-                      itemStyle={{}}
-                      activeItemStyle={{backgroundColor: '#BBB'}}
-                      labelStyle={{color: '#222'}}
-                      dropDownStyle={{
-                        backgroundColor: '#fafafa',
-                        width: wp('37%'),
-                        marginTop: 5,
-                      }}
-                      defaultValue={warrantyType}
-                      onChangeItem={item => setWarrantyType(item.value)}
-                      name="warrantyType"
-                      placeholder="Select Warranty"
-                      placeholderStyle={{color: '#BBB'}}
-                      style={{left: -5, backgroundColor: 'transparent'}}
-                    />
-
-                    <TextInput
-                      style={[
-                        styles.input,
-                        {
-                          backgroundColor: '#D3FD7A',
-                          width: wp('82%'),
-                          flex: 1,
-                          height: hp('4.7%'),
-                          top: hp('0.3%'),
-                          marginRight: wp('5%'),
-                          color: '#222',
-                        },
-                      ]}
-                      placeholder="Invoice No."
-                      placeholderTextColor="#bbb"
-                      defaultValue={invoiceNumber?.toString()}
-                      onChangeText={text => setInvoiceNumber(text)}
-                    />
-                  </View>
-                  <View
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      paddingLeft: 10,
-                    }}>
-                    <DropDownPicker
-                      items={[
-                        {label: 'Resolved', value: 'Resolved'},
-                        {label: 'Part-Pending', value: 'Part-Pending'},
-                        {
-                          label: 'Technical-Advice',
-                          value: 'Technical-Advice',
-                        },
-                        {label: 'Cancel', value: 'Cancel'},
-                        {label: 'Visit Schedule', value: 'Visit Schedule'},
-                        {label: 'Re Schedule', value: 'Re Schedule'},
-                      ]}
-                      containerStyle={{
-                        height: 40,
-                        width: wp('37%'),
-                        top: hp('0.8%'),
-                        marginLeft: 10,
-                        flex: 1.25,
-                        borderColor: '#BBB',
-                        zIndex: 100,
-                      }}
-                      itemStyle={{}}
-                      activeItemStyle={{backgroundColor: '#BBB'}}
-                      labelStyle={{color: '#222'}}
-                      dropDownStyle={{
-                        backgroundColor: '#fafafa',
-                        width: wp('37%'),
-                        marginTop: 5,
-                      }}
-                      defaultValue={status}
-                      onChangeItem={item => setStatus(item.value)}
-                      name="status"
-                      placeholder="Select Status"
-                      placeholderStyle={{color: '#BBB'}}
-                      style={{left: -5, backgroundColor: 'transparent'}}
-                    />
-                    <DatePicker
-                      conatinerStyles={{
-                        width: wp('42%'),
-                        height: 40,
-                        justifyContent: 'center',
-                        borderRadius: 5,
-                        marginLeft: 8,
-                        marginRight: 17,
-                        borderColor: '#ccc',
-                      }}
-                      date={engineerDate}
-                      placeholder="Date"
-                      setDate={setEngineerDate}
-                    />
-                  </View>
-
-                  {status === 'Resolved' && (
-                    <View
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        paddingLeft: 10,
-                        alignItems: 'center',
-                      }}>
-                      <TextInput
-                        style={[
-                          styles.input,
-                          {
-                            backgroundColor:
-                              happyCode.length === 6 &&
-                              SingleData?._id
-                                ?.substring(SingleData?._id.length - 6)
-                                .toUpperCase() === happyCode
-                                ? '#D3FD7A'
-                                : '#f2918f',
-                            width: wp('95%'),
-                            flex: 1,
-                            height: hp('4.7%'),
-                            top: hp('0.3%'),
-                            marginRight: wp('5%'),
-                            color: '#222',
-                          },
-                        ]}
-                        placeholder="Happy Code"
-                        placeholderTextColor="#bbb"
-                        value={happyCode}
-                        onChangeText={text => {
-                          if (text.length <= 6) {
-                            setHappyCode(text.toUpperCase());
-                          }
-                        }}
-                      />
-                      <TouchableOpacity
-                        onPress={() => {
-                          resendHappyCode();
-                        }}
+                    <TouchableOpacity onPress={() => setToTime(true)}>
+                      <Text
                         style={{
-                          height: 30,
-                          backgroundColor: theme1.DARK_ORANGE_COLOR,
-                          marginRight: 15,
-                          justifyContent: 'center',
-                          paddingHorizontal: 10,
-                          borderRadius: 8,
+                          borderWidth: 1,
+                          borderRadius: 20,
+                          padding: 10,
+                          marginVertical: 10,
+                          color: '#222',
                         }}>
-                        <View>
-                          <Text style={{color: theme1.White}}>Resend Code</Text>
-                        </View>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-
-                  <View
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      width: '95%',
-                      alignSelf: 'center',
-                    }}>
-                    <SelectTwo
-                      items={modelItems}
-                      selectedItem={selectedModelItems}
-                      handleId={handleModelId}
-                      defaultValue={modelName}
-                      placeholder="Model"
-                      borderColor="#ccc"
-                    />
-
-                    <SelectTwo
-                      items={productItems}
-                      selectedItem={selectedProductItems}
-                      handleId={handleProductId}
-                      defaultValue={productName}
-                      placeholder="Product"
-                      borderColor="#ccc"
-                    />
-                  </View>
-
-                  <View
-                    style={{
-                      width: '95%',
-                      alignSelf: 'center',
-                      marginTop: 5,
-                      flexDirection: 'row',
-                      flexWrap: 'wrap',
-                    }}>
-                    <TouchableOpacity
-                      style={{
-                        backgroundColor: theme1.MEDIUM_BLUE_COLOR,
-                        height: 40,
-                        width: 40,
-                        borderWidth: 1,
-                        margin: 5,
-                        borderStyle: 'dashed',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}
-                      onPress={() => {
-                        setImageModal(true);
-                      }}>
-                      <Text style={{fontSize: 30, color: '#000'}}>+</Text>
+                        Select To Time
+                      </Text>
                     </TouchableOpacity>
-
-                    {AutoSelectedImages?.length > 0 &&
-                      AutoSelectedImages?.map((fillImage, index) => {
-                        return (
-                          <Image
-                            key={index + 'AI'}
-                            style={{
-                              height: 40,
-                              width: 40,
-                              resizeMode: 'cover',
-                              margin: 5,
-                            }}
-                            source={{uri: `${host}/${fillImage}`}}
-                          />
-                        );
-                      })}
-
-                    {selectedImages?.path && (
-                      <Image
-                        style={{
-                          height: 40,
-                          width: 40,
-                          resizeMode: 'cover',
-                          margin: 5,
-                        }}
-                        source={{uri: selectedImages?.path}}
-                      />
-                    )}
-
-                    {selectedImages?.length > 0 &&
-                      selectedImages?.map((singleImage, index) => {
-                        return (
-                          <Image
-                            key={index + 'I'}
-                            style={{
-                              height: 40,
-                              width: 40,
-                              resizeMode: 'cover',
-                              margin: 5,
-                            }}
-                            source={{uri: singleImage?.path}}
-                          />
-                        );
-                      })}
                   </View>
+                </View>
 
-                  <View style={{marginTop: 0}}>
-                    {visit_group?.map((x, i) => {
-                      return (
-                        <View key={i} style={styles.card}>
-                          <View style={styles.column}>
-                            <SelectTwo
-                              items={brandItems}
-                              name="visit_spare_part"
-                              selectedItem={selectedBrandItems}
-                              handleId={handleBrandId}
-                              handleProduct={handleProductDetails}
-                              width={wp('37%')}
-                              placeholder="Spare Part"
-                              i={i}
-                              product={x}
-                              borderColor="#ccc"
-                              def_indexD={brandItems?.findIndex(
-                                a => a.id === x.visit_spare_part,
-                              )}
-                            />
-
-                            <DropDownPicker
-                              items={[
-                                {label: 'Installed', value: 'Installed'},
-                                {label: 'Pending', value: 'Pending'},
-                                {label: 'Shipped', value: 'Shipped'},
-                                {label: 'Delivered', value: 'Delivered'},
-                                {label: 'In-Process', value: 'In-Process'},
-                              ]}
-                              defaultValue={x.visit_status}
-                              containerStyle={{
-                                height: 40,
-                                // width: wp('30%'),
-                                top: hp('0.8%'),
-                                marginLeft: 10,
-                                flex: 1,
-                                borderColor: '#BBB',
-                                zIndex: 1000,
-                              }}
-                              itemStyle={{}}
-                              activeItemStyle={{backgroundColor: '#BBB'}}
-                              labelStyle={{color: '#222'}}
-                              dropDownStyle={{
-                                backgroundColor: '#fafafa',
-                                width: wp('37%'),
-                                marginTop: 5,
-                              }}
-                              onChangeItem={item =>
-                                handleProductDetails(
-                                  item.value,
-                                  i,
-                                  'visit_status',
-                                )
-                              }
-                              name="visit_status"
-                              placeholder="Select Status"
-                              placeholderStyle={{color: '#BBB'}}
-                              style={{left: -5, backgroundColor: 'transparent'}}
-                            />
-                          </View>
-                          <View style={styles.column}>
-                            <DropDownPicker
-                              items={[
-                                {label: 'Own', value: 'Own'},
-                                {label: 'Company', value: 'Company'},
-                              ]}
-                              defaultValue={x?.visit_consumption}
-                              containerStyle={{
-                                height: 40,
-                                // width: wp('30%'),
-                                top: hp('0.8%'),
-                                marginLeft: 10,
-                                flex: 1,
-                                borderColor: '#BBB',
-                                zIndex: 1000,
-                                marginBottom: 10,
-                              }}
-                              itemStyle={{}}
-                              activeItemStyle={{backgroundColor: '#BBB'}}
-                              labelStyle={{color: '#222'}}
-                              dropDownStyle={{
-                                backgroundColor: '#fafafa',
-                                width: wp('37%'),
-                                marginTop: 5,
-                              }}
-                              onChangeItem={item =>
-                                handleProductDetails(
-                                  item.value,
-                                  i,
-                                  'visit_consumption',
-                                )
-                              }
-                              name="visit_consumption"
-                              placeholder="Select Consumption"
-                              placeholderStyle={{color: '#BBB'}}
-                              style={{left: -5, backgroundColor: 'transparent'}}
-                            />
-
-                            <DropDownPicker
-                              items={[
-                                {label: 'In-Warranty', value: 'In-Warranty'},
-                                {label: 'Out-Warranty', value: 'Out-Warranty'},
-                              ]}
-                              defaultValue={x?.visit_warranty}
-                              containerStyle={{
-                                height: 40,
-                                // width: wp('30%'),
-                                top: hp('0.8%'),
-                                marginLeft: 10,
-                                flex: 1,
-                                borderColor: '#BBB',
-                                zIndex: 1000,
-                                marginBottom: 10,
-                              }}
-                              itemStyle={{}}
-                              activeItemStyle={{backgroundColor: '#BBB'}}
-                              labelStyle={{color: '#222'}}
-                              dropDownStyle={{
-                                backgroundColor: '#fafafa',
-                                width: wp('37%'),
-                                marginTop: 5,
-                              }}
-                              onChangeItem={item =>
-                                handleProductDetails(
-                                  item.value,
-                                  i,
-                                  'visit_warranty',
-                                )
-                              }
-                              name="visit_warranty"
-                              placeholder="Select Warranty"
-                              placeholderStyle={{color: '#BBB'}}
-                              style={{left: -5, backgroundColor: 'transparent'}}
-                            />
-                          </View>
-
-                          <View style={styles.column}>
-                            <TextInput
-                              keyboardType="numeric"
-                              name="visit_qty"
-                              style={[
-                                styles.input,
-                                {
-                                  backgroundColor: '#D3FD7A',
-                                  width: wp('37%'),
-                                  flex: 0.9,
-                                  height: hp('5%'),
-                                  color: '#222',
-                                },
-                              ]}
-                              placeholder="Quantity"
-                              placeholderTextColor="#bbb"
-                              defaultValue={x?.visit_qty?.toString()}
-                              onChangeText={value =>
-                                handleProductDetails(value, i, 'visit_qty')
-                              }
-                            />
-
-                            <TextInput
-                              keyboardType="numeric"
-                              name="visit_rate"
-                              style={[
-                                styles.input,
-                                {
-                                  backgroundColor: '#D3FD7A',
-                                  width: wp('37%'),
-                                  flex: 0.9,
-                                  height: hp('5%'),
-                                  color: '#222',
-                                },
-                              ]}
-                              placeholder="Rate"
-                              placeholderTextColor="#bbb"
-                              value={x?.visit_rate?.toString()}
-                              onChangeText={value =>
-                                handleProductDetails(value, i, 'visit_rate')
-                              }
-                            />
-                          </View>
-
-                          <View
-                            style={[
-                              styles.column,
-                              {
-                                justifyContent: 'space-around',
-                                marginBottom: 20,
-                                margin: 10,
-                              },
-                            ]}>
-                            {visit_group?.length - 1 === i && (
-                              <TouchableOpacity
-                                onPress={() => handleProductClick(i)}
-                                style={[
-                                  styles.button,
-                                  {flex: 1, marginRight: 10},
-                                ]}>
-                                <Text style={{color: 'white'}}>
-                                  Add Product
-                                </Text>
-                              </TouchableOpacity>
-                            )}
-
-                            {visit_group?.length !== 1 && (
-                              <TouchableOpacity
-                                onPress={() => handleRemoveClick(i)}
-                                style={styles.button}>
-                                <Text style={{color: 'white'}}>Remove</Text>
-                              </TouchableOpacity>
-                            )}
-                          </View>
-                        </View>
-                      );
-                    })}
-
-                    <View
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        paddingLeft: 20,
-                      }}>
-                      {show ? (
-                        <TouchableOpacity
-                          onPress={() => setShow(!show)}
-                          style={{display: 'flex', flexDirection: 'row'}}>
-                          <Text style={{color: 'grey', fontSize: 13}}>
-                            Show More
-                          </Text>
-                          <FIcon
-                            name="caret-down"
-                            size={wp('4%')}
-                            color="black"
-                            style={{top: -2, left: 4}}
-                          />
-                        </TouchableOpacity>
-                      ) : (
-                        <TouchableOpacity
-                          onPress={() => setShow(!show)}
-                          style={{display: 'flex', flexDirection: 'row'}}>
-                          <Text style={{color: 'grey', fontSize: 13}}>
-                            Show Less
-                          </Text>
-                          <FIcon
-                            name="caret-up"
-                            size={wp('4%')}
-                            color="black"
-                            style={{top: -2, left: 4}}
-                          />
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                    {!show && (
-                      <>
-                        <View
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            paddingLeft: 10,
-                          }}>
-                          <TextInput
-                            style={[
-                              styles.input,
-                              {
-                                backgroundColor: '#D3FD7A',
-                                width: wp('82%'),
-                                flex: 0.9,
-                                marginRight: wp('6.5%'),
-                                color: '#222',
-                              },
-                            ]}
-                            placeholder="Charges"
-                            placeholderTextColor="#bbb"
-                            value={charges?.toString()}
-                            onChangeText={text => setCharges(text)}
-                          />
-
-                          <TextInput
-                            style={[
-                              styles.input,
-                              {
-                                backgroundColor: '#D3FD7A',
-                                width: wp('82%'),
-                                flex: 0.9,
-                                marginRight: wp('6.5%'),
-                                color: '#222',
-                              },
-                            ]}
-                            placeholder="TA (in km)"
-                            placeholderTextColor="#bbb"
-                            value={ta?.toString()}
-                            onChangeText={text => setTa(text)}
-                          />
-                        </View>
-
-                        <View
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            paddingLeft: 10,
-                          }}>
-                          <TextInput
-                            style={[
-                              styles.input,
-                              {
-                                backgroundColor: '#D3FD7A',
-                                width: wp('82%'),
-                                flex: 0.9,
-                                marginRight: wp('6.5%'),
-                                color: '#222',
-                              },
-                            ]}
-                            placeholder="Remarks"
-                            placeholderTextColor="#bbb"
-                            value={engineerRemarks?.toString()}
-                            onChangeText={text => setEngineerRemarks(text)}
-                          />
-
-                          <TextInput
-                            style={[
-                              styles.input,
-                              {
-                                backgroundColor: '#D3FD7A',
-                                width: wp('82%'),
-                                flex: 0.9,
-                                marginRight: wp('6.5%'),
-                                color: '#222',
-                              },
-                            ]}
-                            placeholder="Feedback"
-                            placeholderTextColor="#bbb"
-                            value={feedback?.toString()}
-                            onChangeText={text => setFeedback(text)}
-                          />
-                        </View>
-                        <View style={{flex: 1}}>
-                          <SignatureScreen
-                            ref={signatureRef}
-                            onEnd={handleEnd}
-                            onOK={handleOK}
-                            onEmpty={handleEmpty}
-                            onClear={handleClear}
-                            onGetData={handleData}
-                            autoClear={true}
-                            descriptionText={text}
-                          />
-                        </View>
-                      </>
-                    )}
-                  </View>
-
-                  <View
+                <View
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    paddingLeft: 10,
+                  }}>
+                  <Text
+                    style={{
+                      width: wp('10%'),
+                      flex: 0.3,
+                      marginTop: 15,
+                      fontSize: wp('3%'),
+                      color: '#222',
+                    }}>
+                    Technician
+                  </Text>
+                  <TextInput
                     style={[
-                      styles.column,
-                      {justifyContent: 'center', marginTop: hp('3%')},
-                    ]}>
-                    {status === 'Resolved' &&
-                      SingleData?._id
-                        ?.substring(SingleData?._id.length - 6)
-                        .toUpperCase() === happyCode && (
-                        <TouchableOpacity
-                          style={styles.button1}
-                          onPress={() => handleEngineerSubmit()}>
-                          <Text style={{color: 'white'}}>Save Changes</Text>
-                        </TouchableOpacity>
-                      )}
-                    {status !== 'Resolved' && (
-                      <TouchableOpacity
-                        style={styles.button1}
-                        onPress={() => handleEngineerSubmit()}>
-                        <Text style={{color: 'white'}}>Save Changes</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </ScrollView>
-              </RBSheet>
-            )}
+                      styles.input,
+                      {
+                        backgroundColor: '#D3FD7A',
+                        width: wp('82%'),
+                        flex: 0.9,
+                        marginRight: wp('6.5%'),
+                        color: '#222',
+                      },
+                    ]}
+                    placeholder="Technician"
+                    placeholderTextColor="#bbb"
+                    defaultValue={technician}
+                    onChangeText={text => setTechnician(text)}
+                  />
+                </View>
+                <View
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    paddingLeft: 10,
+                  }}>
+                  <Text
+                    style={{
+                      width: wp('10%'),
+                      flex: 0.3,
+                      marginTop: 15,
+                      fontSize: wp('3%'),
+                      color: '#222',
+                    }}>
+                    Technician Mob No.
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: '#D3FD7A',
+                        width: wp('82%'),
+                        flex: 0.9,
+                        marginRight: wp('6.5%'),
+                        color: '#222',
+                      },
+                    ]}
+                    placeholder="Technician Mob No."
+                    keyboardType="decimal-pad"
+                    placeholderTextColor="#bbb"
+                    defaultValue={technicianContact}
+                    onChangeText={text => setTechnicianContact(text)}
+                  />
+                </View>
+                <View
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    paddingLeft: 10,
+                  }}>
+                  <Text
+                    style={{
+                      width: wp('10%'),
+                      flex: 0.45,
+                      marginTop: 22,
+                      fontSize: wp('3%'),
+                      color: '#222',
+                    }}>
+                    Date:
+                  </Text>
+                  <DatePicker
+                    conatinerStyles={{
+                      width: wp('42%'),
+                      height: 40,
+                      justifyContent: 'center',
+                      borderRadius: 5,
+                      marginLeft: 8,
+                      marginRight: 17,
+                      borderColor: '#ccc',
+                    }}
+                    date={complaintDate}
+                    placeholder="Date"
+                    setDate={setComplaintDate}
+                  />
+                </View>
+                <View
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    paddingLeft: 10,
+                  }}>
+                  <Text
+                    style={{
+                      width: wp('10%'),
+                      flex: 0.3,
+                      marginTop: 15,
+                      fontSize: wp('3%'),
+                      color: '#222',
+                    }}>
+                    Remark{' '}
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: '#D3FD7A',
+                        width: wp('82%'),
+                        flex: 0.9,
+                        marginRight: wp('6.5%'),
+                        color: '#222',
+                      },
+                    ]}
+                    placeholder="Remarks"
+                    placeholderTextColor="#bbb"
+                    defaultValue={complaintRemarks}
+                    onChangeText={text => setComplaintRemarks(text)}
+                  />
+                </View>
 
-            <RBSheet
-              animationType="none"
-              ref={RBref2}
-              dragFromTopOnly={true}
-              closeOnPressMask={false}
-              onClose={a => console.log('close -> ', a)}
-              customStyles={{
-                container: {
-                  borderTopEndRadius: 20,
-                  borderTopStartRadius: 20,
-                  backgroundColor: theme1.LIGHT_ORANGE_COLOR,
-                  height: hp('60%'),
-                },
-              }}>
-              <ScrollView
-                style={{flex: 1}}
-                scrollEnabled
-                keyboardShouldPersistTaps="always">
+                <View
+                  style={[
+                    styles.column,
+                    {justifyContent: 'center', marginTop: hp('2%')},
+                  ]}>
+                  <TouchableOpacity
+                    style={styles.button1}
+                    onPress={() => handleAppointmentSubmit()}>
+                    <Text style={{color: 'white'}}>Save Changes</Text>
+                  </TouchableOpacity>
+                </View>
+              </KeyboardAwareScrollView>
+            </Modalize>
+          )}
+
+          {selectedIndex !== 0 && (
+            <Modalize ref={RBref} withHandle={false} modalHeight={height - 25}>
+              <KeyboardAwareScrollView
+                automaticallyAdjustKeyboardInsets
+                contentContainerStyle={{
+                  flex: 1,
+                  borderTopRightRadius: 8,
+                  borderTopLeftRadius: 8,
+                }}
+                bounces={false}
+                showsVerticalScrollIndicator={false}
+                enableOnAndroid={true}
+                scrollEnabled={true}
+                keyboardShouldPersistTaps={'always'}>
                 <View
                   style={{
                     padding: 8,
@@ -1937,15 +1259,19 @@ function CallSummary({navigation, route}) {
                     borderBottomWidth: 1,
                     flexDirection: 'row',
                     justifyContent: 'space-between',
+                    backgroundColor: theme1.LIGHT_ORANGE_COLOR,
+                    borderTopRightRadius: 8,
+                    borderTopLeftRadius: 8,
                   }}>
-                  <View />
                   <Text style={{fontSize: 17, fontWeight: 'bold'}}>
-                    {`Reschedule - ${ReScheduleUser?.s_cus?.ACName}`}
+                    {selectedIndex == 1
+                      ? 'Add Alloted to Engineer'
+                      : 'Part-Pending'}{' '}
+                    -{uniqueId}{' '}
                   </Text>
                   <TouchableOpacity
                     onPress={() => {
-                      RBref2.current.close();
-                      setReScheduleUser({});
+                      RBref.current.close();
                     }}
                     style={{
                       marginRight: 20,
@@ -1958,108 +1284,104 @@ function CallSummary({navigation, route}) {
                   </TouchableOpacity>
                 </View>
 
-                <View>
-                  {firstTimeShow && (
-                    <DateTimePicker
-                      value={firstTime}
-                      mode="time"
-                      is24Hour={true}
-                      display="default"
-                      onChange={handleFirstTime}
-                    />
-                  )}
-                  {secondTimeShow && (
-                    <DateTimePicker
-                      value={secondTime}
-                      mode="time"
-                      is24Hour={true}
-                      display="default"
-                      onChange={handleSecondTime}
-                    />
-                  )}
-                </View>
                 <View
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
-                    // paddingLeft: 10,
-                    justifyContent: 'space-around',
+                    paddingLeft: 10,
                   }}>
-                  <View style={{flex: 0.4}}>
-                    <Text
-                      style={{
-                        width: wp('50%'),
-                        flex: 0.4,
-                        marginTop: 22,
-                        fontSize: wp('3%'),
-                        color: '#222',
-                        marginLeft: 30,
-                      }}>
-                      Time ({firstTime?.getHours()} Hrs:
-                      {firstTime?.getMinutes()} Min)
-                    </Text>
-                    <TouchableOpacity onPress={() => setFirstTimeShow(true)}>
-                      <Text
-                        style={{
-                          borderWidth: 1,
-                          borderRadius: 20,
-                          padding: 10,
-                          paddingRight: 5,
-                          marginVertical: 10,
-                          color: '#222',
-                        }}>
-                        Reschedule From Time
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+                  <DropDownPicker
+                    items={[
+                      {label: 'In-Warranty', value: 'in-warranty'},
+                      {label: 'Out-Warranty', value: 'out-warranty'},
+                      {label: 'New', value: 'new'},
+                    ]}
+                    containerStyle={{
+                      height: 40,
+                      width: wp('37%'),
+                      top: hp('0.8%'),
+                      marginLeft: 10,
+                      flex: 1.25,
+                      borderColor: '#BBB',
+                      zIndex: 1000,
+                    }}
+                    itemStyle={{}}
+                    activeItemStyle={{backgroundColor: '#BBB'}}
+                    labelStyle={{color: '#222'}}
+                    dropDownStyle={{
+                      backgroundColor: '#fafafa',
+                      width: wp('37%'),
+                      marginTop: 5,
+                    }}
+                    defaultValue={warrantyType}
+                    onChangeItem={item => setWarrantyType(item.value)}
+                    name="warrantyType"
+                    placeholder="Select Warranty"
+                    placeholderStyle={{color: '#BBB'}}
+                    style={{left: -5, backgroundColor: 'transparent'}}
+                  />
 
-                  <View style={{flex: 0.4}}>
-                    <Text
-                      style={{
-                        width: wp('50%'),
-                        flex: 0.4,
-                        marginTop: 22,
-                        fontSize: wp('3%'),
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: '#D3FD7A',
+                        width: wp('82%'),
+                        flex: 1,
+                        height: hp('4.7%'),
+                        top: hp('0.3%'),
+                        marginRight: wp('5%'),
                         color: '#222',
-                        marginLeft: 30,
-                      }}>
-                      Time ({secondTime?.getHours()} Hrs:
-                      {secondTime?.getMinutes()} Min)
-                    </Text>
-                    <TouchableOpacity onPress={() => setSecondTimeShow(true)}>
-                      <Text
-                        style={{
-                          borderWidth: 1,
-                          borderRadius: 20,
-                          padding: 10,
-                          marginVertical: 10,
-                          color: '#222',
-                        }}>
-                        Reschedule To Time
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+                      },
+                    ]}
+                    placeholder="Invoice No."
+                    placeholderTextColor="#bbb"
+                    defaultValue={invoiceNumber?.toString()}
+                    onChangeText={text => setInvoiceNumber(text)}
+                  />
                 </View>
                 <View
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
                     paddingLeft: 10,
-                    width: '90%',
-                    justifyContent: 'space-around',
-                    alignSelf: 'center',
-                    alignItems: 'center',
                   }}>
-                  <Text
-                    style={{
-                      // borderWidth: 1,
-                      borderRadius: 20,
-                      padding: 10,
-                      marginVertical: 10,
-                      color: '#222',
-                    }}>
-                    Reschedule Date:
-                  </Text>
+                  <DropDownPicker
+                    items={[
+                      {label: 'Resolved', value: 'Resolved'},
+                      {label: 'Part-Pending', value: 'Part-Pending'},
+                      {
+                        label: 'Technical-Advice',
+                        value: 'Technical-Advice',
+                      },
+                      {label: 'Cancel', value: 'Cancel'},
+                      {label: 'Visit Schedule', value: 'Visit Schedule'},
+                      {label: 'Re Schedule', value: 'Re Schedule'},
+                    ]}
+                    containerStyle={{
+                      height: 40,
+                      width: wp('37%'),
+                      top: hp('0.8%'),
+                      marginLeft: 10,
+                      flex: 1.25,
+                      borderColor: '#BBB',
+                      zIndex: 100,
+                    }}
+                    itemStyle={{}}
+                    activeItemStyle={{backgroundColor: '#BBB'}}
+                    labelStyle={{color: '#222'}}
+                    dropDownStyle={{
+                      backgroundColor: '#fafafa',
+                      width: wp('37%'),
+                      marginTop: 5,
+                    }}
+                    defaultValue={status}
+                    onChangeItem={item => setStatus(item.value)}
+                    name="status"
+                    placeholder="Select Status"
+                    placeholderStyle={{color: '#BBB'}}
+                    style={{left: -5, backgroundColor: 'transparent'}}
+                  />
                   <DatePicker
                     conatinerStyles={{
                       width: wp('42%'),
@@ -2068,49 +1390,739 @@ function CallSummary({navigation, route}) {
                       borderRadius: 5,
                       marginLeft: 8,
                       marginRight: 17,
-                      borderColor: '#222',
+                      borderColor: '#ccc',
                     }}
-                    date={reScheduleDate}
-                    placeholderTextColor={'#222'}
+                    date={engineerDate}
                     placeholder="Date"
-                    setDate={setRescheduleDate}
+                    setDate={setEngineerDate}
                   />
                 </View>
-                <TextInput
-                  value={reScheduleRemark}
-                  onChangeText={text => {
-                    if(text.length <= 100){
-                    setRescheduleRemark(text);
-                    }
-                  }}
-                  numberOfLines={3}
-                  placeholder={'Reschedule Remark'}
-                  placeholderTextColor={"#444"}
-                  style={{
-                    width: '90%',
-                    height: 70,
-                    color: '#222',
-                    alignSelf: 'center',
-                    borderWidth: 1,
-                    borderRadius: 7,
 
-                  }}
-                />
-                <Text style={{marginLeft: 20}}>{`${reScheduleRemark?.length || 0}/100`}</Text>
+                {status === 'Resolved' && (
+                  <View
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      paddingLeft: 10,
+                      alignItems: 'center',
+                    }}>
+                    <TextInput
+                      style={[
+                        styles.input,
+                        {
+                          backgroundColor:
+                            happyCode.length === 6 &&
+                            SingleData?._id
+                              ?.substring(SingleData?._id.length - 6)
+                              .toUpperCase() === happyCode
+                              ? '#D3FD7A'
+                              : '#f2918f',
+                          width: wp('95%'),
+                          flex: 1,
+                          height: hp('4.7%'),
+                          top: hp('0.3%'),
+                          marginRight: wp('5%'),
+                          color: '#222',
+                        },
+                      ]}
+                      placeholder="Happy Code"
+                      placeholderTextColor="#bbb"
+                      value={happyCode}
+                      onChangeText={text => {
+                        if (text.length <= 6) {
+                          setHappyCode(text.toUpperCase());
+                        }
+                      }}
+                    />
+                    <TouchableOpacity
+                      onPress={() => {
+                        resendHappyCode();
+                      }}
+                      style={{
+                        height: 30,
+                        backgroundColor: theme1.DARK_ORANGE_COLOR,
+                        marginRight: 15,
+                        justifyContent: 'center',
+                        paddingHorizontal: 10,
+                        borderRadius: 8,
+                      }}>
+                      <View>
+                        <Text style={{color: theme1.White}}>Resend Code</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                <View
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    width: '95%',
+                    alignSelf: 'center',
+                  }}>
+                  <SelectTwo
+                    items={modelItems}
+                    selectedItem={selectedModelItems}
+                    handleId={handleModelId}
+                    defaultValue={modelName}
+                    placeholder="Model"
+                    borderColor="#ccc"
+                  />
+
+                  <SelectTwo
+                    items={productItems}
+                    selectedItem={selectedProductItems}
+                    handleId={handleProductId}
+                    defaultValue={productName}
+                    placeholder="Product"
+                    borderColor="#ccc"
+                  />
+                </View>
+
+                <View
+                  style={{
+                    width: '95%',
+                    alignSelf: 'center',
+                    marginTop: 5,
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                  }}>
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: theme1.MEDIUM_BLUE_COLOR,
+                      height: 40,
+                      width: 40,
+                      borderWidth: 1,
+                      margin: 5,
+                      borderStyle: 'dashed',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                    onPress={() => {
+                      setImageModal(true);
+                    }}>
+                    <Text style={{fontSize: 30, color: '#000'}}>+</Text>
+                  </TouchableOpacity>
+
+                  {AutoSelectedImages?.length > 0 &&
+                    AutoSelectedImages?.map((fillImage, index) => {
+                      return (
+                        <Image
+                          key={index + 'AI'}
+                          style={{
+                            height: 40,
+                            width: 40,
+                            resizeMode: 'cover',
+                            margin: 5,
+                          }}
+                          source={{uri: `${host}/${fillImage}`}}
+                        />
+                      );
+                    })}
+
+                  {selectedImages?.path && (
+                    <Image
+                      style={{
+                        height: 40,
+                        width: 40,
+                        resizeMode: 'cover',
+                        margin: 5,
+                      }}
+                      source={{uri: selectedImages?.path}}
+                    />
+                  )}
+
+                  {selectedImages?.length > 0 &&
+                    selectedImages?.map((singleImage, index) => {
+                      return (
+                        <Image
+                          key={index + 'I'}
+                          style={{
+                            height: 40,
+                            width: 40,
+                            resizeMode: 'cover',
+                            margin: 5,
+                          }}
+                          source={{uri: singleImage?.path}}
+                        />
+                      );
+                    })}
+                </View>
+
+                <View style={{marginTop: 0}}>
+                  {visit_group?.map((x, i) => {
+                    return (
+                      <View key={i} style={styles.card}>
+                        <View style={styles.column}>
+                          <SelectTwo
+                            items={brandItems}
+                            name="visit_spare_part"
+                            selectedItem={selectedBrandItems}
+                            handleId={handleBrandId}
+                            handleProduct={handleProductDetails}
+                            width={wp('37%')}
+                            placeholder="Spare Part"
+                            i={i}
+                            product={x}
+                            borderColor="#ccc"
+                            def_indexD={brandItems?.findIndex(
+                              a => a.id === x.visit_spare_part,
+                            )}
+                          />
+
+                          <DropDownPicker
+                            items={[
+                              {label: 'Installed', value: 'Installed'},
+                              {label: 'Pending', value: 'Pending'},
+                              {label: 'Shipped', value: 'Shipped'},
+                              {label: 'Delivered', value: 'Delivered'},
+                              {label: 'In-Process', value: 'In-Process'},
+                            ]}
+                            defaultValue={x.visit_status}
+                            containerStyle={{
+                              height: 40,
+                              // width: wp('30%'),
+                              top: hp('0.8%'),
+                              marginLeft: 10,
+                              flex: 1,
+                              borderColor: '#BBB',
+                              zIndex: 10000,
+                            }}
+                            itemStyle={{}}
+                            activeItemStyle={{backgroundColor: '#BBB'}}
+                            labelStyle={{color: '#222'}}
+                            dropDownStyle={{
+                              backgroundColor: '#fafafa',
+                              width: wp('37%'),
+                              marginTop: 5,
+                            }}
+                            onChangeItem={item =>
+                              handleProductDetails(
+                                item.value,
+                                i,
+                                'visit_status',
+                              )
+                            }
+                            name="visit_status"
+                            placeholder="Select Status"
+                            placeholderStyle={{color: '#BBB'}}
+                            style={{left: -5, backgroundColor: 'transparent'}}
+                          />
+                        </View>
+                        <View style={styles.column}>
+                          <DropDownPicker
+                            items={[
+                              {label: 'Own', value: 'Own'},
+                              {label: 'Company', value: 'Company'},
+                            ]}
+                            defaultValue={x?.visit_consumption}
+                            containerStyle={{
+                              height: 40,
+                              // width: wp('30%'),
+                              top: hp('0.8%'),
+                              marginLeft: 10,
+                              flex: 1,
+                              borderColor: '#BBB',
+                              zIndex: 1000,
+                              marginBottom: 10,
+                            }}
+                            itemStyle={{}}
+                            activeItemStyle={{backgroundColor: '#BBB'}}
+                            labelStyle={{color: '#222'}}
+                            dropDownStyle={{
+                              backgroundColor: '#fafafa',
+                              width: wp('37%'),
+                              marginTop: 5,
+                            }}
+                            onChangeItem={item =>
+                              handleProductDetails(
+                                item.value,
+                                i,
+                                'visit_consumption',
+                              )
+                            }
+                            name="visit_consumption"
+                            placeholder="Select Consumption"
+                            placeholderStyle={{color: '#BBB'}}
+                            style={{left: -5, backgroundColor: 'transparent'}}
+                          />
+
+                          <DropDownPicker
+                            items={[
+                              {label: 'In-Warranty', value: 'In-Warranty'},
+                              {label: 'Out-Warranty', value: 'Out-Warranty'},
+                            ]}
+                            defaultValue={x?.visit_warranty}
+                            containerStyle={{
+                              height: 40,
+                              // width: wp('30%'),
+                              top: hp('0.8%'),
+                              marginLeft: 10,
+                              flex: 1,
+                              borderColor: '#BBB',
+                              zIndex: 1000,
+                              marginBottom: 10,
+                            }}
+                            itemStyle={{}}
+                            activeItemStyle={{backgroundColor: '#BBB'}}
+                            labelStyle={{color: '#222'}}
+                            dropDownStyle={{
+                              backgroundColor: '#fafafa',
+                              width: wp('37%'),
+                              marginTop: 5,
+                            }}
+                            onChangeItem={item =>
+                              handleProductDetails(
+                                item.value,
+                                i,
+                                'visit_warranty',
+                              )
+                            }
+                            name="visit_warranty"
+                            placeholder="Select Warranty"
+                            placeholderStyle={{color: '#BBB'}}
+                            style={{left: -5, backgroundColor: 'transparent'}}
+                          />
+                        </View>
+
+                        <View style={styles.column}>
+                          <TextInput
+                            keyboardType="numeric"
+                            name="visit_qty"
+                            style={[
+                              styles.input,
+                              {
+                                backgroundColor: '#D3FD7A',
+                                width: wp('37%'),
+                                flex: 0.9,
+                                height: hp('5%'),
+                                color: '#222',
+                              },
+                            ]}
+                            placeholder="Quantity"
+                            placeholderTextColor="#bbb"
+                            defaultValue={x?.visit_qty?.toString()}
+                            onChangeText={value =>
+                              handleProductDetails(value, i, 'visit_qty')
+                            }
+                          />
+
+                          <TextInput
+                            keyboardType="numeric"
+                            name="visit_rate"
+                            style={[
+                              styles.input,
+                              {
+                                backgroundColor: '#D3FD7A',
+                                width: wp('37%'),
+                                flex: 0.9,
+                                height: hp('5%'),
+                                color: '#222',
+                              },
+                            ]}
+                            placeholder="Rate"
+                            placeholderTextColor="#bbb"
+                            value={x?.visit_rate?.toString()}
+                            onChangeText={value =>
+                              handleProductDetails(value, i, 'visit_rate')
+                            }
+                          />
+                        </View>
+
+                        <View
+                          style={[
+                            styles.column,
+                            {
+                              justifyContent: 'space-around',
+                              marginBottom: 20,
+                              margin: 10,
+                            },
+                          ]}>
+                          {visit_group?.length - 1 === i && (
+                            <TouchableOpacity
+                              onPress={() => handleProductClick(i)}
+                              style={[
+                                styles.button,
+                                {flex: 1, marginRight: 10},
+                              ]}>
+                              <Text style={{color: 'white'}}>Add Product</Text>
+                            </TouchableOpacity>
+                          )}
+
+                          {visit_group?.length !== 1 && (
+                            <TouchableOpacity
+                              onPress={() => handleRemoveClick(i)}
+                              style={styles.button}>
+                              <Text style={{color: 'white'}}>Remove</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+
+                <View
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    paddingLeft: 20,
+                  }}>
+                  {show ? (
+                    <TouchableOpacity
+                      onPress={() => setShow(!show)}
+                      style={{display: 'flex', flexDirection: 'row'}}>
+                      <Text style={{color: 'grey', fontSize: 13}}>
+                        Show More
+                      </Text>
+                      <FIcon
+                        name="caret-down"
+                        size={wp('4%')}
+                        color="black"
+                        style={{top: -2, left: 4}}
+                      />
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={() => setShow(!show)}
+                      style={{display: 'flex', flexDirection: 'row'}}>
+                      <Text style={{color: 'grey', fontSize: 13}}>
+                        Show Less
+                      </Text>
+                      <FIcon
+                        name="caret-up"
+                        size={wp('4%')}
+                        color="black"
+                        style={{top: -2, left: 4}}
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
+                {!show && (
+                  <>
+                    <View
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        paddingLeft: 10,
+                      }}>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: '#D3FD7A',
+                            width: wp('82%'),
+                            flex: 0.9,
+                            marginRight: wp('6.5%'),
+                            color: '#222',
+                          },
+                        ]}
+                        placeholder="Charges"
+                        placeholderTextColor="#bbb"
+                        value={charges?.toString()}
+                        onChangeText={text => setCharges(text)}
+                      />
+
+                      <TextInput
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: '#D3FD7A',
+                            width: wp('82%'),
+                            flex: 0.9,
+                            marginRight: wp('6.5%'),
+                            color: '#222',
+                          },
+                        ]}
+                        placeholder="TA (in km)"
+                        placeholderTextColor="#bbb"
+                        value={ta?.toString()}
+                        onChangeText={text => setTa(text)}
+                      />
+                    </View>
+
+                    <View
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        paddingLeft: 10,
+                      }}>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: '#D3FD7A',
+                            width: wp('82%'),
+                            flex: 0.9,
+                            marginRight: wp('6.5%'),
+                            color: '#222',
+                          },
+                        ]}
+                        placeholder="Remarks"
+                        placeholderTextColor="#bbb"
+                        value={engineerRemarks?.toString()}
+                        onChangeText={text => setEngineerRemarks(text)}
+                      />
+
+                      <TextInput
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: '#D3FD7A',
+                            width: wp('82%'),
+                            flex: 0.9,
+                            marginRight: wp('6.5%'),
+                            color: '#222',
+                          },
+                        ]}
+                        placeholder="Feedback"
+                        placeholderTextColor="#bbb"
+                        value={feedback?.toString()}
+                        onChangeText={text => setFeedback(text)}
+                      />
+                    </View>
+                    {/* <View style={{flex: 1}}>
+                      <SignatureScreen
+                        ref={signatureRef}
+                        onEnd={handleEnd}
+                        onOK={handleOK}
+                        onEmpty={handleEmpty}
+                        onClear={handleClear}
+                        onGetData={handleData}
+                        autoClear={true}
+                        descriptionText={text}
+                      />
+                    </View> */}
+                  </>
+                )}
+
                 <View
                   style={[
                     styles.column,
-                    {justifyContent: 'center', marginTop: hp('2%')},
+                    {justifyContent: 'center', marginTop: hp('3%')},
                   ]}>
-                  <TouchableOpacity
-                    style={styles.button1}
-                    onPress={() => handleRescheduleChanges()}>
-                    <Text style={{color: 'white'}}>Save Changes</Text>
+                  {status === 'Resolved' &&
+                    SingleData?._id
+                      ?.substring(SingleData?._id.length - 6)
+                      .toUpperCase() === happyCode && (
+                      <TouchableOpacity
+                        style={styles.button1}
+                        onPress={() => handleEngineerSubmit()}>
+                        <Text style={{color: 'white'}}>Save Changes</Text>
+                      </TouchableOpacity>
+                    )}
+                  {status !== 'Resolved' && (
+                    <TouchableOpacity
+                      style={styles.button1}
+                      onPress={() => handleEngineerSubmit()}>
+                      <Text style={{color: 'white'}}>Save Changes</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </KeyboardAwareScrollView>
+            </Modalize>
+          )}
+
+          <RBSheet
+            animationType="none"
+            ref={RBref2}
+            dragFromTopOnly={true}
+            closeOnPressMask={false}
+            onClose={a => console.log('close -> ', a)}
+            customStyles={{
+              container: {
+                borderTopEndRadius: 20,
+                borderTopStartRadius: 20,
+                backgroundColor: theme1.LIGHT_ORANGE_COLOR,
+                height: hp('60%'),
+              },
+            }}>
+            <ScrollView
+              style={{flex: 1}}
+              scrollEnabled
+              keyboardShouldPersistTaps="always">
+              <View
+                style={{
+                  padding: 8,
+                  textAlign: 'center',
+                  alignItems: 'center',
+                  borderBottomWidth: 1,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <View />
+                <Text style={{fontSize: 17, fontWeight: 'bold'}}>
+                  {`Reschedule - ${ReScheduleUser?.s_cus?.ACName}`}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    RBref2.current.close();
+                    setReScheduleUser({});
+                  }}
+                  style={{
+                    marginRight: 20,
+                    height: 30,
+                    width: 30,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <FIcon name="close" size={20} />
+                </TouchableOpacity>
+              </View>
+
+              <View>
+                {firstTimeShow && (
+                  <DateTimePicker
+                    value={firstTime}
+                    mode="time"
+                    is24Hour={true}
+                    display="default"
+                    onChange={handleFirstTime}
+                  />
+                )}
+                {secondTimeShow && (
+                  <DateTimePicker
+                    value={secondTime}
+                    mode="time"
+                    is24Hour={true}
+                    display="default"
+                    onChange={handleSecondTime}
+                  />
+                )}
+              </View>
+              <View
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  // paddingLeft: 10,
+                  justifyContent: 'space-around',
+                }}>
+                <View style={{flex: 0.4}}>
+                  <Text
+                    style={{
+                      width: wp('50%'),
+                      flex: 0.4,
+                      marginTop: 22,
+                      fontSize: wp('3%'),
+                      color: '#222',
+                      marginLeft: 30,
+                    }}>
+                    Time ({firstTime?.getHours()} Hrs:
+                    {firstTime?.getMinutes()} Min)
+                  </Text>
+                  <TouchableOpacity onPress={() => setFirstTimeShow(true)}>
+                    <Text
+                      style={{
+                        borderWidth: 1,
+                        borderRadius: 20,
+                        padding: 10,
+                        paddingRight: 5,
+                        marginVertical: 10,
+                        color: '#222',
+                      }}>
+                      Reschedule From Time
+                    </Text>
                   </TouchableOpacity>
                 </View>
-              </ScrollView>
-            </RBSheet>
-          </View>
+
+                <View style={{flex: 0.4}}>
+                  <Text
+                    style={{
+                      width: wp('50%'),
+                      flex: 0.4,
+                      marginTop: 22,
+                      fontSize: wp('3%'),
+                      color: '#222',
+                      marginLeft: 30,
+                    }}>
+                    Time ({secondTime?.getHours()} Hrs:
+                    {secondTime?.getMinutes()} Min)
+                  </Text>
+                  <TouchableOpacity onPress={() => setSecondTimeShow(true)}>
+                    <Text
+                      style={{
+                        borderWidth: 1,
+                        borderRadius: 20,
+                        padding: 10,
+                        marginVertical: 10,
+                        color: '#222',
+                      }}>
+                      Reschedule To Time
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  paddingLeft: 10,
+                  width: '90%',
+                  justifyContent: 'space-around',
+                  alignSelf: 'center',
+                  alignItems: 'center',
+                }}>
+                <Text
+                  style={{
+                    // borderWidth: 1,
+                    borderRadius: 20,
+                    padding: 10,
+                    marginVertical: 10,
+                    color: '#222',
+                  }}>
+                  Reschedule Date:
+                </Text>
+                <DatePicker
+                  conatinerStyles={{
+                    width: wp('42%'),
+                    height: 40,
+                    justifyContent: 'center',
+                    borderRadius: 5,
+                    marginLeft: 8,
+                    marginRight: 17,
+                    borderColor: '#222',
+                  }}
+                  date={reScheduleDate}
+                  placeholderTextColor={'#222'}
+                  placeholder="Date"
+                  setDate={setRescheduleDate}
+                />
+              </View>
+              <TextInput
+                value={reScheduleRemark}
+                onChangeText={text => {
+                  if (text.length <= 100) {
+                    setRescheduleRemark(text);
+                  }
+                }}
+                numberOfLines={3}
+                placeholder={'Reschedule Remark'}
+                placeholderTextColor={'#444'}
+                style={{
+                  width: '90%',
+                  height: 70,
+                  color: '#222',
+                  alignSelf: 'center',
+                  borderWidth: 1,
+                  borderRadius: 7,
+                }}
+              />
+              <Text style={{marginLeft: 20}}>{`${
+                reScheduleRemark?.length || 0
+              }/100`}</Text>
+              <View
+                style={[
+                  styles.column,
+                  {justifyContent: 'center', marginTop: hp('2%')},
+                ]}>
+                <TouchableOpacity
+                  style={styles.button1}
+                  onPress={() => handleRescheduleChanges()}>
+                  <Text style={{color: 'white'}}>Save Changes</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </RBSheet>
           <ImagePickerModal
             isVisible={imageModal}
             onClose={() => setImageModal(false)}
@@ -2147,13 +2159,21 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   spinnerTextStyle: {
-    color: '#FFF',
+    color: theme1.White,
   },
   tabStyle: {
+    backgroundColor: theme1.White,
+    borderRadius: 8,
+    borderWidth: 1,
     borderColor: theme1.MEDIUM_ORANGE_COLOR,
+    marginTop: 5,
+    marginHorizontal: 5,
   },
   activeTabStyle: {
     backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
+    borderRadius: 8,
+    marginTop: 5,
+    marginHorizontal: 5,
   },
   button1: {
     flex: 1,
@@ -2217,10 +2237,25 @@ const styles = StyleSheet.create({
     marginTop: 5,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: theme1.White,
   },
   ListButtonText: {
     textAlignVertical: 'center',
     fontSize: 14,
     color: '#FFF',
+  },
+  SgView: {
+    flexDirection: 'row',
+    marginTop: 3,
+  },
+  SgLabel: {
+    width: '25%',
+    fontSize: 13,
+    color: theme1.White,
+  },
+  SgValue: {
+    fontSize: 13,
+    color: theme1.White,
   },
 });
