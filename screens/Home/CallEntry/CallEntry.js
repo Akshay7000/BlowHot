@@ -422,10 +422,11 @@ function CallEntry({navigation, route}) {
   };
 
   const searchCustomerByCity = () => {
-    if (searchedCity.length > 1) {
+    console.log("Searched --> ", `${host}/c_visit_entry/mob_calldealercity?masterid=${AuthStore?.masterId}&cityname=${searchedCity}`)
+    if (searchedCity?.length > 1) {
       setSearchingCustomerCity(true);
-      axios
-        .get(
+      
+      axios.get(
           `${host}/c_visit_entry/mob_calldealercity?masterid=${AuthStore?.masterId}&cityname=${searchedCity}`,
         )
         .then(res => {
@@ -439,8 +440,9 @@ function CallEntry({navigation, route}) {
         })
         .catch(e => {
           setSearchingCustomerCity(false);
-          ``;
           console.log('City Res Error --> ', e);
+        }).finally(()=>{
+          console.log('City Finally --> ');
         });
     }
   };
@@ -520,7 +522,6 @@ function CallEntry({navigation, route}) {
                   width: '90%',
                   color: '#222',
                 }}
-                // keyboardType={'phone-pad'}
                 returnKeyType="search"
                 enablesReturnKeyAutomatically={true}
                 placeholder="Search by City"

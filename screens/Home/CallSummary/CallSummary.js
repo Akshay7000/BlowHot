@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {default as Axios, default as axios} from 'axios';
-// import * as Updates from "expo-updates";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import {observer} from 'mobx-react-lite';
 import moment from 'moment';
 import React, {useEffect, useRef, useState} from 'react';
 import {
@@ -8,44 +9,42 @@ import {
   Dimensions,
   FlatList,
   Image,
-  KeyboardAvoidingView,
   Linking,
   Modal,
+  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import DatePicker from '../../components/DatePicker';
-import DropDownPicker from 'react-native-dropdown-picker';
 import {ScrollView, TextInput} from 'react-native-gesture-handler';
-import {List, Searchbar} from 'react-native-paper';
-import RBSheet from 'react-native-rbs';
-import SegmentedControlTab from 'react-native-segmented-control-tab';
-import SignatureScreen from 'react-native-signature-canvas';
+import ImageCropPicker from 'react-native-image-crop-picker';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {Modalize} from 'react-native-modalize';
+import {Searchbar} from 'react-native-paper';
 import Toast from 'react-native-simple-toast';
 import Icon from 'react-native-vector-icons/Feather';
 import FIcon from 'react-native-vector-icons/FontAwesome';
+import Entypo from 'react-native-vector-icons/Entypo';
+import DatePicker from '../../components/DatePicker';
+import {ImagePickerModal} from '../../components/ImagePickerModal';
 import SelectTwo from '../../components/SelectTwo';
 import theme1 from '../../components/styles/DarkTheme';
+import {host} from '../../Constants/Host';
+import AuthStore from '../../Mobx/AuthStore';
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from '../../responsiveLayout/ResponsiveLayout';
-import {ImagePickerModal} from '../../components/ImagePickerModal';
-import {host, oldHost} from '../../Constants/Host';
-import {useNavigation} from '@react-navigation/native';
-import ImageCropPicker from 'react-native-image-crop-picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import AuthStore from '../../Mobx/AuthStore';
-import {observer} from 'mobx-react-lite';
-import {Modalize} from 'react-native-modalize';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import TextInputField from '../../components/TextInputField';
+import {Dropdown} from 'react-native-element-dropdown';
+import CallMapView from './CallMapView';
+import Share from 'react-native-share';
+import RBSheet from 'react-native-raw-bottom-sheet';
 
 const height = Dimensions.get('window').height;
 
-function CallSummary({navigation, route}) {
-  const nav = useNavigation();
+function CallSummary({navigation}) {
   const [loading, setLoading] = useState(true);
 
   const [tableData, setTableData] = useState();
@@ -54,7 +53,7 @@ function CallSummary({navigation, route}) {
   const [endDate, setEndDate] = useState();
   const [filteredData, setFilteredData] = useState();
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [loaded, setLoaded] = useState(false);
+  // const [loaded, setLoaded] = useState(false);
   const [productName, setProductName] = useState();
   const [modelName, setModelName] = useState();
   const [uniqueId, setUniqueId] = useState();
@@ -86,6 +85,8 @@ function CallSummary({navigation, route}) {
   const [ta, setTa] = useState(0);
   const [status, setStatus] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [warrantyNumber, setWarrantyNumber] = useState('');
+  const [serialNumber, setSerialNumber] = useState('');
   const [warrantyType, setWarrantyType] = useState('');
   const [show, setShow] = useState(true);
 
@@ -106,13 +107,11 @@ function CallSummary({navigation, route}) {
   const [brandItems, setBrandItems] = useState([]);
   const [modelItems, setModelItems] = useState([]);
 
-  const [selectedProductItems, setSelectedProductItems] = useState([]);
-  const [selectedBrandItems, setSelectedBrandItems] = useState([]);
-  const [selectedModelItems, setSelectedModelItems] = useState([]);
+  const [userLocation, setUserLocation] = useState();
 
-  const [productId, setProductId] = useState();
+  const [productId, setProductId] = useState('');
   const [brandId, setBrandId] = useState();
-  const [modelId, setModelId] = useState();
+  const [modelId, setModelId] = useState('');
 
   const [imageModal, setImageModal] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
@@ -123,12 +122,7 @@ function CallSummary({navigation, route}) {
   // Signature
   const RBref = useRef();
   const RBref2 = useRef();
-  const signatureRef = useRef();
-  const [text, setText] = useState('her');
-
-  const handleProductId = item => {
-    setProductId(item.id);
-  };
+  const MapRef = useRef();
 
   // const clearAll = () => {
   //   setBuyerId("");
@@ -194,11 +188,11 @@ function CallSummary({navigation, route}) {
       user: user,
       administrator: administrator,
     };
-
+    console.log('API  -> ', `${host}/call_summary/mobcall_summary`);
     axios
       .post(`${host}/call_summary/mobcall_summary`, body)
       .then(function (response) {
-        // console.log('res -> ', JSON.stringify(response.data.s_call));
+        // console.log('res -> ', JSON.stringify(response.data?.s_call));
         setTableData(response?.data?.s_call);
         setFilteredData(response?.data?.s_call);
         setLoading(false);
@@ -246,12 +240,14 @@ function CallSummary({navigation, route}) {
   };
 
   const getParticularData = id => {
-    // console.log("URL --> ", `${host}/s_call/mobs_call_update/${id}`);
     axios
       .get(`${host}/s_call/mobs_call_update/${id}`)
       .then(function (response) {
         const data = response?.data?.s_call;
-        // console.log("Response mobs_call_update --> ", JSON.stringify(response?.data?.s_call));
+        // console.log(
+        //   'Response mobs_call_update --> ',
+        //   JSON.stringify(response?.data?.s_call),
+        // );
         setSingleData(data);
         setCharges(data?.visit_charges);
         setTa(data?.ta_km);
@@ -306,23 +302,6 @@ function CallSummary({navigation, route}) {
       });
   };
 
-  // const getRawMast = async () => {
-  //   console.log("war")
-  //   axios.post('http://103.231.46.238:5000/call_summary/mobgetrawMat_mast', { masterid: await AsyncStorage.getItem("masterid") })
-  //     .then(function (response) {
-  //       response.data.rawMat_mast.map(dat => (
-  //         setBrandItems(oldArray => [...oldArray, { id: dat._id, name: dat.Rm_Des }])
-  //       ))
-  //     })
-  //     .catch(function (error) {
-  //       console.log(error, "error")
-  //     })
-  //     .then(function (response) {
-  //       setLoaded(false)
-  //       setLoading(false)
-  //     })
-  // }
-
   const filter = text => {
     const array = [...tableData];
     const newArray = array.filter(
@@ -357,25 +336,6 @@ function CallSummary({navigation, route}) {
 
   const handleRescheduleChanges = () => {
     setLoading(true);
-    const user = AuthStore?.user;
-    const masterid = AuthStore?.masterId;
-    const compid = AuthStore?.companyId;
-    const divid = AuthStore?.divisionId;
-
-    const body = {
-      first_time: `${fromDate.getHours()}:${fromDate.getMinutes()}`,
-      end_time: `${toDate.getHours()}:${toDate.getMinutes()}`,
-      appointment_technician: technician,
-      technician_mobno: technicianContact,
-      appointment_date: complaintDate,
-      appointment_remark: complaintRemarks,
-      vhpxappointment: SingleData?._id,
-      user: user,
-      compid: compid,
-      divid: divid,
-      masterid: masterid,
-    };
-
     Axios({
       method: 'POST',
       url: `${host}/s_call/mobreschedule_add?reschedule_date=${reScheduleDate}&first_time=${firstTime}&second_time=${secondTime}&rescheduleremark=${reScheduleRemark}&vhpxappointment=${SingleData?._id}`,
@@ -407,12 +367,24 @@ function CallSummary({navigation, route}) {
     setToTime(false);
   };
 
-  const handleNewComplaint = async id => {
-    if (selectedIndex !== 0) {
-      getParticularData(id);
-    } else {
-      RBref.current.open();
-    }
+  const clearAsc = () => {
+    const todayDate = moment(new Date()).format('DD/MM/YYYY');
+    setFromDate(new Date(1598051730000));
+    setToDate(new Date(1598051730000));
+    setToTime(false);
+    setFromTime(false);
+    setComplaintDate();
+    setComplaintRemarks('');
+    setTechnician('');
+    setTechnicianContact('');
+  };
+
+  const clearReSch = () => {
+    setFirstTime(new Date(1598051730000));
+    setSecondTime(new Date(1598051730000));
+    setReScheduleUser({});
+    setRescheduleDate();
+    setRescheduleRemark('');
   };
 
   const handleAppointmentSubmit = async () => {
@@ -443,17 +415,9 @@ function CallSummary({navigation, route}) {
     })
       .then(respone => {
         Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
-        const todayDate = moment(new Date()).format('DD/MM/YYYY');
-        setFromDate(new Date(1598051730000));
-        setToDate(new Date(1598051730000));
-        setToTime(false);
-        setFromTime(false);
-        setComplaintDate(todayDate);
-        setComplaintRemarks('');
-        setTechnician('');
+        clearAsc();
         setLoading(false);
         RBref.current.close();
-        // nav.goBack();
       })
       .catch(error => {
         Toast.showWithGravity('Data Submit Failed.', Toast.LONG, Toast.BOTTOM);
@@ -485,40 +449,6 @@ function CallSummary({navigation, route}) {
     const list = [...visit_group];
     list[index][name] = value;
     setArray(list);
-  };
-
-  const handleModelId = item => {
-    setModelId(item.id);
-  };
-
-  const handleBrandId = id => {
-    setBrandId(id);
-  };
-
-  // Called after ref.current.readSignature() reads a non-empty base64 string
-  const handleOK = signature => {
-    console.log(signature);
-    onOK(signature); // Callback from Component props
-  };
-
-  // Called after ref.current.readSignature() reads an empty string
-  const handleEmpty = () => {
-    console.log('Empty');
-  };
-
-  // Called after ref.current.clearSignature()
-  const handleClear = () => {
-    console.log('clear success!');
-  };
-
-  // Called after end of stroke
-  const handleEnd = () => {
-    signatureRef.current.readSignature();
-  };
-
-  // Called after ref.current.getData()
-  const handleData = data => {
-    console.log(data);
   };
 
   const handleEngineerSubmit = async () => {
@@ -564,10 +494,13 @@ function CallSummary({navigation, route}) {
         });
       });
     }
+
     let array = visit_group;
     data.append('visit_date', engineerDate);
     data.append('warranty_type', warrantyType);
     data.append('invoice_no', invoiceNumber);
+    data.append('serial_no', serialNumber);
+    data.append('warranty_card_no', warrantyNumber);
     data.append('s_prod', productId);
     data.append('s_mdl', modelId);
     data.append('first_visit_status', status);
@@ -584,12 +517,12 @@ function CallSummary({navigation, route}) {
     data.append('compid', compid);
     data.append('divid', divid);
     data.append('masterid', masterid);
+    data.append('previousfilepath', AutoSelectedImages);
 
     await Axios({
       method: 'POST',
       url: `${host}/s_call/mobvisit_add`,
       headers: {
-        // 'Accept': 'application/json',
         'Content-Type': 'multipart/form-data',
       },
       processData: false,
@@ -668,26 +601,28 @@ function CallSummary({navigation, route}) {
     }
   };
 
+  const ShareData = async data => {
+    try {
+      Linking.openURL(
+        `https://api.whatsapp.com/send?phone=91${
+          data?.s_cus?.MobileNo
+        }&text=Name:- ${data?.s_cus?.ACName}\n\nAddress:- ${
+          data?.s_cus?.Address1
+        }\n\nProduct:- ${data?.s_prod?.Fg_Des}\n\nProblem:- ${
+          data?.typ_call?.CallType
+        }\n\nModel:- ${data?.s_mdl?.Description}\n\nStatus:- ${String(
+          data?.s_stus,
+        )?.toUpperCase()}`,
+      );
+    } catch (e) {}
+  };
+
   return (
-    <View>
+    <SafeAreaView>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={{marginVertical: 5}}>
-        {/* <SegmentedControlTab
-          values={[
-            'Assigned to Asc',
-            'Visit Schedule',
-            'Re-Schedule',
-            'Part Pending',
-            'Tech Advice',
-          ]}
-          tabTextStyle={{color: theme1.DARK_ORANGE_COLOR}}
-          selectedIndex={selectedIndex}
-          tabStyle={styles.tabStyle}
-          activeTabStyle={styles.activeTabStyle}
-          onTabPress={handleSingleIndexSelect}
-        /> */}
         {[
           'Assigned to Asc',
           'Visit Schedule',
@@ -695,7 +630,9 @@ function CallSummary({navigation, route}) {
           'Part Pending',
           'Tech Advice',
         ].map((item, index) => (
-          <TouchableOpacity onPress={() => handleSingleIndexSelect(index)}>
+          <TouchableOpacity
+            key={index}
+            onPress={() => handleSingleIndexSelect(index)}>
             <View
               style={
                 selectedIndex === index
@@ -735,7 +672,7 @@ function CallSummary({navigation, route}) {
       </Modal>
 
       {filteredData && (
-        <>
+        <React.Fragment>
           <View
             style={{
               display: 'flex',
@@ -757,6 +694,7 @@ function CallSummary({navigation, route}) {
               }}
             />
           </View>
+
           <View
             style={{
               borderBottomColor: 'grey',
@@ -767,13 +705,15 @@ function CallSummary({navigation, route}) {
             }}
           />
 
-          <View style={{height: height - 210}}>
+          <View style={{height: height - 205}}>
             <FlatList
               data={filteredData}
               initialNumToRender={10}
+              keyExtractor={item => item.unique_id}
               renderItem={({item, index}) => {
                 return (
                   <View
+                    key={item?.unique_id}
                     style={{
                       width: '90%',
                       backgroundColor: theme1.LIGHT_ORANGE_COLOR,
@@ -895,11 +835,11 @@ function CallSummary({navigation, route}) {
                         </Text>
                       </View>
                       <View style={styles.SgView}>
-                        <Text style={styles.SgLabel}>Brand: - </Text>
+                        <Text style={styles.SgLabel}>Problem: - </Text>
                         <Text
                           style={[styles.SgValue, {width: '80%'}]}
                           numberOfLines={1}>
-                          {item?.s_bnd?.Description}
+                          {item?.typ_call?.CallType}
                         </Text>
                       </View>
                       <View style={styles.SgView}>
@@ -910,19 +850,13 @@ function CallSummary({navigation, route}) {
                           {item?.s_mdl?.Description}
                         </Text>
                       </View>
-                      <View style={{flexDirection: 'row', width: '100%'}}>
-                        <View style={styles.SgView}>
-                          <Text style={[styles.SgLabel, {width: '50%'}]}>
-                            Quantity: -{' '}
-                          </Text>
-                          <Text style={styles.SgValue}>{item?.s_qty}</Text>
-                        </View>
-                        <View style={styles.SgView}>
-                          <Text style={[styles.SgLabel, {width: '35%'}]}>
-                            Status: -{' '}
-                          </Text>
-                          <Text style={styles.SgValue}>{item?.s_stus}</Text>
-                        </View>
+                      <View style={styles.SgView}>
+                        <Text style={styles.SgLabel}>Status: - </Text>
+                        <Text
+                          style={[styles.SgValue, {width: '80%'}]}
+                          numberOfLines={1}>
+                          {item?.s_stus}
+                        </Text>
                       </View>
                     </View>
                     <View
@@ -946,6 +880,35 @@ function CallSummary({navigation, route}) {
                           <Text style={styles.ListButtonText}>Submit</Text>
                         </View>
                       </TouchableOpacity>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          justifyContent: 'space-evenly',
+                          width: 100,
+                        }}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setUserLocation({
+                              latitude: Number(item?.latitude),
+                              longitude: Number(item?.longitude),
+                              latitudeDelta: 0.0922,
+                              longitudeDelta: 0.0421,
+                            });
+                            MapRef.current.open();
+                          }}>
+                          <Entypo
+                            name="location"
+                            size={25}
+                            color={theme1.DARK_BLUE_COLOR}
+                          />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => {
+                            ShareData(item);
+                          }}>
+                          <FIcon name="whatsapp" size={25} color={'green'} />
+                        </TouchableOpacity>
+                      </View>
                       {selectedIndex !== 0 && (
                         <TouchableOpacity
                           style={styles.ListButton}
@@ -966,14 +929,17 @@ function CallSummary({navigation, route}) {
               }}
             />
           </View>
+
           {selectedIndex === 0 && (
-            <Modalize ref={RBref} withHandle={false} modalHeight={height - 25}>
+            <Modalize
+              ref={RBref}
+              useNativeDriver={true}
+              withHandle={false}
+              modalHeight={height - 25}>
               <KeyboardAwareScrollView
                 automaticallyAdjustKeyboardInsets
                 contentContainerStyle={{
                   height: height,
-                  borderTopRightRadius: 8,
-                  borderTopLeftRadius: 8,
                 }}
                 bounces={false}
                 showsVerticalScrollIndicator={false}
@@ -985,17 +951,22 @@ function CallSummary({navigation, route}) {
                     padding: 8,
                     textAlign: 'center',
                     alignItems: 'center',
-                    borderBottomWidth: 1,
+                    borderBottomWidth: 0.5,
                     flexDirection: 'row',
-                    backgroundColor: theme1.LIGHT_ORANGE_COLOR,
+                    // backgroundColor: theme1.LIGHT_ORANGE_COLOR,
                     justifyContent: 'space-between',
+                    borderTopRightRadius: 20,
+                    borderTopLeftRadius: 20,
                   }}>
                   <Text
                     style={{fontSize: 17, fontWeight: 'bold', color: '#222'}}>
                     Add Assigned to Asc{' '}
                   </Text>
                   <TouchableOpacity
-                    onPress={() => RBref.current.close()}
+                    onPress={() => {
+                      clearAsc();
+                      RBref.current.close();
+                    }}
                     style={{marginRight: 20}}>
                     <FIcon name="close" size={20} color="#222" />
                   </TouchableOpacity>
@@ -1024,16 +995,14 @@ function CallSummary({navigation, route}) {
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
-                    paddingLeft: 10,
+                    justifyContent: 'space-evenly',
                   }}>
-                  <View style={{flex: 0.35}}>
+                  <View>
                     <Text
                       style={{
-                        width: wp('50%'),
-                        flex: 0.4,
                         marginTop: 22,
                         fontSize: wp('3%'),
-                        color: '#222',
+                        color: theme1.LIGHT_ORANGE_COLOR,
                       }}>
                       Time ({fromDate?.getHours()} Hrs:
                       {fromDate?.getMinutes()} Min)
@@ -1042,36 +1011,35 @@ function CallSummary({navigation, route}) {
                       <Text
                         style={{
                           borderWidth: 1,
+                          borderColor: theme1.LIGHT_ORANGE_COLOR,
                           borderRadius: 20,
                           padding: 10,
                           marginVertical: 10,
-                          color: '#222',
+                          color: theme1.LIGHT_ORANGE_COLOR,
                         }}>
                         Select From Time
                       </Text>
                     </TouchableOpacity>
                   </View>
-                  <View style={{flex: 0.2}}>
-                    <Text
-                      style={{
-                        width: wp('10%'),
-                        flex: 0.2,
-                        marginTop: 22,
-                        fontSize: wp('3%'),
-                        color: '#222',
-                      }}>
-                      To
-                    </Text>
-                  </View>
+                  <Text
+                    style={{
+                      width: wp('10%'),
+                      textAlign: 'center',
+                      marginTop: 22,
+                      fontSize: wp('3%'),
+                      color: theme1.LIGHT_ORANGE_COLOR,
+                    }}>
+                    To
+                  </Text>
 
-                  <View style={{flex: 0.35}}>
+                  <View>
                     <Text
                       style={{
-                        width: wp('50%'),
-                        flex: 0.3,
+                        // width: wp('50%'),
+                        // flex: 0.3,
                         marginTop: 22,
                         fontSize: wp('3%'),
-                        color: '#222',
+                        color: theme1.LIGHT_ORANGE_COLOR,
                       }}>
                       Time ({toDate?.getHours()} Hrs:{toDate?.getMinutes()} Min)
                     </Text>
@@ -1079,10 +1047,11 @@ function CallSummary({navigation, route}) {
                       <Text
                         style={{
                           borderWidth: 1,
+                          borderColor: theme1.LIGHT_ORANGE_COLOR,
                           borderRadius: 20,
                           padding: 10,
                           marginVertical: 10,
-                          color: '#222',
+                          color: theme1.LIGHT_ORANGE_COLOR,
                         }}>
                         Select To Time
                       </Text>
@@ -1090,7 +1059,65 @@ function CallSummary({navigation, route}) {
                   </View>
                 </View>
 
-                <View
+                <DatePicker
+                  conatinerStyles={{
+                    width: wp('90%'),
+                    alignSelf: 'center',
+                    height: 40,
+                    justifyContent: 'center',
+                    borderRadius: 5,
+                    borderColor: theme1.LIGHT_ORANGE_COLOR,
+                    paddingLeft: 22,
+                  }}
+                  date={complaintDate}
+                  placeholder="Date"
+                  placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
+                  setDate={setComplaintDate}
+                />
+
+                <TextInputField
+                  label="Technician"
+                  placeHolder="enter technician"
+                  value={technician}
+                  onChangeText={setTechnician}
+                  // leftIcon={<INSTITUTE_ICON />}
+                  style={{
+                    width: '90%',
+                    alignSelf: 'center',
+                    height: 50,
+                    marginTop: 15,
+                  }}
+                />
+
+                <TextInputField
+                  label="Technician contact"
+                  placeHolder="eg: - 9876543210"
+                  value={technicianContact}
+                  onChangeText={setTechnicianContact}
+                  type={'decimal-pad'}
+                  style={{
+                    width: '90%',
+                    alignSelf: 'center',
+                    height: 50,
+                    marginTop: 15,
+                  }}
+                />
+
+                <TextInputField
+                  label="Remark"
+                  placeHolder="enter remark"
+                  value={complaintRemarks}
+                  onChangeText={setComplaintRemarks}
+                  // type={'decimal-pad'}
+                  style={{
+                    width: '90%',
+                    alignSelf: 'center',
+                    height: 50,
+                    marginTop: 15,
+                  }}
+                />
+
+                {/* <View
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
@@ -1122,8 +1149,8 @@ function CallSummary({navigation, route}) {
                     defaultValue={technician}
                     onChangeText={text => setTechnician(text)}
                   />
-                </View>
-                <View
+                </View> */}
+                {/* <View
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
@@ -1156,8 +1183,8 @@ function CallSummary({navigation, route}) {
                     defaultValue={technicianContact}
                     onChangeText={text => setTechnicianContact(text)}
                   />
-                </View>
-                <View
+                </View> */}
+                {/* <View
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
@@ -1175,20 +1202,20 @@ function CallSummary({navigation, route}) {
                   </Text>
                   <DatePicker
                     conatinerStyles={{
-                      width: wp('42%'),
+                      // width: wp('42%'),
                       height: 40,
                       justifyContent: 'center',
                       borderRadius: 5,
                       marginLeft: 8,
                       marginRight: 17,
-                      borderColor: '#ccc',
+                      borderColor: theme1.LIGHT_ORANGE_COLOR,
                     }}
                     date={complaintDate}
                     placeholder="Date"
                     setDate={setComplaintDate}
                   />
-                </View>
-                <View
+                </View> */}
+                {/* <View
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
@@ -1220,7 +1247,7 @@ function CallSummary({navigation, route}) {
                     defaultValue={complaintRemarks}
                     onChangeText={text => setComplaintRemarks(text)}
                   />
-                </View>
+                </View> */}
 
                 <View
                   style={[
@@ -1238,7 +1265,11 @@ function CallSummary({navigation, route}) {
           )}
 
           {selectedIndex !== 0 && (
-            <Modalize ref={RBref} withHandle={false} modalHeight={height - 25}>
+            <Modalize
+              ref={RBref}
+              useNativeDriver={true}
+              withHandle={false}
+              modalHeight={height - 25}>
               <KeyboardAwareScrollView
                 automaticallyAdjustKeyboardInsets
                 contentContainerStyle={{
@@ -1256,10 +1287,10 @@ function CallSummary({navigation, route}) {
                     padding: 8,
                     textAlign: 'center',
                     alignItems: 'center',
-                    borderBottomWidth: 1,
+                    borderBottomWidth: 0.5,
                     flexDirection: 'row',
                     justifyContent: 'space-between',
-                    backgroundColor: theme1.LIGHT_ORANGE_COLOR,
+                    // backgroundColor: theme1.LIGHT_ORANGE_COLOR,
                     borderTopRightRadius: 8,
                     borderTopLeftRadius: 8,
                   }}>
@@ -1286,68 +1317,41 @@ function CallSummary({navigation, route}) {
 
                 <View
                   style={{
-                    display: 'flex',
                     flexDirection: 'row',
-                    paddingLeft: 10,
+                    width: '90%',
+                    alignSelf: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: 10,
                   }}>
-                  <DropDownPicker
-                    items={[
+                  <Dropdown
+                    data={[
                       {label: 'In-Warranty', value: 'in-warranty'},
                       {label: 'Out-Warranty', value: 'out-warranty'},
                       {label: 'New', value: 'new'},
                     ]}
-                    containerStyle={{
-                      height: 40,
-                      width: wp('37%'),
-                      top: hp('0.8%'),
-                      marginLeft: 10,
-                      flex: 1.25,
-                      borderColor: '#BBB',
-                      zIndex: 1000,
-                    }}
-                    itemStyle={{}}
-                    activeItemStyle={{backgroundColor: '#BBB'}}
-                    labelStyle={{color: '#222'}}
-                    dropDownStyle={{
-                      backgroundColor: '#fafafa',
-                      width: wp('37%'),
-                      marginTop: 5,
-                    }}
-                    defaultValue={warrantyType}
-                    onChangeItem={item => setWarrantyType(item.value)}
-                    name="warrantyType"
+                    labelField="label"
+                    valueField="value"
+                    value={warrantyType}
                     placeholder="Select Warranty"
-                    placeholderStyle={{color: '#BBB'}}
-                    style={{left: -5, backgroundColor: 'transparent'}}
+                    placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
+                    onChange={item => setWarrantyType(item?.value)}
+                    style={{
+                      width: '48%',
+                      alignSelf: 'center',
+                      borderWidth: 1,
+                      borderRadius: 5,
+                      paddingLeft: 5,
+                      borderColor: theme1.LIGHT_ORANGE_COLOR,
+                    }}
+                    activeColor={theme1.LIGHT_ORANGE_COLOR}
+                    selectedTextStyle={{color: theme1.SemiBlack, fontSize: 12}}
+                    itemTextStyle={{fontSize: 12}}
+                    containerStyle={{borderRadius: 8}}
+                    itemContainerStyle={{borderRadius: 8}}
+                    iconColor={theme1.LIGHT_ORANGE_COLOR}
                   />
-
-                  <TextInput
-                    style={[
-                      styles.input,
-                      {
-                        backgroundColor: '#D3FD7A',
-                        width: wp('82%'),
-                        flex: 1,
-                        height: hp('4.7%'),
-                        top: hp('0.3%'),
-                        marginRight: wp('5%'),
-                        color: '#222',
-                      },
-                    ]}
-                    placeholder="Invoice No."
-                    placeholderTextColor="#bbb"
-                    defaultValue={invoiceNumber?.toString()}
-                    onChangeText={text => setInvoiceNumber(text)}
-                  />
-                </View>
-                <View
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    paddingLeft: 10,
-                  }}>
-                  <DropDownPicker
-                    items={[
+                  <Dropdown
+                    data={[
                       {label: 'Resolved', value: 'Resolved'},
                       {label: 'Part-Pending', value: 'Part-Pending'},
                       {
@@ -1358,82 +1362,206 @@ function CallSummary({navigation, route}) {
                       {label: 'Visit Schedule', value: 'Visit Schedule'},
                       {label: 'Re Schedule', value: 'Re Schedule'},
                     ]}
-                    containerStyle={{
-                      height: 40,
-                      width: wp('37%'),
-                      top: hp('0.8%'),
-                      marginLeft: 10,
-                      flex: 1.25,
-                      borderColor: '#BBB',
-                      zIndex: 100,
-                    }}
-                    itemStyle={{}}
-                    activeItemStyle={{backgroundColor: '#BBB'}}
-                    labelStyle={{color: '#222'}}
-                    dropDownStyle={{
-                      backgroundColor: '#fafafa',
-                      width: wp('37%'),
-                      marginTop: 5,
-                    }}
-                    defaultValue={status}
-                    onChangeItem={item => setStatus(item.value)}
-                    name="status"
+                    labelField="label"
+                    valueField="value"
+                    value={status}
                     placeholder="Select Status"
-                    placeholderStyle={{color: '#BBB'}}
-                    style={{left: -5, backgroundColor: 'transparent'}}
+                    placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
+                    onChange={item => setStatus(item?.value)}
+                    style={{
+                      width: '48%',
+                      alignSelf: 'center',
+                      borderWidth: 1,
+                      borderRadius: 5,
+                      paddingLeft: 5,
+                      borderColor: theme1.LIGHT_ORANGE_COLOR,
+                    }}
+                    activeColor={theme1.LIGHT_ORANGE_COLOR}
+                    selectedTextStyle={{color: theme1.SemiBlack, fontSize: 12}}
+                    itemTextStyle={{fontSize: 12}}
+                    containerStyle={{borderRadius: 8}}
+                    itemContainerStyle={{borderRadius: 8}}
+                    iconColor={theme1.LIGHT_ORANGE_COLOR}
+                  />
+                </View>
+
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    width: '90%',
+                    alignSelf: 'center',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <TextInputField
+                    label="Invoice No."
+                    placeHolder="enter Invoice No."
+                    value={invoiceNumber || ''}
+                    onChangeText={setInvoiceNumber}
+                    style={{
+                      width: '48%',
+                      height: 40,
+                      marginTop: 15,
+                      borderRadius: 5,
+                    }}
                   />
                   <DatePicker
                     conatinerStyles={{
-                      width: wp('42%'),
+                      width: '48%',
                       height: 40,
                       justifyContent: 'center',
                       borderRadius: 5,
-                      marginLeft: 8,
-                      marginRight: 17,
-                      borderColor: '#ccc',
+                      borderColor: theme1.LIGHT_ORANGE_COLOR,
+                      marginTop: 15,
                     }}
+                    textStyle={{color: theme1.SemiBlack}}
                     date={engineerDate}
                     placeholder="Date"
+                    placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
                     setDate={setEngineerDate}
                   />
                 </View>
 
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    width: '90%',
+                    alignSelf: 'center',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <TextInputField
+                    label="Serial No."
+                    placeHolder="enter Serial No."
+                    value={serialNumber}
+                    onChangeText={setSerialNumber}
+                    style={{
+                      width: '48%',
+                      height: 40,
+                      marginTop: 15,
+                      borderRadius: 5,
+                    }}
+                  />
+                  <TextInputField
+                    label="Warranty card no."
+                    placeHolder="enter warranty card no."
+                    value={warrantyNumber}
+                    onChangeText={setWarrantyNumber}
+                    style={{
+                      width: '48%',
+                      height: 40,
+                      marginTop: 15,
+                      borderRadius: 5,
+                    }}
+                  />
+                </View>
+
+                <Dropdown
+                  data={modelItems}
+                  labelField="name"
+                  valueField="id"
+                  value={modelId || ''}
+                  placeholder="Select model"
+                  placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
+                  onChange={item => {
+                    setModelId(item.id);
+                  }}
+                  search={true}
+                  searchPlaceholder="Search"
+                  style={{
+                    width: '90%',
+                    marginTop: 10,
+                    alignSelf: 'center',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    paddingLeft: 5,
+                    borderColor: theme1.LIGHT_ORANGE_COLOR,
+                  }}
+                  activeColor={theme1.LIGHT_ORANGE_COLOR}
+                  selectedTextStyle={{color: theme1.SemiBlack, fontSize: 12}}
+                  itemTextStyle={{fontSize: 12}}
+                  containerStyle={{borderRadius: 8}}
+                  itemContainerStyle={{borderRadius: 8}}
+                  iconColor={theme1.LIGHT_ORANGE_COLOR}
+                />
+
+                <Dropdown
+                  data={productItems}
+                  labelField="name"
+                  valueField="id"
+                  value={productId || SingleData?.s_prod?._id || ''}
+                  placeholder="Select model"
+                  placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
+                  onChange={item => {
+                    setProductId(item.id);
+                  }}
+                  search={true}
+                  searchPlaceholder="Search"
+                  style={{
+                    width: '90%',
+                    marginTop: 10,
+                    alignSelf: 'center',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    paddingLeft: 5,
+                    borderColor: theme1.LIGHT_ORANGE_COLOR,
+                  }}
+                  activeColor={theme1.LIGHT_ORANGE_COLOR}
+                  selectedTextStyle={{color: theme1.SemiBlack, fontSize: 12}}
+                  itemTextStyle={{fontSize: 12}}
+                  containerStyle={{borderRadius: 8}}
+                  itemContainerStyle={{borderRadius: 8}}
+                  iconColor={theme1.LIGHT_ORANGE_COLOR}
+                />
+
                 {status === 'Resolved' && (
                   <View
                     style={{
-                      display: 'flex',
                       flexDirection: 'row',
-                      paddingLeft: 10,
+                      justifyContent: 'space-between',
                       alignItems: 'center',
+                      width: '90%',
+                      alignSelf: 'center',
                     }}>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        {
-                          backgroundColor:
-                            happyCode.length === 6 &&
-                            SingleData?._id
-                              ?.substring(SingleData?._id.length - 6)
-                              .toUpperCase() === happyCode
-                              ? '#D3FD7A'
-                              : '#f2918f',
-                          width: wp('95%'),
-                          flex: 1,
-                          height: hp('4.7%'),
-                          top: hp('0.3%'),
-                          marginRight: wp('5%'),
-                          color: '#222',
-                        },
-                      ]}
-                      placeholder="Happy Code"
-                      placeholderTextColor="#bbb"
+                    <TextInputField
+                      label="Happy Code"
+                      placeHolder="enter happy code"
                       value={happyCode}
                       onChangeText={text => {
                         if (text.length <= 6) {
                           setHappyCode(text.toUpperCase());
                         }
                       }}
+                      style={[
+                        {
+                          width: '60%',
+                          height: 40,
+                          marginTop: 15,
+                        },
+                      ]}
                     />
+                    <View style={{marginTop: 15}}>
+                      <FIcon
+                        size={25}
+                        name={
+                          happyCode.length === 6 &&
+                          SingleData?._id
+                            ?.substring(SingleData?._id.length - 6)
+                            .toUpperCase() === happyCode
+                            ? 'check'
+                            : 'close'
+                        }
+                        color={
+                          happyCode.length === 6 &&
+                          SingleData?._id
+                            ?.substring(SingleData?._id.length - 6)
+                            .toUpperCase() === happyCode
+                            ? 'green'
+                            : theme1.DARK_ORANGE_COLOR
+                        }
+                      />
+                    </View>
+
                     <TouchableOpacity
                       onPress={() => {
                         resendHappyCode();
@@ -1441,8 +1569,8 @@ function CallSummary({navigation, route}) {
                       style={{
                         height: 30,
                         backgroundColor: theme1.DARK_ORANGE_COLOR,
-                        marginRight: 15,
                         justifyContent: 'center',
+                        marginTop: 15,
                         paddingHorizontal: 10,
                         borderRadius: 8,
                       }}>
@@ -1455,32 +1583,6 @@ function CallSummary({navigation, route}) {
 
                 <View
                   style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    width: '95%',
-                    alignSelf: 'center',
-                  }}>
-                  <SelectTwo
-                    items={modelItems}
-                    selectedItem={selectedModelItems}
-                    handleId={handleModelId}
-                    defaultValue={modelName}
-                    placeholder="Model"
-                    borderColor="#ccc"
-                  />
-
-                  <SelectTwo
-                    items={productItems}
-                    selectedItem={selectedProductItems}
-                    handleId={handleProductId}
-                    defaultValue={productName}
-                    placeholder="Product"
-                    borderColor="#ccc"
-                  />
-                </View>
-
-                <View
-                  style={{
                     width: '95%',
                     alignSelf: 'center',
                     marginTop: 5,
@@ -1489,19 +1591,25 @@ function CallSummary({navigation, route}) {
                   }}>
                   <TouchableOpacity
                     style={{
-                      backgroundColor: theme1.MEDIUM_BLUE_COLOR,
+                      backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
                       height: 40,
                       width: 40,
                       borderWidth: 1,
                       margin: 5,
                       borderStyle: 'dashed',
-                      justifyContent: 'center',
-                      alignItems: 'center',
                     }}
                     onPress={() => {
                       setImageModal(true);
                     }}>
-                    <Text style={{fontSize: 30, color: '#000'}}>+</Text>
+                    <Text
+                      style={{
+                        fontSize: 25,
+                        color: '#000',
+                        textAlign: 'center',
+                        textAlignVertical: 'center',
+                      }}>
+                      +
+                    </Text>
                   </TouchableOpacity>
 
                   {AutoSelectedImages?.length > 0 &&
@@ -1553,209 +1661,228 @@ function CallSummary({navigation, route}) {
                   {visit_group?.map((x, i) => {
                     return (
                       <View key={i} style={styles.card}>
+                        <View
+                          style={{
+                            width: 70,
+                            flexDirection: 'row',
+                            alignSelf: 'flex-end',
+                            justifyContent: 'flex-end',
+                          }}>
+                          {visit_group?.length - 1 === i && (
+                            <TouchableOpacity
+                              style={{marginHorizontal: 15}}
+                              onPress={() => handleProductClick(i)}>
+                              <Icon
+                                name="plus-circle"
+                                size={25}
+                                color={theme1.LIGHT_ORANGE_COLOR}
+                              />
+                            </TouchableOpacity>
+                          )}
+                          {visit_group?.length !== 1 && (
+                            <TouchableOpacity
+                              // style={{marginHorizontal: 5}}
+                              onPress={() => handleRemoveClick(i)}>
+                              <Icon
+                                name="minus-circle"
+                                size={25}
+                                color={theme1.LIGHT_ORANGE_COLOR}
+                              />
+                            </TouchableOpacity>
+                          )}
+                        </View>
                         <View style={styles.column}>
-                          <SelectTwo
-                            items={brandItems}
-                            name="visit_spare_part"
-                            selectedItem={selectedBrandItems}
-                            handleId={handleBrandId}
-                            handleProduct={handleProductDetails}
-                            width={wp('37%')}
+                          <Dropdown
+                            data={brandItems}
+                            labelField="name"
+                            valueField="id"
+                            value={x?.visit_spare_part || ''}
                             placeholder="Spare Part"
-                            i={i}
-                            product={x}
-                            borderColor="#ccc"
-                            def_indexD={brandItems?.findIndex(
-                              a => a.id === x.visit_spare_part,
-                            )}
+                            placeholderStyle={{
+                              color: theme1.LIGHT_ORANGE_COLOR,
+                            }}
+                            onChange={item => {
+                              handleProductDetails(
+                                item.id,
+                                i,
+                                'visit_spare_part',
+                              );
+                            }}
+                            search={true}
+                            searchPlaceholder="Search"
+                            style={{
+                              width: '48%',
+                              marginTop: 10,
+                              alignSelf: 'center',
+                              borderWidth: 1,
+                              borderRadius: 5,
+                              paddingLeft: 5,
+                              borderColor: theme1.LIGHT_ORANGE_COLOR,
+                            }}
+                            activeColor={theme1.LIGHT_ORANGE_COLOR}
+                            selectedTextStyle={{
+                              color: theme1.SemiBlack,
+                              fontSize: 12,
+                            }}
+                            itemTextStyle={{fontSize: 12}}
+                            containerStyle={{borderRadius: 8}}
+                            itemContainerStyle={{borderRadius: 8}}
+                            iconColor={theme1.LIGHT_ORANGE_COLOR}
                           />
-
-                          <DropDownPicker
-                            items={[
+                          <Dropdown
+                            data={[
                               {label: 'Installed', value: 'Installed'},
                               {label: 'Pending', value: 'Pending'},
                               {label: 'Shipped', value: 'Shipped'},
                               {label: 'Delivered', value: 'Delivered'},
                               {label: 'In-Process', value: 'In-Process'},
                             ]}
-                            defaultValue={x.visit_status}
-                            containerStyle={{
-                              height: 40,
-                              // width: wp('30%'),
-                              top: hp('0.8%'),
-                              marginLeft: 10,
-                              flex: 1,
-                              borderColor: '#BBB',
-                              zIndex: 10000,
+                            labelField="label"
+                            valueField="value"
+                            value={x?.visit_status || ''}
+                            placeholder="Select Status"
+                            placeholderStyle={{
+                              color: theme1.LIGHT_ORANGE_COLOR,
                             }}
-                            itemStyle={{}}
-                            activeItemStyle={{backgroundColor: '#BBB'}}
-                            labelStyle={{color: '#222'}}
-                            dropDownStyle={{
-                              backgroundColor: '#fafafa',
-                              width: wp('37%'),
-                              marginTop: 5,
-                            }}
-                            onChangeItem={item =>
+                            onChange={item =>
                               handleProductDetails(
                                 item.value,
                                 i,
                                 'visit_status',
                               )
                             }
-                            name="visit_status"
-                            placeholder="Select Status"
-                            placeholderStyle={{color: '#BBB'}}
-                            style={{left: -5, backgroundColor: 'transparent'}}
+                            style={{
+                              width: '48%',
+                              marginTop: 10,
+                              alignSelf: 'center',
+                              borderWidth: 1,
+                              borderRadius: 5,
+                              paddingLeft: 5,
+                              borderColor: theme1.LIGHT_ORANGE_COLOR,
+                            }}
+                            activeColor={theme1.LIGHT_ORANGE_COLOR}
+                            selectedTextStyle={{
+                              color: theme1.SemiBlack,
+                              fontSize: 12,
+                            }}
+                            itemTextStyle={{fontSize: 12}}
+                            containerStyle={{borderRadius: 8}}
+                            itemContainerStyle={{borderRadius: 8}}
+                            iconColor={theme1.LIGHT_ORANGE_COLOR}
                           />
                         </View>
+
                         <View style={styles.column}>
-                          <DropDownPicker
-                            items={[
+                          <Dropdown
+                            data={[
                               {label: 'Own', value: 'Own'},
                               {label: 'Company', value: 'Company'},
                             ]}
-                            defaultValue={x?.visit_consumption}
-                            containerStyle={{
-                              height: 40,
-                              // width: wp('30%'),
-                              top: hp('0.8%'),
-                              marginLeft: 10,
-                              flex: 1,
-                              borderColor: '#BBB',
-                              zIndex: 1000,
-                              marginBottom: 10,
+                            labelField="label"
+                            valueField="value"
+                            value={x?.visit_consumption || ''}
+                            placeholder="Select Consumption"
+                            placeholderStyle={{
+                              color: theme1.LIGHT_ORANGE_COLOR,
+                              fontSize: 14,
                             }}
-                            itemStyle={{}}
-                            activeItemStyle={{backgroundColor: '#BBB'}}
-                            labelStyle={{color: '#222'}}
-                            dropDownStyle={{
-                              backgroundColor: '#fafafa',
-                              width: wp('37%'),
-                              marginTop: 5,
-                            }}
-                            onChangeItem={item =>
+                            onChange={item =>
                               handleProductDetails(
                                 item.value,
                                 i,
                                 'visit_consumption',
                               )
                             }
-                            name="visit_consumption"
-                            placeholder="Select Consumption"
-                            placeholderStyle={{color: '#BBB'}}
-                            style={{left: -5, backgroundColor: 'transparent'}}
+                            style={{
+                              width: '48%',
+                              marginTop: 10,
+                              alignSelf: 'center',
+                              borderWidth: 1,
+                              borderRadius: 5,
+                              paddingLeft: 5,
+                              borderColor: theme1.LIGHT_ORANGE_COLOR,
+                            }}
+                            activeColor={theme1.LIGHT_ORANGE_COLOR}
+                            selectedTextStyle={{
+                              color: theme1.SemiBlack,
+                              fontSize: 12,
+                            }}
+                            itemTextStyle={{fontSize: 12}}
+                            containerStyle={{borderRadius: 8}}
+                            itemContainerStyle={{borderRadius: 8}}
+                            iconColor={theme1.LIGHT_ORANGE_COLOR}
                           />
-
-                          <DropDownPicker
-                            items={[
+                          <Dropdown
+                            data={[
                               {label: 'In-Warranty', value: 'In-Warranty'},
                               {label: 'Out-Warranty', value: 'Out-Warranty'},
                             ]}
-                            defaultValue={x?.visit_warranty}
-                            containerStyle={{
-                              height: 40,
-                              // width: wp('30%'),
-                              top: hp('0.8%'),
-                              marginLeft: 10,
-                              flex: 1,
-                              borderColor: '#BBB',
-                              zIndex: 1000,
-                              marginBottom: 10,
+                            labelField="label"
+                            valueField="value"
+                            value={x?.visit_warranty || ''}
+                            placeholder="Select Warranty"
+                            placeholderStyle={{
+                              color: theme1.LIGHT_ORANGE_COLOR,
                             }}
-                            itemStyle={{}}
-                            activeItemStyle={{backgroundColor: '#BBB'}}
-                            labelStyle={{color: '#222'}}
-                            dropDownStyle={{
-                              backgroundColor: '#fafafa',
-                              width: wp('37%'),
-                              marginTop: 5,
-                            }}
-                            onChangeItem={item =>
+                            onChange={item =>
                               handleProductDetails(
                                 item.value,
                                 i,
                                 'visit_warranty',
                               )
                             }
-                            name="visit_warranty"
-                            placeholder="Select Warranty"
-                            placeholderStyle={{color: '#BBB'}}
-                            style={{left: -5, backgroundColor: 'transparent'}}
+                            style={{
+                              width: '48%',
+                              marginTop: 10,
+                              alignSelf: 'center',
+                              borderWidth: 1,
+                              borderRadius: 5,
+                              paddingLeft: 5,
+                              borderColor: theme1.LIGHT_ORANGE_COLOR,
+                            }}
+                            activeColor={theme1.LIGHT_ORANGE_COLOR}
+                            selectedTextStyle={{
+                              color: theme1.SemiBlack,
+                              fontSize: 12,
+                            }}
+                            itemTextStyle={{fontSize: 12}}
+                            containerStyle={{borderRadius: 8}}
+                            itemContainerStyle={{borderRadius: 8}}
+                            iconColor={theme1.LIGHT_ORANGE_COLOR}
                           />
                         </View>
 
                         <View style={styles.column}>
-                          <TextInput
-                            keyboardType="numeric"
-                            name="visit_qty"
-                            style={[
-                              styles.input,
-                              {
-                                backgroundColor: '#D3FD7A',
-                                width: wp('37%'),
-                                flex: 0.9,
-                                height: hp('5%'),
-                                color: '#222',
-                              },
-                            ]}
-                            placeholder="Quantity"
-                            placeholderTextColor="#bbb"
-                            defaultValue={x?.visit_qty?.toString()}
+                          <TextInputField
+                            label="Quantity"
+                            placeHolder="enter quantity"
+                            type={'numeric'}
+                            value={String(x?.visit_qty) || ''}
                             onChangeText={value =>
                               handleProductDetails(value, i, 'visit_qty')
                             }
+                            style={{
+                              width: '48%',
+                              height: 40,
+                              marginTop: 15,
+                              borderRadius: 5,
+                            }}
                           />
-
-                          <TextInput
-                            keyboardType="numeric"
-                            name="visit_rate"
-                            style={[
-                              styles.input,
-                              {
-                                backgroundColor: '#D3FD7A',
-                                width: wp('37%'),
-                                flex: 0.9,
-                                height: hp('5%'),
-                                color: '#222',
-                              },
-                            ]}
-                            placeholder="Rate"
-                            placeholderTextColor="#bbb"
-                            value={x?.visit_rate?.toString()}
+                          <TextInputField
+                            label="Rate"
+                            placeHolder="enter rate"
+                            type={'numeric'}
+                            value={String(x?.visit_rate) || ''}
                             onChangeText={value =>
                               handleProductDetails(value, i, 'visit_rate')
                             }
+                            style={{
+                              width: '48%',
+                              height: 40,
+                              marginTop: 15,
+                              borderRadius: 5,
+                            }}
                           />
-                        </View>
-
-                        <View
-                          style={[
-                            styles.column,
-                            {
-                              justifyContent: 'space-around',
-                              marginBottom: 20,
-                              margin: 10,
-                            },
-                          ]}>
-                          {visit_group?.length - 1 === i && (
-                            <TouchableOpacity
-                              onPress={() => handleProductClick(i)}
-                              style={[
-                                styles.button,
-                                {flex: 1, marginRight: 10},
-                              ]}>
-                              <Text style={{color: 'white'}}>Add Product</Text>
-                            </TouchableOpacity>
-                          )}
-
-                          {visit_group?.length !== 1 && (
-                            <TouchableOpacity
-                              onPress={() => handleRemoveClick(i)}
-                              style={styles.button}>
-                              <Text style={{color: 'white'}}>Remove</Text>
-                            </TouchableOpacity>
-                          )}
                         </View>
                       </View>
                     );
@@ -1923,20 +2050,39 @@ function CallSummary({navigation, route}) {
             </Modalize>
           )}
 
-          <RBSheet
-            animationType="none"
-            ref={RBref2}
-            dragFromTopOnly={true}
-            closeOnPressMask={false}
-            onClose={a => console.log('close -> ', a)}
-            customStyles={{
-              container: {
-                borderTopEndRadius: 20,
-                borderTopStartRadius: 20,
-                backgroundColor: theme1.LIGHT_ORANGE_COLOR,
-                height: hp('60%'),
-              },
-            }}>
+          <RBSheet ref={MapRef} height={height - 25}>
+            <View
+              style={{
+                padding: 8,
+                textAlign: 'center',
+                alignItems: 'center',
+                borderBottomWidth: 0.5,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}>
+              <View />
+              <Text style={{fontSize: 17, fontWeight: 'bold'}}>
+                {`User Location`}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setUserLocation();
+                  MapRef.current.close();
+                }}
+                style={{
+                  marginRight: 20,
+                  height: 30,
+                  width: 30,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <FIcon name="close" size={20} />
+              </TouchableOpacity>
+            </View>
+            {!!userLocation && <CallMapView region={userLocation} />}
+          </RBSheet>
+
+          <Modalize ref={RBref2} withHandle={false} modalHeight={height - 25}>
             <ScrollView
               style={{flex: 1}}
               scrollEnabled
@@ -1946,7 +2092,7 @@ function CallSummary({navigation, route}) {
                   padding: 8,
                   textAlign: 'center',
                   alignItems: 'center',
-                  borderBottomWidth: 1,
+                  borderBottomWidth: 0.5,
                   flexDirection: 'row',
                   justifyContent: 'space-between',
                 }}>
@@ -1956,8 +2102,8 @@ function CallSummary({navigation, route}) {
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
+                    clearReSch();
                     RBref2.current.close();
-                    setReScheduleUser({});
                   }}
                   style={{
                     marginRight: 20,
@@ -1994,18 +2140,17 @@ function CallSummary({navigation, route}) {
                 style={{
                   display: 'flex',
                   flexDirection: 'row',
-                  // paddingLeft: 10,
-                  justifyContent: 'space-around',
+                  justifyContent: 'space-evenly',
                 }}>
-                <View style={{flex: 0.4}}>
+                <View>
                   <Text
                     style={{
-                      width: wp('50%'),
-                      flex: 0.4,
+                      // width: wp('40%'),
                       marginTop: 22,
                       fontSize: wp('3%'),
-                      color: '#222',
-                      marginLeft: 30,
+                      color: theme1.LIGHT_ORANGE_COLOR,
+                      textAlign: 'center',
+                      // marginLeft: 30,
                     }}>
                     Time ({firstTime?.getHours()} Hrs:
                     {firstTime?.getMinutes()} Min)
@@ -2014,26 +2159,26 @@ function CallSummary({navigation, route}) {
                     <Text
                       style={{
                         borderWidth: 1,
+                        borderColor: theme1.LIGHT_ORANGE_COLOR,
                         borderRadius: 20,
                         padding: 10,
                         paddingRight: 5,
                         marginVertical: 10,
-                        color: '#222',
+                        color: theme1.LIGHT_ORANGE_COLOR,
                       }}>
                       Reschedule From Time
                     </Text>
                   </TouchableOpacity>
                 </View>
 
-                <View style={{flex: 0.4}}>
+                <View>
                   <Text
                     style={{
-                      width: wp('50%'),
-                      flex: 0.4,
+                      // width: wp('40%'),
                       marginTop: 22,
                       fontSize: wp('3%'),
-                      color: '#222',
-                      marginLeft: 30,
+                      color: theme1.LIGHT_ORANGE_COLOR,
+                      textAlign: 'center',
                     }}>
                     Time ({secondTime?.getHours()} Hrs:
                     {secondTime?.getMinutes()} Min)
@@ -2042,74 +2187,56 @@ function CallSummary({navigation, route}) {
                     <Text
                       style={{
                         borderWidth: 1,
+                        borderColor: theme1.LIGHT_ORANGE_COLOR,
                         borderRadius: 20,
                         padding: 10,
                         marginVertical: 10,
-                        color: '#222',
+                        color: theme1.LIGHT_ORANGE_COLOR,
                       }}>
                       Reschedule To Time
                     </Text>
                   </TouchableOpacity>
                 </View>
               </View>
-              <View
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  paddingLeft: 10,
-                  width: '90%',
-                  justifyContent: 'space-around',
+
+              <DatePicker
+                conatinerStyles={{
+                  width: wp('90%'),
+                  height: 40,
+                  justifyContent: 'center',
                   alignSelf: 'center',
-                  alignItems: 'center',
-                }}>
-                <Text
-                  style={{
-                    // borderWidth: 1,
-                    borderRadius: 20,
-                    padding: 10,
-                    marginVertical: 10,
-                    color: '#222',
-                  }}>
-                  Reschedule Date:
-                </Text>
-                <DatePicker
-                  conatinerStyles={{
-                    width: wp('42%'),
-                    height: 40,
-                    justifyContent: 'center',
-                    borderRadius: 5,
-                    marginLeft: 8,
-                    marginRight: 17,
-                    borderColor: '#222',
-                  }}
-                  date={reScheduleDate}
-                  placeholderTextColor={'#222'}
-                  placeholder="Date"
-                  setDate={setRescheduleDate}
-                />
-              </View>
-              <TextInput
+                  borderRadius: 5,
+                  paddingLeft: 20,
+                  borderColor: theme1.LIGHT_ORANGE_COLOR,
+                }}
+                date={reScheduleDate}
+                placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
+                placeholder="Date"
+                setDate={setRescheduleDate}
+              />
+
+              <TextInputField
+                label="Re-Schedule Remark"
+                placeHolder="enter remark"
                 value={reScheduleRemark}
                 onChangeText={text => {
                   if (text.length <= 100) {
                     setRescheduleRemark(text);
                   }
                 }}
-                numberOfLines={3}
-                placeholder={'Reschedule Remark'}
-                placeholderTextColor={'#444'}
                 style={{
                   width: '90%',
-                  height: 70,
-                  color: '#222',
                   alignSelf: 'center',
-                  borderWidth: 1,
-                  borderRadius: 7,
+                  height: 50,
+                  marginTop: 15,
                 }}
               />
-              <Text style={{marginLeft: 20}}>{`${
-                reScheduleRemark?.length || 0
-              }/100`}</Text>
+              <Text
+                style={{
+                  marginTop: 5,
+                  marginLeft: 30,
+                  color: theme1.LIGHT_ORANGE_COLOR,
+                }}>{`${reScheduleRemark?.length || 0}/100`}</Text>
               <View
                 style={[
                   styles.column,
@@ -2122,16 +2249,17 @@ function CallSummary({navigation, route}) {
                 </TouchableOpacity>
               </View>
             </ScrollView>
-          </RBSheet>
+          </Modalize>
+
           <ImagePickerModal
             isVisible={imageModal}
             onClose={() => setImageModal(false)}
             onImageLibraryPress={pickImage}
             onCameraPress={pickFromCamera}
           />
-        </>
+        </React.Fragment>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -2188,8 +2316,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   column: {
-    display: 'flex',
+    width: '100%',
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignSelf: 'center',
   },
   button: {
     alignItems: 'center',
@@ -2218,9 +2348,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   card: {
+    width: '95%',
     backgroundColor: 'white',
     borderRadius: 15,
-    shadowColor: '#000',
+    elevation: 6,
+    shadowColor: theme1.SemiBlack,
     shadowOffset: {width: 0, height: 3},
     shadowOpacity: 0.5,
     shadowRadius: 5,

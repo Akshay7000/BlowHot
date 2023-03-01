@@ -68,60 +68,8 @@ function AttendanceList({navigation}) {
       setTableData(response?.data?.atd);
       setFilteredData(sortArrayByDate(response?.data?.atd, 'Start_date'));
       setLoading(false);
-
-      // getSellers();
     });
   };
-
-  // Seller lIst
-  // const getSellers = async () => {
-  //   const masterid = await AsyncStorage.getItem('masterid');
-  //   const dat = {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //     },
-  //   };
-  //   await fetch(
-  //     `http://www.softsauda.com/deal_entry/party_listS?ptyp=S&masterid=${masterid}`,
-  //     dat,
-  //   )
-  //     .then(response => response.json())
-  //     .then(dat => {
-  //       dat.results.map(da =>
-  //         setSellerItems(oldArray => [
-  //           ...oldArray,
-  //           {id: da.id, name: da.party_name, mobile: da.mob_no},
-  //         ]),
-  //       );
-  //     });
-  // };
-
-  // Get City List
-  // const getCity = async () => {
-  //   const URL = `http://www.softsauda.com/add_city/getcitylist`;
-
-  //   Axios.get(URL).then(response => {
-  //     response.data.city_name.map(dat =>
-  //       setCityItems(oldArray => [
-  //         ...oldArray,
-  //         {id: dat._id, name: dat.city_name},
-  //       ]),
-  //     );
-  //     getState();
-  //   });
-  // };
-
-  //Get State List
-  // const getState = async () => {
-  //   const URL = `http://www.softsauda.com/add_city/getstatelist`;
-
-  //   Axios.get(URL).then(response => {
-  //     setStateItems(response.data.state_name);
-
-  //     setLoading(false);
-  //   });
-  // };
 
   const getFilteredData = async (startDate, endDate) => {
     const user = AuthStore?.user;

@@ -4,6 +4,7 @@ import {StyleSheet, TextInput, TouchableOpacity, View} from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import theme1 from '../components/styles/DarkTheme';
 
 const DatePicker = ({
   date,
@@ -15,6 +16,7 @@ const DatePicker = ({
   conatinerStyles,
   maxDate,
   minDate,
+  textStyle,
   isDisable = false,
 }) => {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
@@ -47,19 +49,20 @@ const DatePicker = ({
               placeholderTextColor ? placeholderTextColor : '#BBB'
             }
             placeholder={placeholder}
-            style={styles.text}
+            style={[styles.text,textStyle]}
             onChangeText={value => setDate(value)}
             editable={false}
             value={date}
           />
 
           {type !== 'time' ? (
-            <AntDesign name="calendar" size={20} color={'#222'} />
+            <AntDesign name="calendar" size={20} color={theme1.LIGHT_ORANGE_COLOR} style={{marginRight: 5}} />
           ) : (
             <MaterialCommunityIcons
               name="clock-time-eight-outline"
               size={20}
               color={'#222'}
+
             />
           )}
         </View>

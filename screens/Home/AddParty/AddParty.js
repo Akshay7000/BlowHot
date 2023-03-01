@@ -1,35 +1,38 @@
 import axios from 'axios';
-import React, { useEffect, useRef, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
   Text,
   TextInput,
   ToastAndroid,
-  View
+  View,
+  Image,
 } from 'react-native';
-import { Row } from 'react-native-easy-grid';
-import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
+import {Row} from 'react-native-easy-grid';
+import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
 import SelectMultiple from 'react-native-select-multiple';
 import SelectTwo from '../../components/SelectTwo';
 import theme1 from '../../components/styles/DarkTheme';
-// import * as Updates from "expo-updates";
-import { useNavigation } from '@react-navigation/native';
-import { observer } from 'mobx-react-lite';
-import { host } from '../../Constants/Host';
+import {useNavigation} from '@react-navigation/native';
+import {observer} from 'mobx-react-lite';
+import {host} from '../../Constants/Host';
 import AuthStore from '../../Mobx/AuthStore';
 import {
   heightPercentageToDP as hp,
-  widthPercentageToDP as wp
+  widthPercentageToDP as wp,
 } from '../../responsiveLayout/ResponsiveLayout';
+import TextInputField from '../../components/TextInputField';
+import {Dropdown} from 'react-native-element-dropdown';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 const AddParty = ({navigation, route}) => {
   const nav = useNavigation();
   const checkList = [
-    {value: 'Retails', label: 'Retails'},
+    // {value: 'Retails', label: 'Retails'},
     {value: 'Dealer', label: 'Dealer'},
     {value: 'Distributor', label: 'Distributor'},
-    {value: 'Customer', label: 'Customer'},
+    // {value: 'Customer', label: 'Customer'},
   ];
 
   const [loading, setLoading] = useState(true);
@@ -55,39 +58,28 @@ const AddParty = ({navigation, route}) => {
 
   const [selectedItems, setSelectedItems] = useState([]);
 
-  // Refs
-
-  const nameRef = useRef();
-  const cityRef = useRef();
-  const mobileRef = useRef();
-  const addressRef = useRef();
-
   //Handle Ids
-
   const handleCityId = item => {
     setCityId(item.id);
   };
+
   useEffect(() => {
     getCity();
   }, []);
 
   const getCity = async () => {
-    console.log('hey');
+    setLoading(false);
     const URL = `${host}/c_visit_entry/mob_getcity`;
-
     axios
       .get(URL)
       .then(response => {
-        // console.log("response", response.data.results)
-        response.data.results.map(dat =>
-          setCityItems(oldArray => [
-            ...oldArray,
-            {id: dat._id, name: String(dat.CityName)},
-          ]),
-        );
+        setCityItems(response?.data?.results);
         setLoading(true);
       })
-      .catch(error => console.log('error', error));
+      .catch(error => {
+        setLoading(true);
+        console.log('error', error);
+      });
   };
 
   const clear = () => {
@@ -177,150 +169,194 @@ const AddParty = ({navigation, route}) => {
   };
 
   return (
-    <View style={{flex: 1, justifyContent: 'center'}}>
+    <View style={{flex: 1}}>
       {loading ? (
-        <>
-          <ScrollView
-            keyboardShouldPersistTaps="always"
-            style={styles.container}>
-            <SelectMultiple
-              items={checkList}
-              selectedItems={selectedItems}
-              onSelectionsChange={onSelectionsChange}
-              labelStyle={{color: '#222'}}
-            />
+        <ScrollView keyboardShouldPersistTaps="always" style={styles.container}>
+          <SelectMultiple
+            items={checkList}
+            selectedItems={selectedItems}
+            onSelectionsChange={onSelectionsChange}
+            labelStyle={{color: theme1.SemiBlack}}
+            rowStyle={{
+              borderColor: theme1.LIGHT_ORANGE_COLOR,
+              width: '90%',
+              alignSelf: 'center',
+              marginVertical: 5,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderBottomWidth: 1,
+              borderBottomColor: theme1.LIGHT_ORANGE_COLOR,
+            }}
+          />
 
-            <View style={styles.form}>
-              <Row style={{marginBottom: 10}}>
-                <TextInput
-                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
-                  placeholder="AC. Code"
-                  placeholderTextColor={'#BBB'}
-                  keyboardType="numeric"
-                  defaultValue={acCode}
-                  onChangeText={text => setAcCode(text)}
+          <View style={styles.form}>
+            <View style={styles.row}>
+              {cityItems.length > 0 && (
+                <Dropdown
+                  data={cityItems}
+                  labelField="CityName"
+                  valueField="_id"
+                  value={cityId || ''}
+                  placeholder="Select City"
+                  placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
+                  onChange={item => {
+                    setCityId(item?._id);
+                  }}
+                  search={true}
+                  searchPlaceholder="Search"
+                  style={{
+                    width: '48%',
+                    marginTop: 15,
+                    alignSelf: 'center',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    paddingLeft: 5,
+                    borderColor: theme1.LIGHT_ORANGE_COLOR,
+                  }}
+                  activeColor={theme1.LIGHT_ORANGE_COLOR}
+                  selectedTextStyle={{color: theme1.SemiBlack, fontSize: 12}}
+                  itemTextStyle={{fontSize: 12}}
+                  containerStyle={{borderRadius: 8}}
+                  itemContainerStyle={{borderRadius: 8}}
+                  iconColor={theme1.LIGHT_ORANGE_COLOR}
                 />
-
-                <TextInput
-                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
-                  placeholder="Name"
-                  placeholderTextColor={'#BBB'}
-                  defaultValue={name}
-                  onChangeText={text => setName(text)}
-                />
-              </Row>
-              <Row style={{marginBottom: 10}}>
-                <TextInput
-                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
-                  placeholder="Pan Number"
-                  placeholderTextColor={'#BBB'}
-                  defaultValue={pan}
-                  onChangeText={text => setPan(text)}
-                />
-                <TextInput
-                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
-                  placeholder="Enter Address"
-                  placeholderTextColor={'#BBB'}
-                  defaultValue={address}
-                  onChangeText={text => setAddress(text)}
-                />
-              </Row>
-              <Row style={{marginBottom: 10}}>
-                <TextInput
-                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
-                  placeholder="Area"
-                  placeholderTextColor={'#BBB'}
-                  defaultValue={area}
-                  onChangeText={text => setArea(text)}
-                />
-                <TextInput
-                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
-                  placeholder="GSTIN"
-                  placeholderTextColor={'#BBB'}
-                  defaultValue={gstin}
-                  onChangeText={text => setGstin(text)}
-                />
-              </Row>
-
-              <Row style={{marginBottom: 10}}>
-                <SelectTwo
-                  items={cityItems}
-                  selectedItem={selectedCityItems}
-                  handleId={handleCityId}
-                  width={wp('92%')}
-                  placeholder="City"
-                  borderColor="#ccc"
-                />
-                <TextInput
-                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
-                  placeholder="Pincode"
-                  placeholderTextColor={'#BBB'}
-                  keyboardType="numeric"
-                  defaultValue={pincode}
-                  onChangeText={text => setPincode(text)}
-                />
-              </Row>
-
-              {/* <Row style={{ marginBottom: 10 }}>
-                <TextInput
-                  style={[styles.input, { backgroundColor: "#D3FD7A" }]}
-                  placeholder="Webiste"
-                  defaultValue={website}
-                  onChangeText={(text) => setWebsite(text)}
-                />
-                <TextInput
-                  style={[styles.input, { backgroundColor: "#D3FD7A" }]}
-                  placeholder="Email"
-                  defaultValue={email}
-                  onChangeText={(text) => setEmail(text)}
-                />
-              </Row> */}
-
-              <Row style={{marginBottom: 10}}>
-                <TextInput
-                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
-                  placeholder="Mobile no."
-                  placeholderTextColor={'#BBB'}
-                  required
-                  keyboardType="numeric"
-                  defaultValue={mobile}
-                  onChangeText={text => setMobile(text)}
-                />
-                <TextInput
-                  style={[styles.input, {backgroundColor: '#D3FD7A'}]}
-                  placeholder="No/Alt"
-                  placeholderTextColor={'#BBB'}
-                  defaultValue={alt}
-                  onChangeText={text => setAlt(text)}
-                />
-              </Row>
-
-              {/* <Row style={{ marginBottom: 10 }}>
-                <TextInput
-                  style={[styles.input, { backgroundColor: "#D3FD7A" }]}
-                  placeholder="Resi no."
-                  defaultValue={resiNumber}
-                  onChangeText={(text) => setResiNumber(text)}
-                />
-                <TextInput
-                  style={[styles.input, { backgroundColor: "#D3FD7A" }]}
-                  placeholder="Fax"
-                  defaultValue={fax}
-                  onChangeText={(text) => setFax(text)}
-                />
-              </Row> */}
-
-              <View style={[styles.column, {justifyContent: 'center'}]}>
-                <TouchableOpacity
-                  onPress={() => handleSubmit()}
-                  style={disabled ? styles.button : styles.button1}
-                  disabled={disabled}>
-                  <Text style={{color: 'white'}}>Submit</Text>
-                </TouchableOpacity>
-              </View>
+              )}
+              <TextInputField
+                label="AC. Code"
+                placeHolder="enter AC. Code"
+                value={acCode}
+                type={'numeric'}
+                onChangeText={setAcCode}
+                style={{
+                  width: '48%',
+                  height: 40,
+                  marginTop: 15,
+                  borderRadius: 5,
+                }}
+              />
             </View>
-          </ScrollView>
-        </>
+
+            <View style={styles.row}>
+              <TextInputField
+                label="Name"
+                placeHolder="enter name"
+                value={name}
+                onChangeText={setName}
+                style={{
+                  width: '48%',
+                  height: 40,
+                  marginTop: 15,
+                  borderRadius: 5,
+                }}
+              />
+              <TextInputField
+                label="Pan Number"
+                placeHolder="Enter Pan Number"
+                value={pan}
+                onChangeText={setPan}
+                style={{
+                  width: '48%',
+                  height: 40,
+                  marginTop: 15,
+                  borderRadius: 5,
+                }}
+              />
+            </View>
+
+            <View style={styles.row}>
+              <TextInputField
+                label="Address"
+                placeHolder="Enter Address"
+                value={address}
+                onChangeText={setAddress}
+                style={{
+                  width: '48%',
+                  height: 40,
+                  marginTop: 15,
+                  borderRadius: 5,
+                }}
+              />
+              <TextInputField
+                label="Area"
+                placeHolder="Enter Area"
+                value={area}
+                onChangeText={setArea}
+                style={{
+                  width: '48%',
+                  height: 40,
+                  marginTop: 15,
+                  borderRadius: 5,
+                }}
+              />
+            </View>
+
+            <View style={styles.row}>
+              <TextInputField
+                label="Mobile"
+                placeHolder="Enter Mobile"
+                value={mobile}
+                type={'numeric'}
+                onChangeText={setMobile}
+                style={{
+                  width: '48%',
+                  height: 40,
+                  marginTop: 15,
+                  borderRadius: 5,
+                }}
+              />
+              <TextInputField
+                label="Alt. Mobile"
+                placeHolder="Enter Alt. Mobile"
+                value={alt}
+                type={'numeric'}
+                onChangeText={setAlt}
+                style={{
+                  width: '48%',
+                  height: 40,
+                  marginTop: 15,
+                  borderRadius: 5,
+                }}
+              />
+            </View>
+
+            <View style={styles.row}>
+              <TextInputField
+                label="GSTIN"
+                placeHolder="Enter GSTIN"
+                value={gstin}
+                onChangeText={setGstin}
+                style={{
+                  width: '48%',
+                  height: 40,
+                  marginTop: 15,
+                  borderRadius: 5,
+                }}
+              />
+              <TextInputField
+                label="Pin Code"
+                placeHolder="Enter Pin Code"
+                value={pincode}
+                type={'numeric'}
+                onChangeText={setPincode}
+                style={{
+                  width: '48%',
+                  height: 40,
+                  marginTop: 15,
+                  borderRadius: 5,
+                }}
+              />
+            </View>
+
+            <View style={[styles.column, {justifyContent: 'center'}]}>
+              <TouchableOpacity
+                onPress={() => handleSubmit()}
+                style={disabled ? styles.button : styles.button1}
+                disabled={disabled}>
+                <Text style={{color: 'white'}}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
       ) : (
         <ActivityIndicator color={theme1.DARK_ORANGE_COLOR} size={100} />
       )}
@@ -375,17 +411,16 @@ const styles = StyleSheet.create({
   },
 
   form: {
-    flex: 1,
-    top: 0,
-    marginTop: 30,
-    marginHorizontal: 10,
-    borderRadius: 12,
-    padding: 10,
+    width: '95%',
+    marginTop: 10,
+    borderRadius: 15,
+    alignSelf: 'center',
+    backgroundColor: theme1.White,
+    paddingVertical: 10,
   },
   container: {
     flex: 1,
     flexDirection: 'column',
-    height: hp('100%'),
   },
   button: {
     alignItems: 'center',
@@ -421,5 +456,12 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 5,
     marginTop: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    width: '90%',
+    alignSelf: 'center',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 });

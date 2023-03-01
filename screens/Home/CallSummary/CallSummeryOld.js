@@ -20,7 +20,6 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import {ScrollView, TextInput} from 'react-native-gesture-handler';
 import {List, Searchbar} from 'react-native-paper';
 import RBSheet from 'react-native-rbs';
-import SegmentedControlTab from 'react-native-segmented-control-tab';
 import SignatureScreen from 'react-native-signature-canvas';
 import Toast from 'react-native-simple-toast';
 import Icon from 'react-native-vector-icons/Feather';
@@ -625,7 +624,7 @@ function CallSummary({navigation, route}) {
   return (
     <View>
       <View style={{backgroundColor: '#CBD9F5', borderRadius: 6, margin: 10}}>
-        <SegmentedControlTab
+        {/* <SegmentedControlTab
           values={[
             'Assigned to Asc',
             'Visit Schedule',
@@ -638,7 +637,7 @@ function CallSummary({navigation, route}) {
           tabStyle={styles.tabStyle}
           activeTabStyle={styles.activeTabStyle}
           onTabPress={handleSingleIndexSelect}
-        />
+        /> */}
       </View>
 
       <Modal

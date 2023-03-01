@@ -41,10 +41,6 @@ const Landing = () => {
     navigation.navigate('Call Summary');
   };
 
-  const claimStatusHandler = () => {
-    navigation.navigate('Claim Status');
-  };
-
   const comingSoonHandler = () => {
     navigation.navigate('Claim Status');
   };
@@ -72,7 +68,7 @@ const Landing = () => {
 
   useEffect(() => {
     getAllData();
-  }, [AuthStore?.divisionId, isFocused]);
+  }, [AuthStore?.masterId, isFocused]);
 
   useEffect(() => {
     const use = async () => {

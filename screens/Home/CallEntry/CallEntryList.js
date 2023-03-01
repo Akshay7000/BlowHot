@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Axios from 'axios';
+import { observer } from 'mobx-react-lite';
 import moment from 'moment';
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -10,21 +11,16 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import DatePicker from '../../components/DatePicker';
-import {ScrollView} from 'react-native-gesture-handler';
-import {List, Searchbar} from 'react-native-paper';
-import RBSheet from 'react-native-raw-bottom-sheet';
+import { Searchbar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Feather';
 import theme1 from '../../components/styles/DarkTheme';
-import {host} from '../../Constants/Host';
-import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
-} from '../../responsiveLayout/ResponsiveLayout';
-import {observer} from 'mobx-react-lite';
+import { host } from '../../Constants/Host';
 import AuthStore from '../../Mobx/AuthStore';
+import {
+  widthPercentageToDP as wp
+} from '../../responsiveLayout/ResponsiveLayout';
 
 function CallEntryList({navigation}) {
   const [loading, setLoading] = useState(true);

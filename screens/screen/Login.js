@@ -60,7 +60,7 @@ const Login = () => {
       method: 'POST',
       url: `${host}/userright/appuserlogin`,
       data: {
-        usrnm: userName,
+        usrnm: userName?.trim(),
         usrpwd: password,
       },
     })
@@ -156,9 +156,9 @@ const Login = () => {
               resizeMode="contain"
             />
 
-            <View style={{width: '90%'}}>
+            <View style={{width: '90%',}}>
               <FormControl.Label
-                style={{color: theme1.DARK_ORANGE_COLOR, fontWeight: 'bold'}}>
+                style={{color: theme1.SemiBlack, fontWeight: 'bold'}}>
                 Username
               </FormControl.Label>
               <Input
@@ -169,10 +169,10 @@ const Login = () => {
             </View>
 
             <View style={{width: '90%'}}>
-              <FormControl
-                style={{color: theme1.DARK_ORANGE_COLOR, fontWeight: 'bold'}}>
+              <FormControl.Label
+                style={{color: theme1.SemiBlack, fontWeight: 'bold'}}>
                 Password
-              </FormControl>
+              </FormControl.Label>
               <Input
                 style={{color: '#000', fontWeight: 'bold'}}
                 secureTextEntry={hidePassword}

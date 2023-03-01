@@ -1,6 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Axios from 'axios';
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -8,24 +7,24 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import DatePicker from '../components/DatePicker';
-import {Col, Grid, Row} from 'react-native-easy-grid';
-import {ScrollView, TextInput} from 'react-native-gesture-handler';
+import { Col, Grid, Row } from 'react-native-easy-grid';
+import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import Modal from 'react-native-modal';
-import {Button, Searchbar} from 'react-native-paper';
+import { Button, Searchbar } from 'react-native-paper';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import Icon from 'react-native-vector-icons/Feather';
+import DatePicker from '../components/DatePicker';
 import SelectTwo from '../components/SelectTwo';
-import {host} from '../Constants/Host';
+import { host } from '../Constants/Host';
 import AuthStore from '../Mobx/AuthStore';
 
+import { observer } from 'mobx-react-lite';
 import {
   heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
+  widthPercentageToDP as wp
 } from '../responsiveLayout/ResponsiveLayout';
-import {observer} from 'mobx-react-lite';
 
 const ComingSoon = ({navigation, route}) => {
   const [startDate, setStartDate] = useState();

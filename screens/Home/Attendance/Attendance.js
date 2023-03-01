@@ -248,7 +248,6 @@ function Attendance({navigation, route}) {
         data: data,
       })
         .then(respone => {
-          console.log('.hey', respone);
           let todayDate = moment(new Date()).format('DD/MM/YYYY');
           var ampm = new Date().getHours() >= 12 ? 'PM' : 'AM';
           let minutes = new Date().getMinutes();

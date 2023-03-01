@@ -1,5 +1,4 @@
 import {NavigationContainer} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
 import {useEffect, useState} from 'react';
 import {
   Alert,
@@ -37,7 +36,7 @@ import CallSummary from './screens/Home/CallSummary/CallSummary';
 import ClaimStatus from './screens/Home/ClaimStatus/ClaimStatus';
 import Landing from './screens/Home/Landing/Landing';
 import {host} from './screens/Constants/Host.js';
-import {NativeBaseProvider, theme, themeTools} from 'native-base';
+import {NativeBaseProvider} from 'native-base';
 import AuthStore from './screens/Mobx/AuthStore.js';
 import SPLASH from './assets/splash.png';
 import {observer} from 'mobx-react';
@@ -45,14 +44,12 @@ import {observer} from 'mobx-react';
 LogBox.ignoreAllLogs();
 Icon.loadFont();
 
-const Stack = createStackNavigator();
-
 const App = () => {
   useEffect(() => {
     const unsubscribe = async () => {
       try {
         const usr = await AsyncStorage.getItem('user');
-        if (usr !== null) {
+        if (!!usr) {
           const masterid = await AsyncStorage.getItem('masterid');
           const compid = await AsyncStorage.getItem('companyCode');
           const divid = await AsyncStorage.getItem('divisionCode');
@@ -84,12 +81,12 @@ const App = () => {
 
   return (
     <NativeBaseProvider>
-      {!AuthStore?.isLoading && (
+      {!AuthStore?.isLoading ? (
         <View style={styles.container}>
           <Toast />
           {AuthStore?.isLoggedIn ? <AdminDrawer /> : <LoginDrawer />}
         </View>
-      )}
+      ): (<View></View>)}
     </NativeBaseProvider>
   );
 };
@@ -105,15 +102,6 @@ export const Drawerbutton = ({navigation}) => {
 };
 
 export const CustomDrawerContent = props => {
-  const [user, setUser] = useState();
-
-  useEffect(() => {
-    const getUser = async () => {
-      setUser(await AsyncStorage.getItem('user'));
-    };
-    getUser();
-  }, [props.navigation]);
-
   return (
     <>
       <DrawerContentScrollView
@@ -133,23 +121,21 @@ export const CustomDrawerContent = props => {
         </View>
         <View
           style={{
-            display: 'flex',
             flexDirection: 'column',
-            width: wp('50%'),
-            top: -20,
+            width: '90%',
+            top: -15,
+            alignSelf: 'center',
+            alignItems: 'center'
           }}>
           <Text
             style={{
-              marginLeft: wp('27%'),
               marginTop: 10,
               fontWeight: 'bold',
-              fontSize: wp('4%'),
-              marginRight: 25,
+              fontSize: 16,
               color: 'yellow',
               textAlign: 'center',
-              marginBottom: 0,
             }}>
-            {user}{' '}
+            {AuthStore?.user}{' '}
           </Text>
         </View>
         <View
@@ -163,7 +149,7 @@ export const CustomDrawerContent = props => {
         />
 
         <DrawerItemList {...props} />
-        {user && (
+        {AuthStore?.user && (
           <TouchableOpacity
             style={{marginRight: 30}}
             onPress={() => {
