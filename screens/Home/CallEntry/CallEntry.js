@@ -15,18 +15,17 @@ import {
 import Geolocation from '@react-native-community/geolocation';
 import {useNavigation} from '@react-navigation/native';
 import {observer} from 'mobx-react-lite';
+import {Dropdown} from 'react-native-element-dropdown';
 import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
 import Toast from 'react-native-simple-toast';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
+import Icon from 'react-native-vector-icons/Feather';
 import DatePicker from '../../components/DatePicker';
-import SelectTwo from '../../components/SelectTwo';
 import theme1 from '../../components/styles/DarkTheme';
+import TextInputField from '../../components/TextInputField';
 import {host} from '../../Constants/Host';
 import AuthStore from '../../Mobx/AuthStore';
-import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
-} from '../../responsiveLayout/ResponsiveLayout';
+import {widthPercentageToDP as wp} from '../../responsiveLayout/ResponsiveLayout';
 
 const {width, height} = Dimensions.get('window');
 
@@ -57,66 +56,13 @@ function CallEntry({navigation, route}) {
   const [followUpDate, setFollowUpDate] = useState();
 
   const [sales_or_group, setProductList] = useState([
-    {brandid: '', so_qty: '', so_disc: '', model: '', dsirn: ''},
+    {brandid: '', so_qty: '', productid: '', model: '', dsirn: ''},
   ]);
-
-  const [masterId, setMasterId] = useState();
   const [productItems, setProductItems] = useState([]);
   const [brandItems, setBrandItems] = useState([]);
   const [modelItems, setModelItems] = useState([]);
-  const [selectedProductItems, setSelectedProductItems] = useState([]);
-  const [selectedBrandItems, setSelectedBrandItems] = useState([]);
-  const [selectedModelItems, setSelectedModelItems] = useState([]);
-
-  const [productId, setProductId] = useState();
-  const [brandId, setBrandId] = useState();
-  const [modelId, setModelId] = useState();
 
   const [location, setLocation] = useState();
-
-  const onFocusChange = (name, i) => {
-    if (name == 'dealOne') {
-      dealOneRef.current.setNativeProps({
-        style: {backgroundColor: '#FCFE8F'},
-      });
-    } else if (name == 'dealTwo') {
-      dealTwoRef.current.setNativeProps({
-        style: {backgroundColor: '#FCFE8F'},
-      });
-    } else if (name == 'remarks') {
-      remarksRef.current.setNativeProps({
-        style: {backgroundColor: '#FCFE8F'},
-      });
-    } else if (name == 'billNumber') {
-      billNumberRef.current.setNativeProps({
-        style: {backgroundColor: '#FCFE8F'},
-      });
-    } else if (name == 'bag') {
-      bagRefs.current[i].setNativeProps({
-        style: {backgroundColor: '#FCFE8F'},
-      });
-    } else if (name == 'rate') {
-      rateRef.current[i].setNativeProps({
-        style: {backgroundColor: '#FCFE8F'},
-      });
-    } else if (name == 'amount') {
-      amountRef.current[i].setNativeProps({
-        style: {backgroundColor: '#FCFE8F'},
-      });
-    } else if (name == 'buyerBrokerage') {
-      buyerBrokerageRef.current[i].setNativeProps({
-        style: {backgroundColor: '#FCFE8F'},
-      });
-    } else if (name == 'sellerBrokerage') {
-      sellerBrokerageRef.current[i].setNativeProps({
-        style: {backgroundColor: '#FCFE8F'},
-      });
-    } else if (name == 'productRemarks') {
-      productRemarksRef.current[i].setNativeProps({
-        style: {backgroundColor: '#FCFE8F'},
-      });
-    }
-  };
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', async () => {
@@ -132,52 +78,8 @@ function CallEntry({navigation, route}) {
     setSearchedUser({});
     setRemarks('');
     setProductList([
-      {brandid: '', so_qty: '', so_disc: '', model: '', dsirn: ''},
+      {brandid: '', so_qty: '', productid: '', model: '', dsirn: ''},
     ]);
-  };
-
-  const onBlurChange = (name, i) => {
-    if (name == 'dealOne') {
-      dealOneRef.current.setNativeProps({
-        style: {backgroundColor: '#D3FD7A'},
-      });
-    } else if (name == 'dealTwo') {
-      dealTwoRef.current.setNativeProps({
-        style: {backgroundColor: '#D3FD7A'},
-      });
-    } else if (name == 'remarks') {
-      remarksRef.current.setNativeProps({
-        style: {backgroundColor: '#D3FD7A'},
-      });
-    } else if (name == 'billNumber') {
-      billNumberRef.current.setNativeProps({
-        style: {backgroundColor: '#D3FD7A'},
-      });
-    } else if (name == 'bag') {
-      bagRefs.current[i].setNativeProps({
-        style: {backgroundColor: '#D3FD7A'},
-      });
-    } else if (name == 'rate') {
-      rateRef.current[i].setNativeProps({
-        style: {backgroundColor: '#D3FD7A'},
-      });
-    } else if (name == 'amount') {
-      amountRef.current[i].setNativeProps({
-        style: {backgroundColor: '#D3FD7A'},
-      });
-    } else if (name == 'buyerBrokerage') {
-      buyerBrokerageRef.current[i].setNativeProps({
-        style: {backgroundColor: '#D3FD7A'},
-      });
-    } else if (name == 'sellerBrokerage') {
-      sellerBrokerageRef.current[i].setNativeProps({
-        style: {backgroundColor: '#D3FD7A'},
-      });
-    } else if (name == 'productRemarks') {
-      productRemarksRef.current[i].setNativeProps({
-        style: {backgroundColor: '#D3FD7A'},
-      });
-    }
   };
 
   useEffect(() => {
@@ -187,23 +89,10 @@ function CallEntry({navigation, route}) {
     init();
   }, []);
 
-  const dealOneRef = useRef();
-  const dealTwoRef = useRef();
-  const remarksRef = useRef();
-  const billNumberRef = useRef();
-  const bagRefs = useRef([]);
-  const rateRef = useRef([]);
-  const amountRef = useRef([]);
-  const buyerBrokerageRef = useRef([]);
-  const sellerBrokerageRef = useRef([]);
-  const productRemarksRef = useRef([]);
-  const dateRef = useRef();
-
   //Dealers List
 
   const PromisData = async () => {
     setLoading(false);
-
     // var diler = getDealers(masterid);
     var calls = getCallType(AuthStore?.masterId);
     var product = getProducts(AuthStore?.masterId);
@@ -211,7 +100,7 @@ function CallEntry({navigation, route}) {
       // setDealerItems(values[0]);
       setCallTypeItems(values[0]);
       setBrandItems(values[1]?.brand);
-      setProductItems(values[1]?.products);
+      // setProductItems(values[1]?.products);
       setModelItems(values[1]?.model);
       setLoading(true);
     });
@@ -291,24 +180,38 @@ function CallEntry({navigation, route}) {
       });
   };
 
-  const handleModelId = item => {
-    setModelId(item.id);
-  };
-
-  const handleBrandId = id => {
-    setBrandId(id);
+  const getProductByModal = async (name, i) => {
+    const data = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+    fetch(
+      `${host}/c_visit_entry/mob_modelname?masterid=${AuthStore?.masterId}&modelname=${name}`,
+      data,
+    )
+      .then(response => response.json())
+      .then(data => {
+        let d = [...productItems];
+        d[i] = data?.results;
+        setProductItems(d);
+      });
   };
 
   const handleProductClick = i => {
     setProductList([
       ...sales_or_group,
-      {brandid: '', so_qty: '', so_disc: '', model: '', dsirn: ''},
+      {brandid: '', so_qty: '', productid: '', model: '', dsirn: ''},
     ]);
   };
 
   const handleRemoveClick = index => {
     const list = [...sales_or_group];
+    let d = [...productItems];
     list.splice(index, 1);
+    d.splice(index, 1);
+    setProductItems(d);
     setProductList(list);
   };
 
@@ -378,10 +281,6 @@ function CallEntry({navigation, route}) {
     });
   };
 
-  const handleProductId = (id, product, index) => {
-    setProductId(id);
-  };
-
   const searchCustomer = () => {
     if (mobileNumber?.length === 10) {
       setSearchingCustomer(true);
@@ -422,11 +321,11 @@ function CallEntry({navigation, route}) {
   };
 
   const searchCustomerByCity = () => {
-    console.log("Searched --> ", `${host}/c_visit_entry/mob_calldealercity?masterid=${AuthStore?.masterId}&cityname=${searchedCity}`)
     if (searchedCity?.length > 1) {
       setSearchingCustomerCity(true);
-      
-      axios.get(
+
+      axios
+        .get(
           `${host}/c_visit_entry/mob_calldealercity?masterid=${AuthStore?.masterId}&cityname=${searchedCity}`,
         )
         .then(res => {
@@ -441,7 +340,8 @@ function CallEntry({navigation, route}) {
         .catch(e => {
           setSearchingCustomerCity(false);
           console.log('City Res Error --> ', e);
-        }).finally(()=>{
+        })
+        .finally(() => {
           console.log('City Finally --> ');
         });
     }
@@ -453,8 +353,7 @@ function CallEntry({navigation, route}) {
         a.ACName.toLowerCase().includes(name?.toLowerCase()),
       );
       setFilteredUserList(data);
-    }else{
-      
+    } else {
     }
   };
 
@@ -550,6 +449,7 @@ function CallEntry({navigation, route}) {
                     borderRadius: 5,
                     justifyContent: 'space-between',
                     marginHorizontal: 8,
+                    marginTop: 5,
                     paddingHorizontal: 10,
                     alignItems: 'center',
                   },
@@ -623,6 +523,7 @@ function CallEntry({navigation, route}) {
                   borderRadius: 5,
                   justifyContent: 'space-between',
                   marginHorizontal: 8,
+                  marginTop: 5,
                   paddingHorizontal: 10,
                   alignItems: 'center',
                 },
@@ -649,7 +550,7 @@ function CallEntry({navigation, route}) {
                 <ActivityIndicator />
               )}
             </View>
-            <View style={styles.column}>
+            <View style={[styles.column, {marginTop: 5}]}>
               <TextInput
                 style={{
                   width: wp('85%'),
@@ -699,7 +600,7 @@ function CallEntry({navigation, route}) {
               />
             </View> */}
 
-            <View style={styles.column}>
+            <View style={[styles.column, {marginTop: 5}]}>
               <TextInput
                 style={{
                   width: wp('85%'),
@@ -729,51 +630,154 @@ function CallEntry({navigation, route}) {
               {sales_or_group.map((item, i) => {
                 return (
                   <View key={i} style={styles.card}>
+                    <View
+                      style={{
+                        width: 70,
+                        flexDirection: 'row',
+                        alignSelf: 'flex-end',
+                        justifyContent: 'flex-end',
+                      }}>
+                      {sales_or_group?.length - 1 === i && (
+                        <TouchableOpacity
+                          style={{marginHorizontal: 15}}
+                          onPress={() => handleProductClick(i)}>
+                          <Icon
+                            name="plus-circle"
+                            size={25}
+                            color={theme1.LIGHT_ORANGE_COLOR}
+                          />
+                        </TouchableOpacity>
+                      )}
+                      {sales_or_group?.length !== 1 && (
+                        <TouchableOpacity
+                          // style={{marginHorizontal: 5}}
+                          onPress={() => handleRemoveClick(i)}>
+                          <Icon
+                            name="minus-circle"
+                            size={25}
+                            color={theme1.LIGHT_ORANGE_COLOR}
+                          />
+                        </TouchableOpacity>
+                      )}
+                    </View>
                     <View style={styles.column}>
-                      <SelectTwo
-                        items={modelItems}
-                        name="model"
-                        selectedItem={selectedModelItems}
-                        handleId={handleModelId}
-                        handleProduct={handleProductDetails}
-                        //   width={wp("37%")}
-                        placeholder="Model"
-                        i={i}
-                        defaultValue={item.model}
-                        product={item}
-                        borderColor="#ccc"
+                      <Dropdown
+                        data={modelItems}
+                        labelField="name"
+                        valueField="id"
+                        value={item?.model || ''}
+                        placeholder="Select model"
+                        placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
+                        onChange={item => {
+                          getProductByModal(item?.name, i);
+                          handleProductDetails(item.id, i, 'model');
+                        }}
+                        search={true}
+                        searchPlaceholder="Search"
+                        style={{
+                          width: '48%',
+                          marginTop: 10,
+                          alignSelf: 'center',
+                          borderWidth: 1,
+                          borderRadius: 5,
+                          paddingLeft: 5,
+                          borderColor: theme1.LIGHT_ORANGE_COLOR,
+                        }}
+                        activeColor={theme1.LIGHT_ORANGE_COLOR}
+                        selectedTextStyle={{
+                          color: theme1.SemiBlack,
+                          fontSize: 12,
+                        }}
+                        itemTextStyle={{fontSize: 12}}
+                        containerStyle={{borderRadius: 8}}
+                        itemContainerStyle={{borderRadius: 8}}
+                        iconColor={theme1.LIGHT_ORANGE_COLOR}
                       />
 
-                      <SelectTwo
-                        items={productItems}
-                        name="so_disc"
-                        selectedItem={selectedProductItems}
-                        handleId={handleProductId}
-                        handleProduct={handleProductDetails}
-                        //   width={wp("37%")}
-                        placeholder="Product"
-                        i={i}
-                        defaultValue={item.so_disc}
-                        product={item}
-                        borderColor="#ccc"
+                      <Dropdown
+                        data={productItems[i] || []}
+                        labelField="Fg_Des"
+                        valueField="_id"
+                        value={item?.productid || ''}
+                        placeholder="Select product"
+                        placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
+                        onChange={item => {
+                          // setProductId(item.id);
+                          handleProductDetails(item.id, i, 'productid');
+                        }}
+                        search={true}
+                        searchPlaceholder="Search"
+                        style={{
+                          width: '48%',
+                          marginTop: 10,
+                          alignSelf: 'center',
+                          borderWidth: 1,
+                          borderRadius: 5,
+                          paddingLeft: 5,
+                          borderColor: theme1.LIGHT_ORANGE_COLOR,
+                        }}
+                        activeColor={theme1.LIGHT_ORANGE_COLOR}
+                        selectedTextStyle={{
+                          color: theme1.SemiBlack,
+                          fontSize: 12,
+                        }}
+                        itemTextStyle={{fontSize: 12}}
+                        containerStyle={{borderRadius: 8}}
+                        itemContainerStyle={{borderRadius: 8}}
+                        iconColor={theme1.LIGHT_ORANGE_COLOR}
                       />
                     </View>
                     <View style={styles.column}>
-                      <SelectTwo
-                        items={brandItems}
-                        name="brandid"
-                        selectedItem={selectedBrandItems}
-                        handleId={handleBrandId}
-                        handleProduct={handleProductDetails}
-                        width={wp('37%')}
-                        placeholder="Brand"
-                        i={i}
-                        defaultValue={item.brandid}
-                        product={item}
-                        borderColor="#ccc"
+                      <Dropdown
+                        data={brandItems || []}
+                        labelField="name"
+                        valueField="id"
+                        value={item.brandid || ''}
+                        placeholder="Select brand"
+                        placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
+                        onChange={item => {
+                          // setBrandId(item.id);
+                          handleProductDetails(item.id, i, 'brandid');
+                        }}
+                        search={true}
+                        searchPlaceholder="Search"
+                        style={{
+                          width: '48%',
+                          marginTop: 10,
+                          alignSelf: 'center',
+                          borderWidth: 1,
+                          borderRadius: 5,
+                          paddingLeft: 5,
+                          borderColor: theme1.LIGHT_ORANGE_COLOR,
+                        }}
+                        activeColor={theme1.LIGHT_ORANGE_COLOR}
+                        selectedTextStyle={{
+                          color: theme1.SemiBlack,
+                          fontSize: 12,
+                        }}
+                        itemTextStyle={{fontSize: 12}}
+                        containerStyle={{borderRadius: 8}}
+                        itemContainerStyle={{borderRadius: 8}}
+                        iconColor={theme1.LIGHT_ORANGE_COLOR}
                       />
 
-                      <TextInput
+                      <TextInputField
+                        label="Quantity"
+                        placeHolder="enter quantity"
+                        type={'numeric'}
+                        value={item?.so_qty || ''}
+                        onChangeText={value =>
+                          handleProductDetails(value, i, 'so_qty')
+                        }
+                        style={{
+                          width: '48%',
+                          height: 40,
+                          marginTop: 15,
+                          borderRadius: 5,
+                        }}
+                      />
+
+                      {/* <TextInput
                         keyboardType="numeric"
                         name="so_qty"
                         style={[
@@ -795,34 +799,7 @@ function CallEntry({navigation, route}) {
                         onChangeText={value =>
                           handleProductDetails(value, i, 'so_qty')
                         }
-                      />
-                    </View>
-
-                    <View
-                      style={[
-                        styles.column,
-                        {
-                          justifyContent: 'space-around',
-                          marginBottom: 20,
-                        },
-                      ]}>
-                      {sales_or_group.length - 1 === i && (
-                        <TouchableOpacity
-                          onPress={() => handleProductClick(i)}
-                          style={[styles.button, {flex: 1}]}>
-                          <Text style={{color: 'white'}}>Add Product</Text>
-                        </TouchableOpacity>
-                      )}
-
-                      {sales_or_group.length !== 1 ? (
-                        <TouchableOpacity
-                          onPress={() => handleRemoveClick(i)}
-                          style={styles.button}>
-                          <Text style={{color: 'white'}}>Remove</Text>
-                        </TouchableOpacity>
-                      ) : (
-                        <></>
-                      )}
+                      /> */}
                     </View>
                   </View>
                 );
@@ -872,7 +849,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginHorizontal: wp('0.3%'),
-    marginVertical: hp('0.8%'),
+    // marginVertical: hp('0.8%'),
     // alignItems: "center",
   },
   item: {

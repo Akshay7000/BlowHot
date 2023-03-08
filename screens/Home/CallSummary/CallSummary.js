@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {default as Axios, default as axios} from 'axios';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import {default as Axios, default as axios} from 'axios';
 import {observer} from 'mobx-react-lite';
 import moment from 'moment';
 import React, {useEffect, useRef, useState} from 'react';
@@ -17,32 +17,30 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {Dropdown} from 'react-native-element-dropdown';
 import {ScrollView, TextInput} from 'react-native-gesture-handler';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Modalize} from 'react-native-modalize';
 import {Searchbar} from 'react-native-paper';
+import RBSheet from 'react-native-raw-bottom-sheet';
 import Toast from 'react-native-simple-toast';
+import Entypo from 'react-native-vector-icons/Entypo';
 import Icon from 'react-native-vector-icons/Feather';
 import FIcon from 'react-native-vector-icons/FontAwesome';
-import Entypo from 'react-native-vector-icons/Entypo';
 import DatePicker from '../../components/DatePicker';
 import {ImagePickerModal} from '../../components/ImagePickerModal';
-import SelectTwo from '../../components/SelectTwo';
 import theme1 from '../../components/styles/DarkTheme';
+import TextInputField from '../../components/TextInputField';
 import {host} from '../../Constants/Host';
 import AuthStore from '../../Mobx/AuthStore';
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from '../../responsiveLayout/ResponsiveLayout';
-import TextInputField from '../../components/TextInputField';
-import {Dropdown} from 'react-native-element-dropdown';
 import CallMapView from './CallMapView';
-import Share from 'react-native-share';
-import RBSheet from 'react-native-raw-bottom-sheet';
 
-const height = Dimensions.get('window').height;
+const {height, width} = Dimensions.get('window');
 
 function CallSummary({navigation}) {
   const [loading, setLoading] = useState(true);
@@ -112,6 +110,10 @@ function CallSummary({navigation}) {
   const [productId, setProductId] = useState('');
   const [brandId, setBrandId] = useState();
   const [modelId, setModelId] = useState('');
+
+  const [whatsappModal, setWhatsappModal] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [whatsappData, setWhatsappData] = useState();
 
   const [imageModal, setImageModal] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
@@ -244,10 +246,6 @@ function CallSummary({navigation}) {
       .get(`${host}/s_call/mobs_call_update/${id}`)
       .then(function (response) {
         const data = response?.data?.s_call;
-        // console.log(
-        //   'Response mobs_call_update --> ',
-        //   JSON.stringify(response?.data?.s_call),
-        // );
         setSingleData(data);
         setCharges(data?.visit_charges);
         setTa(data?.ta_km);
@@ -517,7 +515,7 @@ function CallSummary({navigation}) {
     data.append('compid', compid);
     data.append('divid', divid);
     data.append('masterid', masterid);
-    data.append('previousfilepath', AutoSelectedImages);
+    data.append('previousfilepath', JSON.stringify(AutoSelectedImages));
 
     await Axios({
       method: 'POST',
@@ -601,19 +599,23 @@ function CallSummary({navigation}) {
     }
   };
 
-  const ShareData = async data => {
+  const ShareData = async () => {
     try {
       Linking.openURL(
-        `https://api.whatsapp.com/send?phone=91${
-          data?.s_cus?.MobileNo
-        }&text=Name:- ${data?.s_cus?.ACName}\n\nAddress:- ${
-          data?.s_cus?.Address1
-        }\n\nProduct:- ${data?.s_prod?.Fg_Des}\n\nProblem:- ${
-          data?.typ_call?.CallType
-        }\n\nModel:- ${data?.s_mdl?.Description}\n\nStatus:- ${String(
-          data?.s_stus,
+        `https://api.whatsapp.com/send?phone=91${whatsappNumber}&text=Name:- ${
+          whatsappData?.s_cus?.ACName
+        }\n\nAddress:- ${whatsappData?.s_cus?.Address1}\n\n\Mobile:- ${
+          whatsappData?.s_cus?.MobileNo
+        }\n\nProduct:- ${whatsappData?.s_prod?.Fg_Des}\n\nProblem:- ${
+          whatsappData?.typ_call?.CallType
+        }\n\nModel:- ${whatsappData?.s_mdl?.Description}\n\nStatus:- ${String(
+          whatsappData?.s_stus,
         )?.toUpperCase()}`,
-      );
+      ).then(()=>{
+        setWhatsappData();
+        setWhatsappNumber('');
+        setWhatsappModal(false);
+      });
     } catch (e) {}
   };
 
@@ -668,6 +670,69 @@ function CallSummary({navigation}) {
             alignItems: 'center',
           }}>
           <ActivityIndicator size="large" color="skyblue" />
+        </View>
+      </Modal>
+
+      <Modal
+        visible={whatsappModal}
+        transparent
+        presentationStyle="fullScreen"
+        style={{
+          flex: 1,
+          // backgroundColor: '#9999992a'
+        }}>
+        <View
+          style={{
+            width: width * 0.7,
+            height: height * 0.2,
+            alignSelf: 'center',
+            backgroundColor: '#FFF',
+            justifyContent: 'center',
+            marginTop: height * 0.3,
+            borderRadius: 10,
+          }}>
+          <TouchableOpacity
+            style={{
+              alignSelf: 'flex-end',
+              marginRight: 15,
+              marginTop: -10,
+              marginBottom: 10,
+            }}
+            onPress={() => {
+              setWhatsappData();
+              setWhatsappNumber('');
+              setWhatsappModal(false);
+            }}>
+            <Entypo name="cross" size={25} />
+          </TouchableOpacity>
+          <TextInputField
+            label="Mobile No."
+            placeHolder="enter mobile no."
+            value={whatsappNumber}
+            type={'numeric'}
+            onChangeText={value => {
+              if (whatsappNumber.length <= 10) {
+                setWhatsappNumber(value);
+              }
+            }}
+            style={{
+              width: '90%',
+              height: 40,
+              marginTop: 15,
+              borderRadius: 5,
+            }}
+          />
+          <TouchableOpacity
+            style={[styles.ListButton, {alignSelf: 'center'}]}
+            onPress={() => {
+              if (whatsappNumber.length == 10) {
+                ShareData();
+              }
+            }}>
+            <View>
+              <Text style={styles.ListButtonText}>Share</Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </Modal>
 
@@ -904,7 +969,9 @@ function CallSummary({navigation}) {
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => {
-                            ShareData(item);
+                            setWhatsappModal(true);
+                            setWhatsappData(item);
+                            // ShareData(item);
                           }}>
                           <FIcon name="whatsapp" size={25} color={'green'} />
                         </TouchableOpacity>
