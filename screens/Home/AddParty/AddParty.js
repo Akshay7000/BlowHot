@@ -213,6 +213,9 @@ const AddParty = ({navigation, route}) => {
                     paddingLeft: 5,
                     borderColor: theme1.LIGHT_ORANGE_COLOR,
                   }}
+                  inputSearchStyle={{
+                    color: theme1.SemiBlack,
+                  }}
                   activeColor={theme1.LIGHT_ORANGE_COLOR}
                   selectedTextStyle={{color: theme1.SemiBlack, fontSize: 12}}
                   itemTextStyle={{fontSize: 12}}

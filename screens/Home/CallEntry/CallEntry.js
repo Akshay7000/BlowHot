@@ -676,12 +676,16 @@ function CallEntry({navigation, route}) {
                         searchPlaceholder="Search"
                         style={{
                           width: '48%',
+                          height: 40,
                           marginTop: 10,
                           alignSelf: 'center',
                           borderWidth: 1,
                           borderRadius: 5,
                           paddingLeft: 5,
                           borderColor: theme1.LIGHT_ORANGE_COLOR,
+                        }}
+                        inputSearchStyle={{
+                          color: theme1.SemiBlack,
                         }}
                         activeColor={theme1.LIGHT_ORANGE_COLOR}
                         selectedTextStyle={{
@@ -709,12 +713,16 @@ function CallEntry({navigation, route}) {
                         searchPlaceholder="Search"
                         style={{
                           width: '48%',
+                          height: 40,
                           marginTop: 10,
                           alignSelf: 'center',
                           borderWidth: 1,
                           borderRadius: 5,
                           paddingLeft: 5,
                           borderColor: theme1.LIGHT_ORANGE_COLOR,
+                        }}
+                        inputSearchStyle={{
+                          color: theme1.SemiBlack,
                         }}
                         activeColor={theme1.LIGHT_ORANGE_COLOR}
                         selectedTextStyle={{
@@ -743,12 +751,16 @@ function CallEntry({navigation, route}) {
                         searchPlaceholder="Search"
                         style={{
                           width: '48%',
+                          height: 40,
                           marginTop: 10,
                           alignSelf: 'center',
                           borderWidth: 1,
                           borderRadius: 5,
                           paddingLeft: 5,
                           borderColor: theme1.LIGHT_ORANGE_COLOR,
+                        }}
+                        inputSearchStyle={{
+                          color: theme1.SemiBlack,
                         }}
                         activeColor={theme1.LIGHT_ORANGE_COLOR}
                         selectedTextStyle={{
@@ -772,7 +784,7 @@ function CallEntry({navigation, route}) {
                         style={{
                           width: '48%',
                           height: 40,
-                          marginTop: 15,
+                          marginTop: 10,
                           borderRadius: 5,
                         }}
                       />

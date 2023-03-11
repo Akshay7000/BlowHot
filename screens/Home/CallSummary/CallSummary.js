@@ -157,7 +157,7 @@ function CallSummary({navigation}) {
       getModels();
     });
     return unsubscribe;
-  }, [navigation]);
+  }, []);
 
   useEffect(() => {
     getProducts();
@@ -210,15 +210,10 @@ function CallSummary({navigation}) {
       .post(`${host}/call_summary/mobgetproduct`, {
         masterid: AuthStore?.masterId,
       })
-      .then(function (response) {
-        let products = [...productItems];
-
-        response.data.product.map((dat, index) => {
-          products[index] = {...dat, id: dat._id, name: dat.Fg_Des};
-        });
-        setProductItems(products);
+      .then(({data}) => {
+        setProductItems(data?.product);
       })
-      .catch(function (error) {
+      .catch(error => {
         console.log(error, 'error');
       });
   };
@@ -228,15 +223,10 @@ function CallSummary({navigation}) {
       .post(`${host}/call_summary/mobgetmodel`, {
         masterid: AuthStore?.masterId,
       })
-      .then(function (response) {
-        let models = [...modelItems];
-
-        response.data.model.map((dat, index) => {
-          models[index] = {...dat, id: dat._id, name: dat.Description};
-        });
-        setModelItems(models);
+      .then(response => {
+        setModelItems(response?.data?.model);
       })
-      .catch(function (error) {
+      .catch(error => {
         console.log(error, 'error');
       });
   };
@@ -611,7 +601,7 @@ function CallSummary({navigation}) {
         }\n\nModel:- ${whatsappData?.s_mdl?.Description}\n\nStatus:- ${String(
           whatsappData?.s_stus,
         )?.toUpperCase()}`,
-      ).then(()=>{
+      ).then(() => {
         setWhatsappData();
         setWhatsappNumber('');
         setWhatsappModal(false);
@@ -1332,750 +1322,768 @@ function CallSummary({navigation}) {
           )}
 
           {selectedIndex !== 0 && (
-            <Modalize
-              ref={RBref}
-              useNativeDriver={true}
-              withHandle={false}
-              modalHeight={height - 25}>
-              <KeyboardAwareScrollView
-                automaticallyAdjustKeyboardInsets
-                contentContainerStyle={{
-                  flex: 1,
-                  borderTopRightRadius: 8,
-                  borderTopLeftRadius: 8,
-                }}
-                bounces={false}
-                showsVerticalScrollIndicator={false}
-                enableOnAndroid={true}
-                scrollEnabled={true}
-                keyboardShouldPersistTaps={'always'}>
-                <View
-                  style={{
-                    padding: 8,
-                    textAlign: 'center',
-                    alignItems: 'center',
-                    borderBottomWidth: 0.5,
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    // backgroundColor: theme1.LIGHT_ORANGE_COLOR,
+            <RBSheet ref={RBref} height={height - 25}>
+              <ScrollView
+                style={{flex: 1}}
+                scrollEnabled
+                keyboardShouldPersistTaps="always">
+                <KeyboardAwareScrollView
+                  automaticallyAdjustKeyboardInsets
+                  contentContainerStyle={{
+                    flex: 1,
                     borderTopRightRadius: 8,
                     borderTopLeftRadius: 8,
-                  }}>
-                  <Text style={{fontSize: 17, fontWeight: 'bold'}}>
-                    {selectedIndex == 1
-                      ? 'Add Alloted to Engineer'
-                      : 'Part-Pending'}{' '}
-                    -{uniqueId}{' '}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      RBref.current.close();
-                    }}
+                  }}
+                  bounces={false}
+                  showsVerticalScrollIndicator={false}
+                  enableOnAndroid={true}
+                  scrollEnabled={true}
+                  keyboardShouldPersistTaps={'always'}>
+                  <View
                     style={{
-                      marginRight: 20,
-                      height: 30,
-                      width: 30,
-                      justifyContent: 'center',
+                      padding: 8,
+                      textAlign: 'center',
                       alignItems: 'center',
+                      borderBottomWidth: 0.5,
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      // backgroundColor: theme1.LIGHT_ORANGE_COLOR,
+                      borderTopRightRadius: 8,
+                      borderTopLeftRadius: 8,
                     }}>
-                    <FIcon name="close" size={20} />
-                  </TouchableOpacity>
-                </View>
+                    <Text style={{fontSize: 17, fontWeight: 'bold'}}>
+                      {selectedIndex == 1
+                        ? 'Add Alloted to Engineer'
+                        : 'Part-Pending'}{' '}
+                      -{uniqueId}{' '}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        RBref.current.close();
+                      }}
+                      style={{
+                        marginRight: 20,
+                        height: 30,
+                        width: 30,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}>
+                      <FIcon name="close" size={20} />
+                    </TouchableOpacity>
+                  </View>
 
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    width: '90%',
-                    alignSelf: 'center',
-                    justifyContent: 'space-between',
-                    marginTop: 10,
-                  }}>
-                  <Dropdown
-                    data={[
-                      {label: 'In-Warranty', value: 'in-warranty'},
-                      {label: 'Out-Warranty', value: 'out-warranty'},
-                      {label: 'New', value: 'new'},
-                    ]}
-                    labelField="label"
-                    valueField="value"
-                    value={warrantyType}
-                    placeholder="Select Warranty"
-                    placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
-                    onChange={item => setWarrantyType(item?.value)}
-                    style={{
-                      width: '48%',
-                      alignSelf: 'center',
-                      borderWidth: 1,
-                      borderRadius: 5,
-                      paddingLeft: 5,
-                      borderColor: theme1.LIGHT_ORANGE_COLOR,
-                    }}
-                    activeColor={theme1.LIGHT_ORANGE_COLOR}
-                    selectedTextStyle={{color: theme1.SemiBlack, fontSize: 12}}
-                    itemTextStyle={{fontSize: 12}}
-                    containerStyle={{borderRadius: 8}}
-                    itemContainerStyle={{borderRadius: 8}}
-                    iconColor={theme1.LIGHT_ORANGE_COLOR}
-                  />
-                  <Dropdown
-                    data={[
-                      {label: 'Resolved', value: 'Resolved'},
-                      {label: 'Part-Pending', value: 'Part-Pending'},
-                      {
-                        label: 'Technical-Advice',
-                        value: 'Technical-Advice',
-                      },
-                      {label: 'Cancel', value: 'Cancel'},
-                      {label: 'Visit Schedule', value: 'Visit Schedule'},
-                      {label: 'Re Schedule', value: 'Re Schedule'},
-                    ]}
-                    labelField="label"
-                    valueField="value"
-                    value={status}
-                    placeholder="Select Status"
-                    placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
-                    onChange={item => setStatus(item?.value)}
-                    style={{
-                      width: '48%',
-                      alignSelf: 'center',
-                      borderWidth: 1,
-                      borderRadius: 5,
-                      paddingLeft: 5,
-                      borderColor: theme1.LIGHT_ORANGE_COLOR,
-                    }}
-                    activeColor={theme1.LIGHT_ORANGE_COLOR}
-                    selectedTextStyle={{color: theme1.SemiBlack, fontSize: 12}}
-                    itemTextStyle={{fontSize: 12}}
-                    containerStyle={{borderRadius: 8}}
-                    itemContainerStyle={{borderRadius: 8}}
-                    iconColor={theme1.LIGHT_ORANGE_COLOR}
-                  />
-                </View>
-
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    width: '90%',
-                    alignSelf: 'center',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}>
-                  <TextInputField
-                    label="Invoice No."
-                    placeHolder="enter Invoice No."
-                    value={invoiceNumber || ''}
-                    onChangeText={setInvoiceNumber}
-                    style={{
-                      width: '48%',
-                      height: 40,
-                      marginTop: 15,
-                      borderRadius: 5,
-                    }}
-                  />
-                  <DatePicker
-                    conatinerStyles={{
-                      width: '48%',
-                      height: 40,
-                      justifyContent: 'center',
-                      borderRadius: 5,
-                      borderColor: theme1.LIGHT_ORANGE_COLOR,
-                      marginTop: 15,
-                    }}
-                    textStyle={{color: theme1.SemiBlack}}
-                    date={engineerDate}
-                    placeholder="Date"
-                    placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
-                    setDate={setEngineerDate}
-                  />
-                </View>
-
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    width: '90%',
-                    alignSelf: 'center',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}>
-                  <TextInputField
-                    label="Serial No."
-                    placeHolder="enter Serial No."
-                    value={serialNumber}
-                    onChangeText={setSerialNumber}
-                    style={{
-                      width: '48%',
-                      height: 40,
-                      marginTop: 15,
-                      borderRadius: 5,
-                    }}
-                  />
-                  <TextInputField
-                    label="Warranty card no."
-                    placeHolder="enter warranty card no."
-                    value={warrantyNumber}
-                    onChangeText={setWarrantyNumber}
-                    style={{
-                      width: '48%',
-                      height: 40,
-                      marginTop: 15,
-                      borderRadius: 5,
-                    }}
-                  />
-                </View>
-
-                <Dropdown
-                  data={modelItems}
-                  labelField="name"
-                  valueField="id"
-                  value={modelId || ''}
-                  placeholder="Select model"
-                  placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
-                  onChange={item => {
-                    setModelId(item.id);
-                  }}
-                  search={true}
-                  searchPlaceholder="Search"
-                  style={{
-                    width: '90%',
-                    marginTop: 10,
-                    alignSelf: 'center',
-                    borderWidth: 1,
-                    borderRadius: 5,
-                    paddingLeft: 5,
-                    borderColor: theme1.LIGHT_ORANGE_COLOR,
-                  }}
-                  activeColor={theme1.LIGHT_ORANGE_COLOR}
-                  selectedTextStyle={{color: theme1.SemiBlack, fontSize: 12}}
-                  itemTextStyle={{fontSize: 12}}
-                  containerStyle={{borderRadius: 8}}
-                  itemContainerStyle={{borderRadius: 8}}
-                  iconColor={theme1.LIGHT_ORANGE_COLOR}
-                />
-
-                <Dropdown
-                  data={productItems}
-                  labelField="name"
-                  valueField="id"
-                  value={productId || SingleData?.s_prod?._id || ''}
-                  placeholder="Select model"
-                  placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
-                  onChange={item => {
-                    setProductId(item.id);
-                  }}
-                  search={true}
-                  searchPlaceholder="Search"
-                  style={{
-                    width: '90%',
-                    marginTop: 10,
-                    alignSelf: 'center',
-                    borderWidth: 1,
-                    borderRadius: 5,
-                    paddingLeft: 5,
-                    borderColor: theme1.LIGHT_ORANGE_COLOR,
-                  }}
-                  activeColor={theme1.LIGHT_ORANGE_COLOR}
-                  selectedTextStyle={{color: theme1.SemiBlack, fontSize: 12}}
-                  itemTextStyle={{fontSize: 12}}
-                  containerStyle={{borderRadius: 8}}
-                  itemContainerStyle={{borderRadius: 8}}
-                  iconColor={theme1.LIGHT_ORANGE_COLOR}
-                />
-
-                {status === 'Resolved' && (
                   <View
                     style={{
                       flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
                       width: '90%',
                       alignSelf: 'center',
+                      justifyContent: 'space-between',
+                      marginTop: 10,
+                    }}>
+                    <Dropdown
+                      data={[
+                        {label: 'In-Warranty', value: 'in-warranty'},
+                        {label: 'Out-Warranty', value: 'out-warranty'},
+                        {label: 'New', value: 'new'},
+                      ]}
+                      labelField="label"
+                      valueField="value"
+                      value={warrantyType}
+                      placeholder="Select Warranty"
+                      placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
+                      onChange={item => setWarrantyType(item?.value)}
+                      style={{
+                        width: '48%',
+                        alignSelf: 'center',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        paddingLeft: 5,
+                        borderColor: theme1.LIGHT_ORANGE_COLOR,
+                      }}
+                      activeColor={theme1.LIGHT_ORANGE_COLOR}
+                      selectedTextStyle={{
+                        color: theme1.SemiBlack,
+                        fontSize: 12,
+                      }}
+                      itemTextStyle={{fontSize: 12}}
+                      containerStyle={{borderRadius: 8}}
+                      itemContainerStyle={{borderRadius: 8}}
+                      iconColor={theme1.LIGHT_ORANGE_COLOR}
+                    />
+                    <Dropdown
+                      data={[
+                        {label: 'Resolved', value: 'Resolved'},
+                        {label: 'Part-Pending', value: 'Part-Pending'},
+                        {
+                          label: 'Technical-Advice',
+                          value: 'Technical-Advice',
+                        },
+                        {label: 'Cancel', value: 'Cancel'},
+                        {label: 'Visit Schedule', value: 'Visit Schedule'},
+                        {label: 'Re Schedule', value: 'Re Schedule'},
+                      ]}
+                      labelField="label"
+                      valueField="value"
+                      value={status}
+                      placeholder="Select Status"
+                      placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
+                      onChange={item => setStatus(item?.value)}
+                      style={{
+                        width: '48%',
+                        alignSelf: 'center',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        paddingLeft: 5,
+                        borderColor: theme1.LIGHT_ORANGE_COLOR,
+                      }}
+                      activeColor={theme1.LIGHT_ORANGE_COLOR}
+                      selectedTextStyle={{
+                        color: theme1.SemiBlack,
+                        fontSize: 12,
+                      }}
+                      itemTextStyle={{fontSize: 12}}
+                      containerStyle={{borderRadius: 8}}
+                      itemContainerStyle={{borderRadius: 8}}
+                      iconColor={theme1.LIGHT_ORANGE_COLOR}
+                    />
+                  </View>
+
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      width: '90%',
+                      alignSelf: 'center',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                     }}>
                     <TextInputField
-                      label="Happy Code"
-                      placeHolder="enter happy code"
-                      value={happyCode}
-                      onChangeText={text => {
-                        if (text.length <= 6) {
-                          setHappyCode(text.toUpperCase());
-                        }
-                      }}
-                      style={[
-                        {
-                          width: '60%',
-                          height: 40,
-                          marginTop: 15,
-                        },
-                      ]}
-                    />
-                    <View style={{marginTop: 15}}>
-                      <FIcon
-                        size={25}
-                        name={
-                          happyCode.length === 6 &&
-                          SingleData?._id
-                            ?.substring(SingleData?._id.length - 6)
-                            .toUpperCase() === happyCode
-                            ? 'check'
-                            : 'close'
-                        }
-                        color={
-                          happyCode.length === 6 &&
-                          SingleData?._id
-                            ?.substring(SingleData?._id.length - 6)
-                            .toUpperCase() === happyCode
-                            ? 'green'
-                            : theme1.DARK_ORANGE_COLOR
-                        }
-                      />
-                    </View>
-
-                    <TouchableOpacity
-                      onPress={() => {
-                        resendHappyCode();
-                      }}
+                      label="Invoice No."
+                      placeHolder="enter Invoice No."
+                      value={invoiceNumber || ''}
+                      onChangeText={setInvoiceNumber}
                       style={{
-                        height: 30,
-                        backgroundColor: theme1.DARK_ORANGE_COLOR,
-                        justifyContent: 'center',
+                        width: '48%',
+                        height: 40,
                         marginTop: 15,
-                        paddingHorizontal: 10,
-                        borderRadius: 8,
-                      }}>
-                      <View>
-                        <Text style={{color: theme1.White}}>Resend Code</Text>
-                      </View>
-                    </TouchableOpacity>
+                        borderRadius: 5,
+                      }}
+                    />
+                    <DatePicker
+                      conatinerStyles={{
+                        width: '48%',
+                        height: 40,
+                        justifyContent: 'center',
+                        borderRadius: 5,
+                        borderColor: theme1.LIGHT_ORANGE_COLOR,
+                        marginTop: 15,
+                      }}
+                      textStyle={{color: theme1.SemiBlack}}
+                      date={engineerDate}
+                      placeholder="Date"
+                      placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
+                      setDate={setEngineerDate}
+                    />
                   </View>
-                )}
 
-                <View
-                  style={{
-                    width: '95%',
-                    alignSelf: 'center',
-                    marginTop: 5,
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                  }}>
-                  <TouchableOpacity
+                  <View
                     style={{
-                      backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
-                      height: 40,
-                      width: 40,
-                      borderWidth: 1,
-                      margin: 5,
-                      borderStyle: 'dashed',
-                    }}
-                    onPress={() => {
-                      setImageModal(true);
+                      flexDirection: 'row',
+                      width: '90%',
+                      alignSelf: 'center',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                     }}>
-                    <Text
+                    <TextInputField
+                      label="Serial No."
+                      placeHolder="enter Serial No."
+                      value={serialNumber}
+                      onChangeText={setSerialNumber}
                       style={{
-                        fontSize: 25,
-                        color: '#000',
-                        textAlign: 'center',
-                        textAlignVertical: 'center',
+                        width: '48%',
+                        height: 40,
+                        marginTop: 15,
+                        borderRadius: 5,
+                      }}
+                    />
+                    <TextInputField
+                      label="Warranty card no."
+                      placeHolder="enter warranty card no."
+                      value={warrantyNumber}
+                      onChangeText={setWarrantyNumber}
+                      style={{
+                        width: '48%',
+                        height: 40,
+                        marginTop: 15,
+                        borderRadius: 5,
+                      }}
+                    />
+                  </View>
+
+                  <Dropdown
+                    data={modelItems}
+                    labelField="Description"
+                    valueField="_id"
+                    value={modelId || ''}
+                    placeholder="Select model"
+                    placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
+                    onChange={item => {
+                      setModelId(item._id);
+                    }}
+                    search={true}
+                    searchPlaceholder="Search"
+                    style={{
+                      width: '90%',
+                      marginTop: 10,
+                      alignSelf: 'center',
+                      borderWidth: 1,
+                      borderRadius: 5,
+                      paddingLeft: 5,
+                      borderColor: theme1.LIGHT_ORANGE_COLOR,
+                    }}
+                    inputSearchStyle={{
+                      color: theme1.SemiBlack,
+                    }}
+                    activeColor={theme1.LIGHT_ORANGE_COLOR}
+                    selectedTextStyle={{color: theme1.SemiBlack, fontSize: 12}}
+                    itemTextStyle={{fontSize: 12}}
+                    containerStyle={{borderRadius: 8}}
+                    itemContainerStyle={{borderRadius: 8}}
+                    iconColor={theme1.LIGHT_ORANGE_COLOR}
+                  />
+
+                  <Dropdown
+                    data={
+                      productItems?.filter(a => a?.Fg_Model === modelId) ||
+                      productItems
+                    }
+                    labelField="Fg_Des"
+                    valueField="_id"
+                    value={productId || SingleData?.s_prod?._id || ''}
+                    placeholder="Select model"
+                    placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
+                    onChange={item => {
+                      setProductId(item?._id);
+                    }}
+                    search={true}
+                    searchPlaceholder="Search"
+                    style={{
+                      width: '90%',
+                      marginTop: 10,
+                      alignSelf: 'center',
+                      borderWidth: 1,
+                      borderRadius: 5,
+                      paddingLeft: 5,
+                      borderColor: theme1.LIGHT_ORANGE_COLOR,
+                    }}
+                    inputSearchStyle={{
+                      color: theme1.SemiBlack,
+                    }}
+                    activeColor={theme1.LIGHT_ORANGE_COLOR}
+                    selectedTextStyle={{color: theme1.SemiBlack, fontSize: 12}}
+                    itemTextStyle={{fontSize: 12}}
+                    containerStyle={{borderRadius: 8}}
+                    itemContainerStyle={{borderRadius: 8}}
+                    iconColor={theme1.LIGHT_ORANGE_COLOR}
+                  />
+
+                  {status === 'Resolved' && (
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        width: '90%',
+                        alignSelf: 'center',
                       }}>
-                      +
-                    </Text>
-                  </TouchableOpacity>
-
-                  {AutoSelectedImages?.length > 0 &&
-                    AutoSelectedImages?.map((fillImage, index) => {
-                      return (
-                        <Image
-                          key={index + 'AI'}
-                          style={{
+                      <TextInputField
+                        label="Happy Code"
+                        placeHolder="enter happy code"
+                        value={happyCode}
+                        onChangeText={text => {
+                          if (text.length <= 6) {
+                            setHappyCode(text.toUpperCase());
+                          }
+                        }}
+                        style={[
+                          {
+                            width: '60%',
                             height: 40,
-                            width: 40,
-                            resizeMode: 'cover',
-                            margin: 5,
-                          }}
-                          source={{uri: `${host}/${fillImage}`}}
+                            marginTop: 15,
+                          },
+                        ]}
+                      />
+                      <View style={{marginTop: 15}}>
+                        <FIcon
+                          size={25}
+                          name={
+                            happyCode.length === 6 &&
+                            SingleData?._id
+                              ?.substring(SingleData?._id.length - 6)
+                              .toUpperCase() === happyCode
+                              ? 'check'
+                              : 'close'
+                          }
+                          color={
+                            happyCode.length === 6 &&
+                            SingleData?._id
+                              ?.substring(SingleData?._id.length - 6)
+                              .toUpperCase() === happyCode
+                              ? 'green'
+                              : theme1.DARK_ORANGE_COLOR
+                          }
                         />
-                      );
-                    })}
+                      </View>
 
-                  {selectedImages?.path && (
-                    <Image
+                      <TouchableOpacity
+                        onPress={() => {
+                          resendHappyCode();
+                        }}
+                        style={{
+                          height: 30,
+                          backgroundColor: theme1.DARK_ORANGE_COLOR,
+                          justifyContent: 'center',
+                          marginTop: 15,
+                          paddingHorizontal: 10,
+                          borderRadius: 8,
+                        }}>
+                        <View>
+                          <Text style={{color: theme1.White}}>Resend Code</Text>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  <View
+                    style={{
+                      width: '95%',
+                      alignSelf: 'center',
+                      marginTop: 5,
+                      flexDirection: 'row',
+                      flexWrap: 'wrap',
+                    }}>
+                    <TouchableOpacity
                       style={{
+                        backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
                         height: 40,
                         width: 40,
-                        resizeMode: 'cover',
+                        borderWidth: 1,
                         margin: 5,
+                        borderStyle: 'dashed',
                       }}
-                      source={{uri: selectedImages?.path}}
-                    />
-                  )}
+                      onPress={() => {
+                        setImageModal(true);
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: 25,
+                          color: '#000',
+                          textAlign: 'center',
+                          textAlignVertical: 'center',
+                        }}>
+                        +
+                      </Text>
+                    </TouchableOpacity>
 
-                  {selectedImages?.length > 0 &&
-                    selectedImages?.map((singleImage, index) => {
+                    {AutoSelectedImages?.length > 0 &&
+                      AutoSelectedImages?.map((fillImage, index) => {
+                        return (
+                          <Image
+                            key={index + 'AI'}
+                            style={{
+                              height: 40,
+                              width: 40,
+                              resizeMode: 'cover',
+                              margin: 5,
+                            }}
+                            source={{uri: `${host}/${fillImage}`}}
+                          />
+                        );
+                      })}
+
+                    {selectedImages?.path && (
+                      <Image
+                        style={{
+                          height: 40,
+                          width: 40,
+                          resizeMode: 'cover',
+                          margin: 5,
+                        }}
+                        source={{uri: selectedImages?.path}}
+                      />
+                    )}
+
+                    {selectedImages?.length > 0 &&
+                      selectedImages?.map((singleImage, index) => {
+                        return (
+                          <Image
+                            key={index + 'I'}
+                            style={{
+                              height: 40,
+                              width: 40,
+                              resizeMode: 'cover',
+                              margin: 5,
+                            }}
+                            source={{uri: singleImage?.path}}
+                          />
+                        );
+                      })}
+                  </View>
+
+                  <View style={{marginTop: 0}}>
+                    {visit_group?.map((x, i) => {
                       return (
-                        <Image
-                          key={index + 'I'}
-                          style={{
-                            height: 40,
-                            width: 40,
-                            resizeMode: 'cover',
-                            margin: 5,
-                          }}
-                          source={{uri: singleImage?.path}}
-                        />
+                        <View key={i} style={styles.card}>
+                          <View
+                            style={{
+                              width: 70,
+                              flexDirection: 'row',
+                              alignSelf: 'flex-end',
+                              justifyContent: 'flex-end',
+                            }}>
+                            {visit_group?.length - 1 === i && (
+                              <TouchableOpacity
+                                style={{marginHorizontal: 15}}
+                                onPress={() => handleProductClick(i)}>
+                                <Icon
+                                  name="plus-circle"
+                                  size={25}
+                                  color={theme1.LIGHT_ORANGE_COLOR}
+                                />
+                              </TouchableOpacity>
+                            )}
+                            {visit_group?.length !== 1 && (
+                              <TouchableOpacity
+                                // style={{marginHorizontal: 5}}
+                                onPress={() => handleRemoveClick(i)}>
+                                <Icon
+                                  name="minus-circle"
+                                  size={25}
+                                  color={theme1.LIGHT_ORANGE_COLOR}
+                                />
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                          <View style={styles.column}>
+                            <Dropdown
+                              data={brandItems}
+                              labelField="name"
+                              valueField="id"
+                              value={x?.visit_spare_part || ''}
+                              placeholder="Spare Part"
+                              placeholderStyle={{
+                                color: theme1.LIGHT_ORANGE_COLOR,
+                              }}
+                              onChange={item => {
+                                handleProductDetails(
+                                  item.id,
+                                  i,
+                                  'visit_spare_part',
+                                );
+                              }}
+                              search={true}
+                              searchPlaceholder="Search"
+                              style={{
+                                width: '48%',
+                                marginTop: 10,
+                                alignSelf: 'center',
+                                borderWidth: 1,
+                                borderRadius: 5,
+                                paddingLeft: 5,
+                                borderColor: theme1.LIGHT_ORANGE_COLOR,
+                              }}
+                              inputSearchStyle={{
+                                color: theme1.SemiBlack,
+                              }}
+                              activeColor={theme1.LIGHT_ORANGE_COLOR}
+                              selectedTextStyle={{
+                                color: theme1.SemiBlack,
+                                fontSize: 12,
+                              }}
+                              itemTextStyle={{fontSize: 12}}
+                              containerStyle={{borderRadius: 8}}
+                              itemContainerStyle={{borderRadius: 8}}
+                              iconColor={theme1.LIGHT_ORANGE_COLOR}
+                            />
+                            <Dropdown
+                              data={[
+                                {label: 'Installed', value: 'Installed'},
+                                {label: 'Pending', value: 'Pending'},
+                                {label: 'Shipped', value: 'Shipped'},
+                                {label: 'Delivered', value: 'Delivered'},
+                                {label: 'In-Process', value: 'In-Process'},
+                              ]}
+                              labelField="label"
+                              valueField="value"
+                              value={x?.visit_status || ''}
+                              placeholder="Select Status"
+                              placeholderStyle={{
+                                color: theme1.LIGHT_ORANGE_COLOR,
+                              }}
+                              onChange={item =>
+                                handleProductDetails(
+                                  item.value,
+                                  i,
+                                  'visit_status',
+                                )
+                              }
+                              style={{
+                                width: '48%',
+                                marginTop: 10,
+                                alignSelf: 'center',
+                                borderWidth: 1,
+                                borderRadius: 5,
+                                paddingLeft: 5,
+                                borderColor: theme1.LIGHT_ORANGE_COLOR,
+                              }}
+                              activeColor={theme1.LIGHT_ORANGE_COLOR}
+                              selectedTextStyle={{
+                                color: theme1.SemiBlack,
+                                fontSize: 12,
+                              }}
+                              itemTextStyle={{fontSize: 12}}
+                              containerStyle={{borderRadius: 8}}
+                              itemContainerStyle={{borderRadius: 8}}
+                              iconColor={theme1.LIGHT_ORANGE_COLOR}
+                            />
+                          </View>
+
+                          <View style={styles.column}>
+                            <Dropdown
+                              data={[
+                                {label: 'Own', value: 'Own'},
+                                {label: 'Company', value: 'Company'},
+                              ]}
+                              labelField="label"
+                              valueField="value"
+                              value={x?.visit_consumption || ''}
+                              placeholder="Select Consumption"
+                              placeholderStyle={{
+                                color: theme1.LIGHT_ORANGE_COLOR,
+                                fontSize: 14,
+                              }}
+                              onChange={item =>
+                                handleProductDetails(
+                                  item.value,
+                                  i,
+                                  'visit_consumption',
+                                )
+                              }
+                              style={{
+                                width: '48%',
+                                marginTop: 10,
+                                alignSelf: 'center',
+                                borderWidth: 1,
+                                borderRadius: 5,
+                                paddingLeft: 5,
+                                borderColor: theme1.LIGHT_ORANGE_COLOR,
+                              }}
+                              activeColor={theme1.LIGHT_ORANGE_COLOR}
+                              selectedTextStyle={{
+                                color: theme1.SemiBlack,
+                                fontSize: 12,
+                              }}
+                              itemTextStyle={{fontSize: 12}}
+                              containerStyle={{borderRadius: 8}}
+                              itemContainerStyle={{borderRadius: 8}}
+                              iconColor={theme1.LIGHT_ORANGE_COLOR}
+                            />
+                            <Dropdown
+                              data={[
+                                {label: 'In-Warranty', value: 'In-Warranty'},
+                                {label: 'Out-Warranty', value: 'Out-Warranty'},
+                              ]}
+                              labelField="label"
+                              valueField="value"
+                              value={x?.visit_warranty || ''}
+                              placeholder="Select Warranty"
+                              placeholderStyle={{
+                                color: theme1.LIGHT_ORANGE_COLOR,
+                              }}
+                              onChange={item =>
+                                handleProductDetails(
+                                  item.value,
+                                  i,
+                                  'visit_warranty',
+                                )
+                              }
+                              style={{
+                                width: '48%',
+                                marginTop: 10,
+                                alignSelf: 'center',
+                                borderWidth: 1,
+                                borderRadius: 5,
+                                paddingLeft: 5,
+                                borderColor: theme1.LIGHT_ORANGE_COLOR,
+                              }}
+                              activeColor={theme1.LIGHT_ORANGE_COLOR}
+                              selectedTextStyle={{
+                                color: theme1.SemiBlack,
+                                fontSize: 12,
+                              }}
+                              itemTextStyle={{fontSize: 12}}
+                              containerStyle={{borderRadius: 8}}
+                              itemContainerStyle={{borderRadius: 8}}
+                              iconColor={theme1.LIGHT_ORANGE_COLOR}
+                            />
+                          </View>
+
+                          <View style={styles.column}>
+                            <TextInputField
+                              label="Quantity"
+                              placeHolder="enter quantity"
+                              type={'numeric'}
+                              value={String(x?.visit_qty) || ''}
+                              onChangeText={value =>
+                                handleProductDetails(value, i, 'visit_qty')
+                              }
+                              style={{
+                                width: '48%',
+                                height: 40,
+                                marginTop: 15,
+                                borderRadius: 5,
+                              }}
+                            />
+                            <TextInputField
+                              label="Rate"
+                              placeHolder="enter rate"
+                              type={'numeric'}
+                              value={String(x?.visit_rate) || ''}
+                              onChangeText={value =>
+                                handleProductDetails(value, i, 'visit_rate')
+                              }
+                              style={{
+                                width: '48%',
+                                height: 40,
+                                marginTop: 15,
+                                borderRadius: 5,
+                              }}
+                            />
+                          </View>
+                        </View>
                       );
                     })}
-                </View>
+                  </View>
 
-                <View style={{marginTop: 0}}>
-                  {visit_group?.map((x, i) => {
-                    return (
-                      <View key={i} style={styles.card}>
-                        <View
-                          style={{
-                            width: 70,
-                            flexDirection: 'row',
-                            alignSelf: 'flex-end',
-                            justifyContent: 'flex-end',
-                          }}>
-                          {visit_group?.length - 1 === i && (
-                            <TouchableOpacity
-                              style={{marginHorizontal: 15}}
-                              onPress={() => handleProductClick(i)}>
-                              <Icon
-                                name="plus-circle"
-                                size={25}
-                                color={theme1.LIGHT_ORANGE_COLOR}
-                              />
-                            </TouchableOpacity>
-                          )}
-                          {visit_group?.length !== 1 && (
-                            <TouchableOpacity
-                              // style={{marginHorizontal: 5}}
-                              onPress={() => handleRemoveClick(i)}>
-                              <Icon
-                                name="minus-circle"
-                                size={25}
-                                color={theme1.LIGHT_ORANGE_COLOR}
-                              />
-                            </TouchableOpacity>
-                          )}
-                        </View>
-                        <View style={styles.column}>
-                          <Dropdown
-                            data={brandItems}
-                            labelField="name"
-                            valueField="id"
-                            value={x?.visit_spare_part || ''}
-                            placeholder="Spare Part"
-                            placeholderStyle={{
-                              color: theme1.LIGHT_ORANGE_COLOR,
-                            }}
-                            onChange={item => {
-                              handleProductDetails(
-                                item.id,
-                                i,
-                                'visit_spare_part',
-                              );
-                            }}
-                            search={true}
-                            searchPlaceholder="Search"
-                            style={{
-                              width: '48%',
-                              marginTop: 10,
-                              alignSelf: 'center',
-                              borderWidth: 1,
-                              borderRadius: 5,
-                              paddingLeft: 5,
-                              borderColor: theme1.LIGHT_ORANGE_COLOR,
-                            }}
-                            activeColor={theme1.LIGHT_ORANGE_COLOR}
-                            selectedTextStyle={{
-                              color: theme1.SemiBlack,
-                              fontSize: 12,
-                            }}
-                            itemTextStyle={{fontSize: 12}}
-                            containerStyle={{borderRadius: 8}}
-                            itemContainerStyle={{borderRadius: 8}}
-                            iconColor={theme1.LIGHT_ORANGE_COLOR}
-                          />
-                          <Dropdown
-                            data={[
-                              {label: 'Installed', value: 'Installed'},
-                              {label: 'Pending', value: 'Pending'},
-                              {label: 'Shipped', value: 'Shipped'},
-                              {label: 'Delivered', value: 'Delivered'},
-                              {label: 'In-Process', value: 'In-Process'},
-                            ]}
-                            labelField="label"
-                            valueField="value"
-                            value={x?.visit_status || ''}
-                            placeholder="Select Status"
-                            placeholderStyle={{
-                              color: theme1.LIGHT_ORANGE_COLOR,
-                            }}
-                            onChange={item =>
-                              handleProductDetails(
-                                item.value,
-                                i,
-                                'visit_status',
-                              )
-                            }
-                            style={{
-                              width: '48%',
-                              marginTop: 10,
-                              alignSelf: 'center',
-                              borderWidth: 1,
-                              borderRadius: 5,
-                              paddingLeft: 5,
-                              borderColor: theme1.LIGHT_ORANGE_COLOR,
-                            }}
-                            activeColor={theme1.LIGHT_ORANGE_COLOR}
-                            selectedTextStyle={{
-                              color: theme1.SemiBlack,
-                              fontSize: 12,
-                            }}
-                            itemTextStyle={{fontSize: 12}}
-                            containerStyle={{borderRadius: 8}}
-                            itemContainerStyle={{borderRadius: 8}}
-                            iconColor={theme1.LIGHT_ORANGE_COLOR}
-                          />
-                        </View>
+                  <View
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      paddingLeft: 20,
+                    }}>
+                    {show ? (
+                      <TouchableOpacity
+                        onPress={() => setShow(!show)}
+                        style={{display: 'flex', flexDirection: 'row'}}>
+                        <Text style={{color: 'grey', fontSize: 13}}>
+                          Show More
+                        </Text>
+                        <FIcon
+                          name="caret-down"
+                          size={wp('4%')}
+                          color="black"
+                          style={{top: -2, left: 4}}
+                        />
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        onPress={() => setShow(!show)}
+                        style={{display: 'flex', flexDirection: 'row'}}>
+                        <Text style={{color: 'grey', fontSize: 13}}>
+                          Show Less
+                        </Text>
+                        <FIcon
+                          name="caret-up"
+                          size={wp('4%')}
+                          color="black"
+                          style={{top: -2, left: 4}}
+                        />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  {!show && (
+                    <>
+                      <View
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          paddingLeft: 10,
+                        }}>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            {
+                              backgroundColor: '#D3FD7A',
+                              width: wp('82%'),
+                              flex: 0.9,
+                              marginRight: wp('6.5%'),
+                              color: '#222',
+                            },
+                          ]}
+                          placeholder="Charges"
+                          placeholderTextColor="#bbb"
+                          value={charges?.toString()}
+                          onChangeText={text => setCharges(text)}
+                        />
 
-                        <View style={styles.column}>
-                          <Dropdown
-                            data={[
-                              {label: 'Own', value: 'Own'},
-                              {label: 'Company', value: 'Company'},
-                            ]}
-                            labelField="label"
-                            valueField="value"
-                            value={x?.visit_consumption || ''}
-                            placeholder="Select Consumption"
-                            placeholderStyle={{
-                              color: theme1.LIGHT_ORANGE_COLOR,
-                              fontSize: 14,
-                            }}
-                            onChange={item =>
-                              handleProductDetails(
-                                item.value,
-                                i,
-                                'visit_consumption',
-                              )
-                            }
-                            style={{
-                              width: '48%',
-                              marginTop: 10,
-                              alignSelf: 'center',
-                              borderWidth: 1,
-                              borderRadius: 5,
-                              paddingLeft: 5,
-                              borderColor: theme1.LIGHT_ORANGE_COLOR,
-                            }}
-                            activeColor={theme1.LIGHT_ORANGE_COLOR}
-                            selectedTextStyle={{
-                              color: theme1.SemiBlack,
-                              fontSize: 12,
-                            }}
-                            itemTextStyle={{fontSize: 12}}
-                            containerStyle={{borderRadius: 8}}
-                            itemContainerStyle={{borderRadius: 8}}
-                            iconColor={theme1.LIGHT_ORANGE_COLOR}
-                          />
-                          <Dropdown
-                            data={[
-                              {label: 'In-Warranty', value: 'In-Warranty'},
-                              {label: 'Out-Warranty', value: 'Out-Warranty'},
-                            ]}
-                            labelField="label"
-                            valueField="value"
-                            value={x?.visit_warranty || ''}
-                            placeholder="Select Warranty"
-                            placeholderStyle={{
-                              color: theme1.LIGHT_ORANGE_COLOR,
-                            }}
-                            onChange={item =>
-                              handleProductDetails(
-                                item.value,
-                                i,
-                                'visit_warranty',
-                              )
-                            }
-                            style={{
-                              width: '48%',
-                              marginTop: 10,
-                              alignSelf: 'center',
-                              borderWidth: 1,
-                              borderRadius: 5,
-                              paddingLeft: 5,
-                              borderColor: theme1.LIGHT_ORANGE_COLOR,
-                            }}
-                            activeColor={theme1.LIGHT_ORANGE_COLOR}
-                            selectedTextStyle={{
-                              color: theme1.SemiBlack,
-                              fontSize: 12,
-                            }}
-                            itemTextStyle={{fontSize: 12}}
-                            containerStyle={{borderRadius: 8}}
-                            itemContainerStyle={{borderRadius: 8}}
-                            iconColor={theme1.LIGHT_ORANGE_COLOR}
-                          />
-                        </View>
-
-                        <View style={styles.column}>
-                          <TextInputField
-                            label="Quantity"
-                            placeHolder="enter quantity"
-                            type={'numeric'}
-                            value={String(x?.visit_qty) || ''}
-                            onChangeText={value =>
-                              handleProductDetails(value, i, 'visit_qty')
-                            }
-                            style={{
-                              width: '48%',
-                              height: 40,
-                              marginTop: 15,
-                              borderRadius: 5,
-                            }}
-                          />
-                          <TextInputField
-                            label="Rate"
-                            placeHolder="enter rate"
-                            type={'numeric'}
-                            value={String(x?.visit_rate) || ''}
-                            onChangeText={value =>
-                              handleProductDetails(value, i, 'visit_rate')
-                            }
-                            style={{
-                              width: '48%',
-                              height: 40,
-                              marginTop: 15,
-                              borderRadius: 5,
-                            }}
-                          />
-                        </View>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            {
+                              backgroundColor: '#D3FD7A',
+                              width: wp('82%'),
+                              flex: 0.9,
+                              marginRight: wp('6.5%'),
+                              color: '#222',
+                            },
+                          ]}
+                          placeholder="TA (in km)"
+                          placeholderTextColor="#bbb"
+                          value={ta?.toString()}
+                          onChangeText={text => setTa(text)}
+                        />
                       </View>
-                    );
-                  })}
-                </View>
 
-                <View
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    paddingLeft: 20,
-                  }}>
-                  {show ? (
-                    <TouchableOpacity
-                      onPress={() => setShow(!show)}
-                      style={{display: 'flex', flexDirection: 'row'}}>
-                      <Text style={{color: 'grey', fontSize: 13}}>
-                        Show More
-                      </Text>
-                      <FIcon
-                        name="caret-down"
-                        size={wp('4%')}
-                        color="black"
-                        style={{top: -2, left: 4}}
-                      />
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity
-                      onPress={() => setShow(!show)}
-                      style={{display: 'flex', flexDirection: 'row'}}>
-                      <Text style={{color: 'grey', fontSize: 13}}>
-                        Show Less
-                      </Text>
-                      <FIcon
-                        name="caret-up"
-                        size={wp('4%')}
-                        color="black"
-                        style={{top: -2, left: 4}}
-                      />
-                    </TouchableOpacity>
-                  )}
-                </View>
-                {!show && (
-                  <>
-                    <View
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        paddingLeft: 10,
-                      }}>
-                      <TextInput
-                        style={[
-                          styles.input,
-                          {
-                            backgroundColor: '#D3FD7A',
-                            width: wp('82%'),
-                            flex: 0.9,
-                            marginRight: wp('6.5%'),
-                            color: '#222',
-                          },
-                        ]}
-                        placeholder="Charges"
-                        placeholderTextColor="#bbb"
-                        value={charges?.toString()}
-                        onChangeText={text => setCharges(text)}
-                      />
+                      <View
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          paddingLeft: 10,
+                        }}>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            {
+                              backgroundColor: '#D3FD7A',
+                              width: wp('82%'),
+                              flex: 0.9,
+                              marginRight: wp('6.5%'),
+                              color: '#222',
+                            },
+                          ]}
+                          placeholder="Remarks"
+                          placeholderTextColor="#bbb"
+                          value={engineerRemarks?.toString()}
+                          onChangeText={text => setEngineerRemarks(text)}
+                        />
 
-                      <TextInput
-                        style={[
-                          styles.input,
-                          {
-                            backgroundColor: '#D3FD7A',
-                            width: wp('82%'),
-                            flex: 0.9,
-                            marginRight: wp('6.5%'),
-                            color: '#222',
-                          },
-                        ]}
-                        placeholder="TA (in km)"
-                        placeholderTextColor="#bbb"
-                        value={ta?.toString()}
-                        onChangeText={text => setTa(text)}
-                      />
-                    </View>
-
-                    <View
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        paddingLeft: 10,
-                      }}>
-                      <TextInput
-                        style={[
-                          styles.input,
-                          {
-                            backgroundColor: '#D3FD7A',
-                            width: wp('82%'),
-                            flex: 0.9,
-                            marginRight: wp('6.5%'),
-                            color: '#222',
-                          },
-                        ]}
-                        placeholder="Remarks"
-                        placeholderTextColor="#bbb"
-                        value={engineerRemarks?.toString()}
-                        onChangeText={text => setEngineerRemarks(text)}
-                      />
-
-                      <TextInput
-                        style={[
-                          styles.input,
-                          {
-                            backgroundColor: '#D3FD7A',
-                            width: wp('82%'),
-                            flex: 0.9,
-                            marginRight: wp('6.5%'),
-                            color: '#222',
-                          },
-                        ]}
-                        placeholder="Feedback"
-                        placeholderTextColor="#bbb"
-                        value={feedback?.toString()}
-                        onChangeText={text => setFeedback(text)}
-                      />
-                    </View>
-                    {/* <View style={{flex: 1}}>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            {
+                              backgroundColor: '#D3FD7A',
+                              width: wp('82%'),
+                              flex: 0.9,
+                              marginRight: wp('6.5%'),
+                              color: '#222',
+                            },
+                          ]}
+                          placeholder="Feedback"
+                          placeholderTextColor="#bbb"
+                          value={feedback?.toString()}
+                          onChangeText={text => setFeedback(text)}
+                        />
+                      </View>
+                      {/* <View style={{flex: 1}}>
                       <SignatureScreen
                         ref={signatureRef}
                         onEnd={handleEnd}
@@ -2087,34 +2095,35 @@ function CallSummary({navigation}) {
                         descriptionText={text}
                       />
                     </View> */}
-                  </>
-                )}
+                    </>
+                  )}
 
-                <View
-                  style={[
-                    styles.column,
-                    {justifyContent: 'center', marginTop: hp('3%')},
-                  ]}>
-                  {status === 'Resolved' &&
-                    SingleData?._id
-                      ?.substring(SingleData?._id.length - 6)
-                      .toUpperCase() === happyCode && (
+                  <View
+                    style={[
+                      styles.column,
+                      {justifyContent: 'center', marginTop: hp('3%')},
+                    ]}>
+                    {status === 'Resolved' &&
+                      SingleData?._id
+                        ?.substring(SingleData?._id.length - 6)
+                        .toUpperCase() === happyCode && (
+                        <TouchableOpacity
+                          style={styles.button1}
+                          onPress={() => handleEngineerSubmit()}>
+                          <Text style={{color: 'white'}}>Save Changes</Text>
+                        </TouchableOpacity>
+                      )}
+                    {status !== 'Resolved' && (
                       <TouchableOpacity
                         style={styles.button1}
                         onPress={() => handleEngineerSubmit()}>
                         <Text style={{color: 'white'}}>Save Changes</Text>
                       </TouchableOpacity>
                     )}
-                  {status !== 'Resolved' && (
-                    <TouchableOpacity
-                      style={styles.button1}
-                      onPress={() => handleEngineerSubmit()}>
-                      <Text style={{color: 'white'}}>Save Changes</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </KeyboardAwareScrollView>
-            </Modalize>
+                  </View>
+                </KeyboardAwareScrollView>
+              </ScrollView>
+            </RBSheet>
           )}
 
           <RBSheet ref={MapRef} height={height - 25}>
