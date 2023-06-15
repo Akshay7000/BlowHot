@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Axios from 'axios';
-import { observer } from 'mobx-react-lite';
+import {observer} from 'mobx-react-lite';
 import moment from 'moment';
-import React, { useEffect, useRef, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -11,16 +11,14 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
-import { Searchbar } from 'react-native-paper';
+import {Searchbar} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Feather';
-import theme1 from '../../components/styles/DarkTheme';
-import { host } from '../../Constants/Host';
+import {host} from '../../Constants/Host';
 import AuthStore from '../../Mobx/AuthStore';
-import {
-  widthPercentageToDP as wp
-} from '../../responsiveLayout/ResponsiveLayout';
+import theme1 from '../../components/styles/DarkTheme';
+import {widthPercentageToDP as wp} from '../../responsiveLayout/ResponsiveLayout';
 
 function CallEntryList({navigation}) {
   const [loading, setLoading] = useState(true);
@@ -60,10 +58,36 @@ function CallEntryList({navigation}) {
         'Call Visit Entry List ---->  ',
         response.data.c_visit_entrySchema,
       );
-      setTableData(response.data.c_visit_entrySchema);
-      setFilteredData(response.data.c_visit_entrySchema);
+
+      setTableData(filterArrayByDate(response?.data?.c_visit_entrySchema,'desc', 'so_date'));
+      setFilteredData(filterArrayByDate(response?.data?.c_visit_entrySchema,'desc', 'so_date'));
     });
     setLoading(false);
+  };
+
+  const filterArrayByDate = (
+    arr = [],
+    mode = 'desc',
+    dateKey = 'so_date',
+  ) => {
+    return arr.sort(function (a, b) {
+      if (
+        a != null &&
+        b != null &&
+        typeof a == 'object' &&
+        typeof b == 'object' &&
+        dateKey in a &&
+        dateKey in b
+      ) {
+        if (mode == 'desc') {
+          return moment(a[dateKey]).isBefore(moment(b[dateKey]));
+        } else {
+          return moment(b[dateKey]).isBefore(moment(a[dateKey]));
+        }
+      } else {
+        return false;
+      }
+    });
   };
 
   const filter = text => {
@@ -74,8 +98,12 @@ function CallEntryList({navigation}) {
         table?.Ship_party?.ACName?.toLowerCase()?.includes(
           text.toLowerCase(),
         ) ||
+        moment(new Date(table?.so_date).toDateString())
+          .format('DD-MM-YYYY')
+          ?.includes(text) ||
         table?.ac_cty?.call?.toLowerCase()?.includes(text.toLowerCase()) ||
-        String(table?.vouc_code)?.includes(text),
+        String(table?.vouc_code)?.includes(text) ||
+        String(table?.Ship_party?.MobileNo)?.includes(text),
     );
     setFilteredData(newArray);
   };

@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 
 import Geolocation from '@react-native-community/geolocation';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {observer} from 'mobx-react-lite';
 import {Dropdown} from 'react-native-element-dropdown';
 import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
@@ -64,6 +64,13 @@ function CallEntry({navigation, route}) {
 
   const [location, setLocation] = useState();
 
+  useFocusEffect(
+    React.useCallback(() => {
+      clear();
+      getLocation();
+    }, []),
+  );
+
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', async () => {
       let todayDate = moment(new Date()).format('DD/MM/YYYY');
@@ -80,14 +87,62 @@ function CallEntry({navigation, route}) {
     setProductList([
       {brandid: '', so_qty: '', productid: '', model: '', dsirn: ''},
     ]);
+    setMobileNumber('');
+    setSearchedCity('');
+    setSearchedName('');
+    setSearchedUser('');
+    setSearchedUserList('');
+    setFilteredUserList('');
+    setSearchingCustomer('');
+    setSearchingCustomerCity('');
   };
 
   useEffect(() => {
     const init = async () => {
       PromisData(masterid);
+      getStartDay();
     };
     init();
   }, []);
+
+  const getStartDay = async () => {
+    setLoading(false);
+    const data = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+    const user = AuthStore?.user;
+    const masterid = AuthStore?.masterId;
+    const compid = AuthStore?.companyId;
+    const divid = AuthStore?.divisionId;
+
+    await fetch(
+      `${host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${new Date()}&end_date=${new Date()}`,
+      data,
+    )
+      .then(response => response.json())
+      .then(data => {
+        const obj = data.atd[data.atd.length - 1];
+        console.log(data.atd.length);
+        if (data.atd.length === 0) {
+          Alert.alert('Message', 'Please firstly, Start your day', [
+            {
+              text: 'Ok',
+              onPress: () => {
+                nav.navigate('Attendance');
+              },
+            },
+          ]);
+        }
+        setLoading(true);
+      })
+      .catch(e => {
+        console.log('Error on loading --> ', e);
+        setLoading(true);
+      });
+  };
 
   //Dealers List
 
@@ -271,14 +326,23 @@ function CallEntry({navigation, route}) {
       method: 'POST',
       url: `${host}/c_visit_entry/mobadd`,
       data: body,
-    }).then(respone => {
-      Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
-      let todayDate = moment(new Date()).format('DD/MM/YYYY');
-      setDate(todayDate);
-      setFollowUpDate(todayDate);
-      clear();
-      nav.navigate('Home');
-    });
+    })
+      .then(response => {
+        // console.log('Response ---> ', JSON.stringify(response.data));
+        if (response.data.success) {
+          Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
+          let todayDate = moment(new Date()).format('DD/MM/YYYY');
+          setDate(todayDate);
+          setFollowUpDate(todayDate);
+          clear();
+          nav.navigate('Home');
+        } else {
+          Alert.alert('User Already exist. Please use different mobile number');
+        }
+      })
+      .catch(e => {
+        console.log('Error --> ', e);
+      });
   };
 
   const searchCustomer = () => {
@@ -702,7 +766,7 @@ function CallEntry({navigation, route}) {
                         data={productItems[i] || []}
                         labelField="Fg_Des"
                         valueField="_id"
-                        value={item?.productid || ''}
+                        value={item.productid || ''}
                         placeholder="Select product"
                         placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
                         onChange={item => {

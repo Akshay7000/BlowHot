@@ -1,10 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from '@react-native-community/geolocation';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import Axios from 'axios';
 import {observer} from 'mobx-react-lite';
 import moment from 'moment';
-import React, {useLayoutEffect, useState} from 'react';
+import React, {useCallback, useLayoutEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -24,11 +24,13 @@ import theme1 from '../../components/styles/DarkTheme';
 import {host} from '../../Constants/Host';
 import AuthStore from '../../Mobx/AuthStore';
 import {widthPercentageToDP as wp} from '../../responsiveLayout/ResponsiveLayout';
+import {useIsConnected} from 'react-native-offline';
 const {width, height} = Dimensions.get('window');
 
 function Attendance({navigation, route}) {
-  let rout = '';
-
+  const IsConnected = useIsConnected();
+  console.log('Is net connected --> ', IsConnected);
+  let rout;
   if (typeof route.params == 'undefined') {
     rout = 'none';
   } else {
@@ -57,10 +59,12 @@ function Attendance({navigation, route}) {
   const [image, setImage] = useState();
   const [imageDetails, setImageDetails] = useState();
 
-  useLayoutEffect(() => {
-    getLocation();
-    getStartDay();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getLocation();
+      getStartDay();
+    }, []),
+  );
 
   const getStartDay = async () => {
     setLoading(false);
@@ -87,7 +91,7 @@ function Attendance({navigation, route}) {
         const end_Date = obj?.end_date;
         const id = obj?._id;
 
-        console.log(obj, todayDate, date);
+        console.log('Get start day --> ', JSON.stringify(data));
         if (data.atd.length == 0) {
           setStartDay(true);
         } else {

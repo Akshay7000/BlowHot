@@ -20,7 +20,8 @@ import {host} from '../Constants/Host';
 import {widthPercentageToDP as wp} from '../responsiveLayout/ResponsiveLayout';
 import AuthStore from '../Mobx/AuthStore';
 import theme1 from '../components/styles/DarkTheme';
-import { observer } from 'mobx-react-lite';
+import {observer} from 'mobx-react-lite';
+import {getItem} from '../services/storageServices';
 
 FontAwesomeIcon.loadFont();
 
@@ -54,14 +55,17 @@ const Login = () => {
     division();
   };
 
-  const loginsubmit = () => {
+  const loginsubmit = async () => {
     setLoading(true);
+    const Token = await getItem('fcmToken');
+
     axios({
       method: 'POST',
       url: `${host}/userright/appuserlogin`,
       data: {
         usrnm: userName?.trim(),
         usrpwd: password,
+        fcmToken: Token || '',
       },
     })
       .then(respone => {
@@ -69,6 +73,7 @@ const Login = () => {
           setLoading(false);
           Toast.showWithGravity(respone.data.message, Toast.LONG, Toast.TOP);
         } else {
+          // console.log("Login response --> ", JSON.stringify(respone?.data))
           const setItem = async () => {
             await AsyncStorage.setItem('masterid', respone.data.masterid);
             await AsyncStorage.setItem('user', respone.data.user_name);
@@ -82,12 +87,12 @@ const Login = () => {
             );
             await AsyncStorage.setItem(
               'salesTeam',
-              respone.data.userright.service_team,
+              respone.data.userright.sales_team,
             );
             AuthStore.setIsAdmin(
               respone?.data?.userright?.administrator === 'Yes',
             );
-            AuthStore.setIsSales(respone.data.userright.service_team === 'Yes');
+            AuthStore.setIsSales(respone.data.userright.sales_team === 'Yes');
             setUser(respone.data.user_name);
             setResponseData(respone.data);
             setShowCompany(true);
@@ -97,7 +102,7 @@ const Login = () => {
         }
       })
       .catch(error => {
-        console.log('error');
+        console.log('error', error);
         setLoading(false);
         Toast.showWithGravity(
           'Invalid Username or Password.',
@@ -150,13 +155,13 @@ const Login = () => {
           <View style={styles.form}>
             <Image
               source={{
-                uri: `${host}/public/img/logo.png `,
+                uri: `${host}/public/img/logo.png`,
               }}
               style={styles.image}
               resizeMode="contain"
             />
 
-            <View style={{width: '90%',}}>
+            <View style={{width: '90%'}}>
               <FormControl.Label
                 style={{color: theme1.SemiBlack, fontWeight: 'bold'}}>
                 Username
@@ -234,7 +239,9 @@ const Login = () => {
 
             {responseData.div_com?.map(dat => (
               <DataTable.Row key={dat.idr}>
-                <DataTable.Cell>{dat.com_name}</DataTable.Cell>
+                <DataTable.Title numberOfLines={3} textStyle={{color: '#000'}}>
+                  {dat.com_name}
+                </DataTable.Title>
                 <DataTable.Cell>
                   {dat.sdate.substring(0, 10).split('-').reverse().join('/')}
                 </DataTable.Cell>
@@ -247,7 +254,7 @@ const Login = () => {
                     onPress={() =>
                       divisionhandler(dat._id, dat.sdate, dat.edate)
                     }
-                    title="Click  "
+                    title="Click"
                   />
                 </DataTable.Cell>
               </DataTable.Row>
@@ -273,7 +280,7 @@ const Login = () => {
                   borderRadius: 10,
                   textAlign: 'center',
                   paddingTop: 10,
-                  color: theme1.White
+                  color: theme1.White,
                 }}>
                 Division
               </Text>
@@ -287,12 +294,16 @@ const Login = () => {
 
                 {responseData.div_mast.map(dat => (
                   <DataTable.Row>
-                    <DataTable.Cell>{dat.div_mast}</DataTable.Cell>
+                    <DataTable.Title
+                      numberOfLines={3}
+                      textStyle={{color: '#000'}}>
+                      {dat.div_mast}
+                    </DataTable.Title>
                     <DataTable.Cell>{dat.div_code}</DataTable.Cell>
                     <DataTable.Cell>
                       <Button
                         color={theme1.DARK_ORANGE_COLOR}
-                        title="Enter  "
+                        title="Enter"
                         onPress={() => homeHandler(dat._id, dat.div_code)}
                       />
                     </DataTable.Cell>

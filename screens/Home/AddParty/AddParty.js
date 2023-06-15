@@ -8,6 +8,7 @@ import {
   ToastAndroid,
   View,
   Image,
+  Alert,
 } from 'react-native';
 import {Row} from 'react-native-easy-grid';
 import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
@@ -24,7 +25,6 @@ import {
 } from '../../responsiveLayout/ResponsiveLayout';
 import TextInputField from '../../components/TextInputField';
 import {Dropdown} from 'react-native-element-dropdown';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 const AddParty = ({navigation, route}) => {
   const nav = useNavigation();
@@ -119,6 +119,7 @@ const AddParty = ({navigation, route}) => {
         return;
       }
 
+      setLoading(false);
       const body = {
         party_radio: string,
         ac_code: acCode,
@@ -146,16 +147,29 @@ const AddParty = ({navigation, route}) => {
         method: 'POST',
         url: `${host}/party_master/mobparty_master_add`,
         data: body,
-      }).then(respone => {
-        console.log(respone, 'resonse');
-        ToastAndroid.showWithGravity(
-          'Party Added',
-          ToastAndroid.SHORT,
-          ToastAndroid.CENTER,
-        );
-        clear();
-        nav.goBack();
-      });
+      })
+        .then(respone => {
+          // console.log(respone.data.success);
+          if (respone.data.success) {
+            ToastAndroid.showWithGravity(
+              'Party Added',
+              ToastAndroid.SHORT,
+              ToastAndroid.CENTER,
+            );
+            clear();
+            nav.goBack();
+            setLoading(true);
+          } else {
+            setLoading(true);
+            Alert.alert(
+              'User Already exist. Please use different mobile number',
+            );
+          }
+        })
+        .catch(e => {
+          setLoading(false);
+          console.log('error -> ', e);
+        });
     };
     submit();
     //Seller Broker--T
@@ -361,7 +375,9 @@ const AddParty = ({navigation, route}) => {
           </View>
         </ScrollView>
       ) : (
-        <ActivityIndicator color={theme1.DARK_ORANGE_COLOR} size={100} />
+        <View style={{flex: 1, justifyContent: 'center'}}>
+          <ActivityIndicator color={theme1.DARK_ORANGE_COLOR} size={100} />
+        </View>
       )}
     </View>
   );

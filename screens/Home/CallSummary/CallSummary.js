@@ -28,12 +28,12 @@ import Toast from 'react-native-simple-toast';
 import Entypo from 'react-native-vector-icons/Entypo';
 import Icon from 'react-native-vector-icons/Feather';
 import FIcon from 'react-native-vector-icons/FontAwesome';
-import DatePicker from '../../components/DatePicker';
-import {ImagePickerModal} from '../../components/ImagePickerModal';
-import theme1 from '../../components/styles/DarkTheme';
-import TextInputField from '../../components/TextInputField';
 import {host} from '../../Constants/Host';
 import AuthStore from '../../Mobx/AuthStore';
+import DatePicker from '../../components/DatePicker';
+import {ImagePickerModal} from '../../components/ImagePickerModal';
+import TextInputField from '../../components/TextInputField';
+import theme1 from '../../components/styles/DarkTheme';
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
@@ -451,6 +451,20 @@ function CallSummary({navigation}) {
         Toast.BOTTOM,
       );
     }
+
+    if (status === 'Part-Pending') {
+      let empty_Product = false;
+      visit_group.map((a, i) => {
+        if (a?.visit_spare_part) {
+          empty_Product = true;
+        }
+      });
+      return Toast.showWithGravity(
+        'Please select all fields.',
+        Toast.LONG,
+        Toast.BOTTOM,
+      );
+    }
     setLoading(true);
     const data = new FormData();
     const user = AuthStore?.user;
@@ -560,7 +574,9 @@ function CallSummary({navigation}) {
         compressImageQuality: 0.5,
       })
         .then(async image => {
-          setSelectedImages(image);
+          let all = [...selectedImages];
+          all.push(image);
+          setSelectedImages(all);
           setImageModal(false);
         })
         .catch(err => {
@@ -892,11 +908,18 @@ function CallSummary({navigation}) {
                       <View style={styles.SgView}>
                         <Text style={styles.SgLabel}>Problem: - </Text>
                         <Text
-                          style={[styles.SgValue, {width: '80%'}]}
+                          style={[styles.SgValue, {width: '40%', }]}
                           numberOfLines={1}>
                           {item?.typ_call?.CallType}
                         </Text>
+                        <Text style={styles.SgLabel}>Call time: - </Text>
+                        <Text
+                          style={[styles.SgValue, {width: '30%'}]}
+                          numberOfLines={1}>
+                          {item?.time}
+                        </Text>
                       </View>
+                      
                       <View style={styles.SgView}>
                         <Text style={styles.SgLabel}>Model: - </Text>
                         <Text
@@ -913,6 +936,14 @@ function CallSummary({navigation}) {
                           {item?.s_stus}
                         </Text>
                       </View>
+                      <View style={styles.SgView}>
+                      <Text style={styles.SgLabel}>Service at: - </Text>
+                        <Text
+                          style={[styles.SgValue, {width: '80%'}]}
+                          numberOfLines={1}>
+                          {item?.s_posm?.Description}
+                        </Text>
+                      </View>
                     </View>
                     <View
                       style={{
@@ -923,7 +954,7 @@ function CallSummary({navigation}) {
                         alignItems: 'center',
                         marginVertical: 10,
                       }}>
-                      <TouchableOpacity
+                      {!AuthStore?.isSales &&<TouchableOpacity
                         style={styles.ListButton}
                         onPress={() => {
                           if (item?._id) {
@@ -934,7 +965,7 @@ function CallSummary({navigation}) {
                         <View>
                           <Text style={styles.ListButtonText}>Submit</Text>
                         </View>
-                      </TouchableOpacity>
+                      </TouchableOpacity>}
                       <View
                         style={{
                           flexDirection: 'row',
@@ -966,7 +997,7 @@ function CallSummary({navigation}) {
                           <FIcon name="whatsapp" size={25} color={'green'} />
                         </TouchableOpacity>
                       </View>
-                      {selectedIndex !== 0 && (
+                      {!AuthStore?.isSales && selectedIndex !== 0 && (
                         <TouchableOpacity
                           style={styles.ListButton}
                           onPress={() => {
@@ -1686,6 +1717,7 @@ function CallSummary({navigation}) {
 
                     {AutoSelectedImages?.length > 0 &&
                       AutoSelectedImages?.map((fillImage, index) => {
+                        console.log(`${host}/${fillImage}`);
                         return (
                           <Image
                             key={index + 'AI'}

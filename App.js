@@ -40,6 +40,8 @@ import {NativeBaseProvider} from 'native-base';
 import AuthStore from './screens/Mobx/AuthStore.js';
 import SPLASH from './assets/splash.png';
 import {observer} from 'mobx-react';
+import {GetFCMToken, requestUserPermission} from './screens/services/notify/notificationService.js';
+import {NetworkProvider} from 'react-native-offline';
 
 LogBox.ignoreAllLogs();
 Icon.loadFont();
@@ -49,6 +51,8 @@ const App = () => {
     const unsubscribe = async () => {
       try {
         const usr = await AsyncStorage.getItem('user');
+        // await GetFCMToken();
+        await requestUserPermission();
         if (!!usr) {
           const masterid = await AsyncStorage.getItem('masterid');
           const compid = await AsyncStorage.getItem('companyCode');
@@ -80,14 +84,18 @@ const App = () => {
   }
 
   return (
-    <NativeBaseProvider>
-      {!AuthStore?.isLoading ? (
-        <View style={styles.container}>
-          <Toast />
-          {AuthStore?.isLoggedIn ? <AdminDrawer /> : <LoginDrawer />}
-        </View>
-      ): (<View></View>)}
-    </NativeBaseProvider>
+    <NetworkProvider>
+      <NativeBaseProvider>
+        {!AuthStore?.isLoading ? (
+          <View style={styles.container}>
+            <Toast />
+            {AuthStore?.isLoggedIn ? <AdminDrawer /> : <LoginDrawer />}
+          </View>
+        ) : (
+          <View></View>
+        )}
+      </NativeBaseProvider>
+    </NetworkProvider>
   );
 };
 
@@ -125,7 +133,7 @@ export const CustomDrawerContent = props => {
             width: '90%',
             top: -15,
             alignSelf: 'center',
-            alignItems: 'center'
+            alignItems: 'center',
           }}>
           <Text
             style={{
