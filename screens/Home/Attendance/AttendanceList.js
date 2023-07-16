@@ -62,7 +62,7 @@ function AttendanceList({navigation}) {
     const compid = AuthStore?.companyId;
     const divid = AuthStore?.divisionId;
 
-    const URL = `${host}/attendance/mobattd_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${new Date()}&end_date=${new Date()}`;
+    const URL = `${AuthStore?.host}/attendance/mobattd_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${new Date()}&end_date=${new Date()}`;
     Axios.get(URL).then(response => {
       setData(response?.data?.atd);
       setTableData(response?.data?.atd);
@@ -189,7 +189,7 @@ function AttendanceList({navigation}) {
                     Start Date:
                   </Text>
                   <DatePicker
-                    conatinerStyles={{
+                    containerStyles={{
                       width: wp('42%'),
                       height: 40,
                       justifyContent: 'center',
@@ -215,7 +215,7 @@ function AttendanceList({navigation}) {
                     End Date:
                   </Text>
                   <DatePicker
-                    conatinerStyles={{
+                    containerStyles={{
                       width: wp('42%'),
                       height: 40,
                       justifyContent: 'center',

@@ -5,15 +5,18 @@ class AuthStore {
   isLoggedIn = false;
   isAdmin = false;
   isSales = false;
+  isService = false;
   user = '';
   masterId = '';
   companyId = '';
   divisionId = '';
   adminId = '';
   salesId = '';
+  host = '';
 
   constructor() {
     makeObservable(this, {
+      host: observable,
       isLoading: observable,
       isLoggedIn: observable,
       isAdmin: observable,
@@ -28,13 +31,18 @@ class AuthStore {
       setIsAdmin: action,
       setIsLoggedIn: action,
       setIsSales: action,
+      setIsService: action,
       setUser: action,
       setMasterId: action,
       setCompanyId: action,
       setDivisionId: action,
       setAdmin: action,
       setSales: action,
+      setHost: action
     });
+  }
+  setHost(payload){
+    this.host = payload;
   }
   setLoading(payload) {
     this.isLoading = payload;
@@ -47,6 +55,9 @@ class AuthStore {
   }
   setIsSales(payload) {
     this.isSales = payload;
+  }
+  setIsService(payload) {
+    this.isService = payload;
   }
   setUser(payload) {
     this.user = payload;

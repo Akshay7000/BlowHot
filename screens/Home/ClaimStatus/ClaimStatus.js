@@ -1,639 +1,134 @@
-import Axios from 'axios';
-import React, { useEffect, useRef, useState } from 'react';
+import React, {useLayoutEffect, useState} from 'react';
+import {observer} from 'mobx-react-lite';
+import axios from 'axios';
+import {useNavigation} from '@react-navigation/native';
+import moment from 'moment';
 import {
-  ActivityIndicator,
-  FlatList,
-  Linking,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
-import { Col, Grid, Row } from 'react-native-easy-grid';
-import { ScrollView, TextInput } from 'react-native-gesture-handler';
-import Modal from 'react-native-modal';
-import { Button, Searchbar } from 'react-native-paper';
-import RBSheet from 'react-native-raw-bottom-sheet';
-import Icon from 'react-native-vector-icons/Feather';
-import DatePicker from '../../components/DatePicker';
-import SelectTwo from '../../components/SelectTwo';
-
-import { observer } from 'mobx-react-lite';
-import { host } from '../../Constants/Host';
+import {widthPercentageToDP as wp} from '../../responsiveLayout/ResponsiveLayout';
 import AuthStore from '../../Mobx/AuthStore';
-import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp
-} from '../../responsiveLayout/ResponsiveLayout';
+import theme1 from '../../components/styles/DarkTheme';
 
-function ClaimStatus({navigation, route}) {
-  const [startDate, setStartDate] = useState();
-  const [endDate, setEndDate] = useState();
+function ClaimStatus() {
+  const navigation = useNavigation();
+  const [ClaimData, setClaimData] = useState([]);
 
-  const [loading, setLoading] = useState(true);
-  const [tableData, setTableData] = useState([]);
-  const [data, setData] = useState();
-  const [length, setLength] = useState();
-  const [filteredData, setFilteredData] = useState();
-  const [searchName, setSearchName] = useState();
-  const [page, setPage] = useState(1);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  useLayoutEffect(() => {
+    getClaimStatus();
+  }, []);
 
-  const [selllerId, setSellerId] = useState();
-  const [sellerItems, setSellerItems] = useState([]);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [phoneNumber, setPhoneNumber] = useState();
-  const [inputBox, setShowInputBox] = useState(false);
-  const [shareItem, setShareItem] = useState();
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', async () => {
-      getTelphoneList();
-    });
-    return unsubscribe;
-  }, [navigation]);
-
-  const handleSellerId = item => {
-    setPhoneNumber(item.mobile);
-    setSellerId(item.id);
-    setShowInputBox(true);
-  };
-
-  var RBref = useRef();
-
-  const shareToWhatsAppWithContact = () => {
-    var item = JSON.stringify(shareItem).split(',');
-    var i;
-    var shareText = 'From :' + ' Demo' + '\n';
-    for (i = 0; i < item.length; i++) {
-      shareText += item[i] + '\n';
-    }
-    shareText.replace('{', ' ');
-    shareText.replace('}', ' ');
-    Linking.openURL(
-      `whatsapp://send?text=${shareText}&phone=+91${phoneNumber}`,
-    );
-  };
-
-  const getTelphoneList = async () => {
-    const user = AuthStore?.user;
-    const masterid = AuthStore?.masterId;
-    const compid = AuthStore?.companyId;
-    const divid = AuthStore?.divisionId;
-    const service = AuthStore?.salesId;
-    console.log(service);
-    if (service) {
-      const URL = `${host}/claim_status/mobgetclaimstatuslist`;
-      Axios.post(URL, {
-        user: user,
-        masterid: masterid,
-        divid: divid,
-        compid: compid,
-      }).then(response => {
-        setLength(response.data.s_callSchema.length);
-        setData(response.data.s_callSchema);
-        setTableData(response.data.s_callSchema);
-        setFilteredData(response.data.s_callSchema);
-        setLoading(false);
-      });
-    } else {
-      const URL = `${host}/claim_status/mobgetclaimstatuslist`;
-      Axios.post(URL, {masterid: masterid, divid: divid, compid: compid}).then(
-        response => {
-          setLength(response.data.s_callSchema.length);
-          setData(response.data.s_callSchema);
-          setTableData(response.data.s_callSchema);
-          setFilteredData(response.data.s_callSchema);
-          setLoading(false);
-        },
+  const getClaimStatus = async () => {
+    try {
+      const res = await axios.get(
+        `${AuthStore?.host}/loc_tour_claim/mobget_loc_tour_claimlist?username=${AuthStore?.user}`,
       );
+      // const res = await axios.get(
+      //   `${AuthStore?.host}/loc_tour_claim/mobget_loc_tour_claimlist?username=Munishk`,
+      // );
+      console.log(res?.data?.data);
+      setClaimData(res?.data?.data);
+    } catch (e) {
+      console.log(e);
     }
-  };
-
-  const getFilteredData = async (startDate, endDate) => {
-    const user = AuthStore?.user;
-    const masterid = AuthStore?.masterId;
-    const compid = AuthStore?.companyId;
-    const divid = AuthStore?.divisionId;
-
-    const URL = `${host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${startDate}&end_date=${endDate}`;
-    console.log(URL);
-    Axios.get(URL).then(response => {
-      setLength(response.data.atd.length);
-      setData(response.data.atd);
-      setTableData(response.data.atd);
-      setLoading(false);
-
-      //  getSellers()
-    });
-  };
-
-  const filter = (text, type) => {
-    const array = [...tableData];
-    const newArray = array.filter(table =>
-      (table?.call_center?.ServiceCenterName).toLowerCase().includes(
-        text.toLowerCase(),
-      ),
-    );
-    console.log(newArray.length);
-    setFilteredData(newArray);
-  };
-
-  const toogleModal = id => {
-    setLoading(true);
-    var item = data.find(item => item._id === id);
-    setShareItem({
-      'PARTY-NAME': item.party_name,
-      ADDRESS: item.address1,
-      CITY: item.city_name.city_name,
-      'PHONE NUMBER': item.mob_no,
-      'PAN NUMBER': item.pan_no,
-      'GSTIN NUMBER': item.gstin,
-      'FSSAI NUMBER': item.fssai,
-    });
-    setLoading(false);
-    setIsModalVisible(true);
-  };
-
-  const fetchMoreTelephone = () => {
-    setPage(page + 1);
   };
 
   return (
-    <ScrollView style={{flex: 1}} keyboardShouldPersistTaps="always">
-      {!loading ? (
-        <>
-          <View
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-around',
-              alignItems: 'center',
-            }}>
-            <Modal
-              isVisible={isModalVisible}
-              animationIn="slideInUp"
-              animationOut="slideOutDown"
-              animationInTiming={1000}
-              onBackdropPress={() => setIsModalVisible(false)}
-              onSwipeComplete={() => setIsModalVisible(false)}
-              swipeDirection="left"
-              height={hp('100%')}>
-              <View style={[styles.card, {height: hp('40%')}]}>
-                <Button onPress={() => setIsModalVisible(false)}>
-                  <Text>Hide</Text>
-                </Button>
-                <View style={styles.column}>
-                  <SelectTwo
-                    items={sellerItems}
-                    selectedItem={selectedItems}
-                    handleId={handleSellerId}
-                    width={wp('80%')}
-                    placeholder="Seller"
-                  />
+    <>
+      {ClaimData.length > 0 ? (
+        <ScrollView style={{flex: 1}}>
+          {ClaimData?.map((item, index) => {
+            return (
+              <View
+                style={{
+                  width: '90%',
+                  alignSelf: 'center',
+                  marginVertical: 5,
+                  borderRadius: 8,
+                  borderColor: theme1?.DARK_ORANGE_COLOR,
+                  borderWidth: 1,
+                  paddingVertical: 5,
+                }}>
+                <View style={styles.detail_view}>
+                  <Text style={styles.detail_label}>Date:- </Text>
+                  <Text style={styles.detail_value}>
+                    {moment(item?.so_date).format('DD/MM/YYYY')}
+                  </Text>
                 </View>
-
-                {inputBox ? (
-                  <>
-                    <View style={{borderWidth: 1, borderColor: 'grey'}}></View>
-                    <View style={styles.column}>
-                      <TextInput
-                        style={[styles.input]}
-                        placeholder="Deal No."
-                        defaultValue={phoneNumber}
-                        onChangeText={text => setPhoneNumber(text)}
-                      />
-                      <TouchableOpacity
-                        onPress={() => shareToWhatsAppWithContact()}>
-                        <Button>
-                          <Text>Share </Text>
-                        </Button>
-                      </TouchableOpacity>
-                    </View>
-                  </>
-                ) : (
-                  <></>
-                )}
+                <View style={styles.detail_view}>
+                  <Text style={styles.detail_label}>User Name:- </Text>
+                  <Text style={styles.detail_value}>
+                    {item?.username?.usrnm}
+                  </Text>
+                </View>
+                <View style={styles.detail_view}>
+                  <Text style={styles.detail_label}>Month:- </Text>
+                  <Text style={styles.detail_value}>{item?.month}</Text>
+                </View>
+                <View style={styles.detail_view}>
+                  <Text style={styles.detail_label}>Total KMs:- </Text>
+                  <Text style={styles.detail_value}>{item?.totkms}</Text>
+                </View>
+                <View style={styles.detail_view}>
+                  <Text style={styles.detail_label}>Total Amount:- </Text>
+                  <Text style={styles.detail_value}>{item?.totamt}</Text>
+                </View>
               </View>
-            </Modal>
-            <Searchbar
-              placeholder="Search"
-              defaultValue={searchName}
-              onChangeText={text => filter(text)}
-              style={{
-                borderWidth: 0.5,
-                width: wp('90%'),
-                height: hp('4.5%'),
-                flex: 0.97,
-                marginLeft: 10,
-                marginTop: 10,
-                padding: 5,
-                borderRadius: 10,
-              }}
-            />
-            <TouchableOpacity
-              style={{
-                height: hp('6%'),
-                flex: 0.1,
-                marginLeft: 10,
-                backgroundColor: '#D9D9D9',
-                borderRadius: 10,
-                marginTop: 5,
-                paddingLeft: 10,
-                paddingRight: 10,
-                marginRight: 8,
-              }}
-              onPress={() => RBref.open()}>
-              <Icon
-                name="filter"
-                size={wp('7%')}
-                color="black"
-                style={{top: 5}}
-              />
-            </TouchableOpacity>
-          </View>
-          <View
-            style={{
-              borderBottomColor: 'grey',
-              borderBottomWidth: 0.5,
-              marginBottom: 0,
-              padding: 0,
-              margin: 10,
-            }}
-          />
-
-          <View>
-            <RBSheet
-              ref={ref => {
-                RBref = ref;
-              }}
-              openDuration={250}
-              customStyles={{
-                container: {
-                  borderTopEndRadius: 20,
-                  borderTopStartRadius: 20,
-                  backgroundColor: theme1.LIGHT_BLUE_COLOR,
-                },
-              }}>
-              <ScrollView keyboardShouldPersistTaps="always">
-                <View
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    paddingLeft: 10,
-                  }}>
-                  <Text
-                    style={{
-                      width: wp('10%'),
-                      flex: 0.35,
-                      marginTop: 22,
-                      fontSize: wp('3%'),
-                    }}>
-                    Start Date:
-                  </Text>
-                  <DatePicker
-                    style={{
-                      width: wp('80%'),
-                      borderRadius: 5,
-                      margin: 10,
-                      flex: 0.65,
-                    }}
-                    date={startDate}
-                    mode="date"
-                    placeholder="Date"
-                    format="DD/MM/YYYY"
-                    confirmBtnText="Confirm"
-                    cancelBtnText="Cancel"
-                    customStyles={{
-                      dateIcon: {
-                        position: 'absolute',
-                        left: 40000,
-                        top: 9,
-                        marginLeft: 0,
-                        height: hp('2.8%'),
-                        width: wp('3.5%'),
-                      },
-                      dateInput: {
-                        borderRadius: 10,
-                        marginRight: 15,
-                        height: hp('4%'),
-                      },
-                      // ... You can check the source to find the other keys.
-                    }}
-                    onDateChange={date => {
-                      setStartDate(date);
-                    }}
-                  />
-                  <Text
-                    style={{
-                      width: wp('10%'),
-                      flex: 0.3,
-                      marginTop: 22,
-                      fontSize: wp('3%'),
-                    }}>
-                    End Date:
-                  </Text>
-                  <DatePicker
-                    style={{
-                      width: wp('80%'),
-                      borderRadius: 5,
-                      margin: 10,
-                      flex: 0.7,
-                    }}
-                    date={endDate}
-                    mode="date"
-                    placeholder="Date"
-                    format="DD/MM/YYYY"
-                    confirmBtnText="Confirm"
-                    cancelBtnText="Cancel"
-                    customStyles={{
-                      dateIcon: {
-                        position: 'absolute',
-                        left: 40000,
-                        top: 9,
-                        marginLeft: 0,
-                        height: hp('2.8%'),
-                        width: wp('3.5%'),
-                      },
-                      dateInput: {
-                        borderRadius: 10,
-                        marginRight: 15,
-                        height: hp('4%'),
-                      },
-                      // ... You can check the source to find the other keys.
-                    }}
-                    onDateChange={date => {
-                      setEndDate(date);
-                    }}
-                  />
-                </View>
-
-                <View style={[styles.column, {justifyContent: 'center'}]}>
-                  <TouchableOpacity
-                    style={styles.button1}
-                    onPress={() => getFilteredData(startDate, endDate)}>
-                    <Text style={{color: 'white'}}>Show</Text>
-                  </TouchableOpacity>
-                </View>
-              </ScrollView>
-            </RBSheet>
-          </View>
-
-          <ScrollView style={styles.card} horizontal={true}>
-            <Grid>
-              <Row>
-                <Col
-                  style={{marginRight: 20, borderRightWidth: 0.5}}
-                  width={wp('35%')}>
-                  <Text style={{fontWeight: 'bold', color: '#222'}}>
-                    Unique Id
-                  </Text>
-                </Col>
-                <Col
-                  style={{marginRight: 20, borderRightWidth: 0.5}}
-                  width={wp('33%')}>
-                  <Text style={{fontWeight: 'bold', color: '#222'}}>
-                    Service Center
-                  </Text>
-                </Col>
-                <Col
-                  style={{marginRight: 20, borderRightWidth: 0.5}}
-                  width={wp('25%')}>
-                  <Text style={{fontWeight: 'bold', color: '#222'}}>Date</Text>
-                </Col>
-                <Col
-                  style={{marginRight: 20, borderRightWidth: 0.5}}
-                  width={wp('30%')}>
-                  <Text style={{fontWeight: 'bold', color: '#222'}}>Time</Text>
-                </Col>
-                <Col
-                  style={{marginRight: 20, borderRightWidth: 0.5}}
-                  width={wp('40%')}>
-                  <Text style={{fontWeight: 'bold', color: '#222'}}>
-                    Type of Call
-                  </Text>
-                </Col>
-                <Col
-                  style={{marginRight: 20, borderRightWidth: 0.5}}
-                  width={wp('40%')}>
-                  <Text style={{fontWeight: 'bold', color: '#222'}}>
-                    Warranty
-                  </Text>
-                </Col>
-                <Col
-                  style={{marginRight: 20, borderRightWidth: 0.5}}
-                  width={wp('40%')}>
-                  <Text style={{fontWeight: 'bold', color: '#222'}}>
-                    Distance
-                  </Text>
-                </Col>
-                <Col
-                  style={{marginRight: 20, borderRightWidth: 0.5}}
-                  width={wp('40%')}>
-                  <Text style={{fontWeight: 'bold', color: '#222'}}>
-                    Call Charges
-                  </Text>
-                </Col>
-                <Col
-                  style={{marginRight: 20, borderRightWidth: 0.5}}
-                  width={wp('40%')}>
-                  <Text style={{fontWeight: 'bold', color: '#222'}}>TA</Text>
-                </Col>
-                <Col
-                  style={{marginRight: 20, borderRightWidth: 0.5}}
-                  width={wp('40%')}>
-                  <Text style={{fontWeight: 'bold', color: '#222'}}>
-                    Balance
-                  </Text>
-                </Col>
-              </Row>
-
-              <FlatList
-                data={filteredData}
-                style={{marginTop: 10}}
-                renderItem={({item, index}) => (
-                  <Row style={{marginBottom: 10, marginTop: 10}}>
-                    <Col
-                      style={{
-                        marginRight: 20,
-                        borderRightWidth: 0.5,
-                        paddingRight: 10,
-                      }}
-                      width={wp('35%')}>
-                      <Text style={{color: '#222'}}>{item?.unique_id}</Text>
-                    </Col>
-                    <Col
-                      style={{
-                        marginRight: 20,
-                        borderRightWidth: 0.5,
-                        paddingRight: 10,
-                      }}
-                      width={wp('33%')}>
-                      <Text style={{color: '#222'}}>
-                        {item.call_center?.ServiceCenterName}
-                      </Text>
-                    </Col>
-                    <Col
-                      style={{
-                        marginRight: 20,
-                        borderRightWidth: 0.5,
-                        paddingRight: 10,
-                      }}
-                      width={wp('25%')}>
-                      <Text style={{color: '#222'}}>
-                        {item.so_date
-                          ?.substring(0, 10)
-                          .split('-')
-                          .reverse()
-                          .join('/')}
-                      </Text>
-                    </Col>
-                    <Col
-                      style={{
-                        marginRight: 20,
-                        borderRightWidth: 0.5,
-                        paddingRight: 10,
-                      }}
-                      width={wp('30%')}>
-                      <Text style={{color: '#222'}}>{item?.time}</Text>
-                    </Col>
-                    <Col
-                      style={{
-                        marginRight: 20,
-                        borderRightWidth: 0.5,
-                        paddingRight: 10,
-                      }}
-                      width={wp('38%')}>
-                      <Text style={{color: '#222'}}>
-                        {item?.typ_call?.CallType}
-                      </Text>
-                    </Col>
-                    <Col
-                      style={{
-                        marginRight: 20,
-                        borderRightWidth: 0.5,
-                        paddingRight: 10,
-                      }}
-                      width={wp('40%')}>
-                      <Text style={{color: '#222'}}>{item?.warranty_type}</Text>
-                    </Col>
-                    <Col
-                      style={{
-                        marginRight: 20,
-                        borderRightWidth: 0.5,
-                        paddingRight: 10,
-                      }}
-                      width={wp('40%')}>
-                      <Text style={{color: '#222'}}>
-                        {item?.end_millometer_reading}
-                      </Text>
-                    </Col>
-                    <Col
-                      style={{
-                        marginRight: 20,
-                        borderRightWidth: 0.5,
-                        paddingRight: 10,
-                      }}
-                      width={wp('40%')}>
-                      <Text style={{color: '#222'}}>{item?.visit_charges}</Text>
-                    </Col>
-                    <Col
-                      style={{
-                        marginRight: 20,
-                        borderRightWidth: 0.5,
-                        paddingRight: 10,
-                      }}
-                      width={wp('40%')}>
-                      <Text style={{color: '#222'}}>{item?.visit_charges}</Text>
-                    </Col>
-                    <Col
-                      style={{
-                        marginRight: 20,
-                        borderRightWidth: 0.5,
-                        paddingRight: 10,
-                      }}
-                      width={wp('40%')}>
-                      <Text style={{color: '#222'}}>{item?.visit_charges}</Text>
-                    </Col>
-                  </Row>
-                )}
-                keyExtractor={(item, index) => index}
-                onEndReached={fetchMoreTelephone}
-                onEndReachedThreshold={0.1}
-              />
-            </Grid>
-          </ScrollView>
-        </>
+            );
+          })}
+        </ScrollView>
       ) : (
-        <ActivityIndicator size="large" color="skyblue" />
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={styles.notfound}>No Data Found</Text>
+          <TouchableOpacity
+            style={[styles.button1, {marginTop: 0}]}
+            onPress={() => {
+              navigation.goBack();
+            }}>
+            <Text style={{color: 'white'}}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
       )}
-    </ScrollView>
+    </>
   );
 }
 
 export default observer(ClaimStatus);
 
 const styles = StyleSheet.create({
-  container: {flex: 1, padding: 16, paddingTop: 30, backgroundColor: '#fff'},
-  singleHead: {width: 80, height: 40, backgroundColor: '#c8e1ff'},
-  title: {backgroundColor: '#f6f8fa'},
-  titleText: {textAlign: 'center'},
-  text: {textAlign: 'center'},
-  btn: {
-    width: 58,
-    height: 18,
-    marginHorizontal: 7,
-    backgroundColor: '#c8e1ff',
-    borderRadius: 2,
-    justifyContent: 'center',
-  },
-  btnText: {textAlign: 'center'},
-  cnt: {
-    flex: 1,
-    padding: 32,
-    paddingTop: 80,
-    justifyContent: 'flex-start',
-  },
-  column: {
-    display: 'flex',
-    flexDirection: 'row',
+  notfound: {
+    color: theme1?.DARK_ORANGE_COLOR,
+    fontSize: 24,
+    fontWeight: '700',
   },
   button1: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: wp('95%'),
-    backgroundColor: theme1.DARK_BLUE_COLOR,
-    padding: 10,
-    paddingHorizontal: 25,
+    width: wp('40%'),
+    height: 40,
+    backgroundColor: theme1.DARK_ORANGE_COLOR,
+    marginTop: 20,
     borderRadius: 10,
-    marginBottom: 20,
-    marginLeft: 10,
   },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 10,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 3},
-    shadowOpacity: 0.5,
-    shadowRadius: 5,
-    padding: 10,
-    marginBottom: 10,
+  detail_view: {
+    flexDirection: 'row',
+    width: '90%',
+    alignSelf: 'center',
   },
-  input: {
-    height: 35,
-    flex: 1,
-    width: wp('22%'),
-    borderStartWidth: 2,
-    borderColor: 'grey',
-    borderEndWidth: 0.5,
-    borderTopWidth: 0.5,
-    borderLeftWidth: 0.5,
-    borderRightWidth: 0.5,
-    borderBottomWidth: 0.5,
-    margin: 4,
-    padding: 8,
-    borderRadius: 5,
+  detail_label: {
+    color: theme1?.DARK_ORANGE_COLOR,
+    fontSize: 14,
+    fontWeight: '600',
+    width: 100,
+  },
+  detail_value: {
+    color: theme1?.HEADER_TEXT_COLOR,
+    fontSize: 14,
+    fontWeight: '500',
+    width: '70%',
   },
 });

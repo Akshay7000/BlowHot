@@ -1,18 +1,21 @@
 import {NavigationContainer} from '@react-navigation/native';
-import {useEffect, useState} from 'react';
+import {useEffect} from 'react';
 import {
   Alert,
   Button,
-  Dimensions,
   Image,
   LogBox,
   StyleSheet,
   Text,
-  View,
   TouchableOpacity,
+  View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import Feather from 'react-native-vector-icons/Feather';
+
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import theme1 from './screens/components/styles/DarkTheme.js';
 import Login from './screens/screen/Login';
 
@@ -27,6 +30,11 @@ import {
 } from './screens/responsiveLayout/ResponsiveLayout';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Geolocation from '@react-native-community/geolocation';
+import {observer} from 'mobx-react';
+import {NativeBaseProvider} from 'native-base';
+import {NetworkProvider} from 'react-native-offline';
+import SPLASH from './assets/splash.png';
 import AddParty from './screens/Home/AddParty/AddParty';
 import Attendance from './screens/Home/Attendance/Attendance';
 import AttendanceList from './screens/Home/Attendance/AttendanceList';
@@ -35,16 +43,21 @@ import CallEntryList from './screens/Home/CallEntry/CallEntryList';
 import CallSummary from './screens/Home/CallSummary/CallSummary';
 import ClaimStatus from './screens/Home/ClaimStatus/ClaimStatus';
 import Landing from './screens/Home/Landing/Landing';
-import {host} from './screens/Constants/Host.js';
-import {NativeBaseProvider} from 'native-base';
+import LocalTourClaim from './screens/Home/LocalTourClaim/index.js';
 import AuthStore from './screens/Mobx/AuthStore.js';
-import SPLASH from './assets/splash.png';
-import {observer} from 'mobx-react';
-import {GetFCMToken, requestUserPermission} from './screens/services/notify/notificationService.js';
-import {NetworkProvider} from 'react-native-offline';
+import {requestUserPermission} from './screens/services/notify/notificationService.js';
+import BarCodeDetail from './screens/Home/BarCodeDetail/index.js';
+import {createStackNavigator} from '@react-navigation/stack';
+import ScanCode from './screens/Home/BarCodeDetail/ScanCode.js';
 
 LogBox.ignoreAllLogs();
-Icon.loadFont();
+FontAwesome.loadFont();
+MaterialCommunityIcons.loadFont();
+Ionicons.loadFont();
+
+Geolocation.setRNConfiguration({
+  locationProvider: 'auto',
+});
 
 const App = () => {
   useEffect(() => {
@@ -58,14 +71,20 @@ const App = () => {
           const compid = await AsyncStorage.getItem('companyCode');
           const divid = await AsyncStorage.getItem('divisionCode');
           const admin = await AsyncStorage.getItem('administrator');
-          const service = await AsyncStorage.getItem('salesTeam');
+          const sales = await AsyncStorage.getItem('salesTeam');
+          const service = await AsyncStorage.getItem('serviceTeam');
+          const hst = await AsyncStorage.getItem('host');
+
           AuthStore.setIsLoggedIn(usr !== null);
           AuthStore.setUser(usr);
           AuthStore.setMasterId(masterid);
           AuthStore.setCompanyId(compid);
           AuthStore.setDivisionId(divid);
           AuthStore.setAdmin(admin);
-          AuthStore.setSales(service);
+          AuthStore.setSales(sales);
+          AuthStore.setIsSales(sales === 'Yes');
+          AuthStore.setIsService(service === 'Yes');
+          AuthStore?.setHost(hst);
         }
         AuthStore.setLoading(false);
       } catch (error) {
@@ -122,7 +141,7 @@ export const CustomDrawerContent = props => {
             textAlign: 'center',
           }}>
           <Image
-            source={{uri: `${host}/public/img/logo.png `}}
+            source={{uri: `${AuthStore?.host}/public/img/logo.png `}}
             style={{height: hp('10%'), width: wp('45%')}}
             resizeMode="contain"
           />
@@ -185,7 +204,7 @@ export const CustomDrawerContent = props => {
                 paddingLeft: 20,
                 paddingTop: 20,
               }}>
-              <Icon
+              <FontAwesome
                 name="sign-out"
                 size={wp('8%')}
                 color="white"
@@ -211,6 +230,19 @@ export const CustomDrawerContent = props => {
 
 const Drawer = createDrawerNavigator();
 
+const Stack = createStackNavigator();
+
+const BarcodeStack = () => {
+  return (
+    <Stack.Navigator
+      initialRouteName="barcode-Detail"
+      screenOptions={{headerShown: false}}>
+      <Stack.Screen name="barcode-Detail" component={BarCodeDetail} />
+      <Stack.Screen name="scanCode" component={ScanCode} />
+    </Stack.Navigator>
+  );
+};
+
 export const LoginDrawer = () => {
   return (
     <NavigationContainer>
@@ -234,7 +266,7 @@ export const LoginDrawer = () => {
               ? 'Shift Company/Division'
               : 'Login',
             drawerIcon: ({focused, size}) => (
-              <Icon
+              <FontAwesome
                 name="copy"
                 reverse
                 size={wp('8%')}
@@ -264,7 +296,7 @@ export const AdminDrawer = () => {
           component={Landing}
           options={({navigation}) => ({
             drawerIcon: ({focused, size}) => (
-              <Icon
+              <FontAwesome
                 name="home"
                 reverse
                 size={wp('8%')}
@@ -277,7 +309,7 @@ export const AdminDrawer = () => {
             },
             headerLeft: props => {
               return (
-                <Icon
+                <FontAwesome
                   reverse
                   name="bars"
                   size={wp('7%')}
@@ -313,7 +345,7 @@ export const AdminDrawer = () => {
                       ],
                     )
                   }>
-                  <Icon name="sign-out" size={wp('7%')} color="#222" />
+                  <FontAwesome name="sign-out" size={wp('7%')} color="#222" />
                 </TouchableOpacity>
               );
             },
@@ -325,8 +357,8 @@ export const AdminDrawer = () => {
           component={Attendance}
           options={({navigation}) => ({
             drawerIcon: ({focused, size}) => (
-              <Icon
-                name="copy"
+              <MaterialCommunityIcons
+                name="handshake-outline"
                 reverse
                 size={wp('8%')}
                 color="white"
@@ -343,7 +375,7 @@ export const AdminDrawer = () => {
             },
             headerLeft: props => {
               return (
-                <Icon
+                <FontAwesome
                   reverse
                   name="bars"
                   size={wp('7%')}
@@ -361,8 +393,8 @@ export const AdminDrawer = () => {
           component={AttendanceList}
           options={({navigation}) => ({
             drawerIcon: ({focused, size}) => (
-              <Icon
-                name="copy"
+              <FontAwesome
+                name="book"
                 reverse
                 size={wp('8%')}
                 color="white"
@@ -379,7 +411,7 @@ export const AdminDrawer = () => {
             },
             headerLeft: props => {
               return (
-                <Icon
+                <FontAwesome
                   reverse
                   name="bars"
                   size={wp('7%')}
@@ -405,8 +437,8 @@ export const AdminDrawer = () => {
               color: theme1.HEADER_TEXT_COLOR,
             },
             drawerIcon: ({focused, size}) => (
-              <Icon
-                name="copy"
+              <MaterialCommunityIcons
+                name="file-document-edit-outline"
                 reverse
                 size={wp('8%')}
                 color="white"
@@ -415,7 +447,7 @@ export const AdminDrawer = () => {
             ),
             headerLeft: props => {
               return (
-                <Icon
+                <FontAwesome
                   reverse
                   name="bars"
                   size={wp('7%')}
@@ -428,77 +460,81 @@ export const AdminDrawer = () => {
           })}
         />
 
-        <Drawer.Screen
-          name="Call Visit Entry List"
-          component={CallEntryList}
-          options={({navigation}) => ({
-            headerStyle: {
-              borderBottomEndRadius: 20,
-              borderBottomStartRadius: 20,
-              backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
-            },
-            headerTitleStyle: {
-              color: theme1.HEADER_TEXT_COLOR,
-            },
-            drawerIcon: ({focused, size}) => (
-              <Icon
-                name="copy"
-                reverse
-                size={wp('8%')}
-                color="white"
-                style={{marginLeft: 8}}
-              />
-            ),
-            headerLeft: props => {
-              return (
-                <Icon
+        {(AuthStore?.isAdmin || AuthStore?.isSales) && (
+          <Drawer.Screen
+            name="Call Visit Entry List"
+            component={CallEntryList}
+            options={({navigation}) => ({
+              headerStyle: {
+                borderBottomEndRadius: 20,
+                borderBottomStartRadius: 20,
+                backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
+              },
+              headerTitleStyle: {
+                color: theme1.HEADER_TEXT_COLOR,
+              },
+              drawerIcon: ({focused, size}) => (
+                <MaterialCommunityIcons
+                  name="notebook-check-outline"
                   reverse
-                  name="bars"
-                  size={wp('7%')}
-                  color={theme1.HEADER_TEXT_COLOR}
-                  onPress={() => navigation.toggleDrawer()}
-                  style={{marginLeft: 30}}
+                  size={wp('8%')}
+                  color="white"
+                  style={{marginLeft: 8}}
                 />
-              );
-            },
-          })}
-        />
+              ),
+              headerLeft: props => {
+                return (
+                  <FontAwesome
+                    reverse
+                    name="bars"
+                    size={wp('7%')}
+                    color={theme1.HEADER_TEXT_COLOR}
+                    onPress={() => navigation.toggleDrawer()}
+                    style={{marginLeft: 30}}
+                  />
+                );
+              },
+            })}
+          />
+        )}
 
-        <Drawer.Screen
-          name="Call Summary"
-          component={CallSummary}
-          options={({navigation}) => ({
-            headerStyle: {
-              borderBottomEndRadius: 20,
-              borderBottomStartRadius: 20,
-              backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
-            },
-            headerTitleStyle: {
-              color: theme1.HEADER_TEXT_COLOR,
-            },
-            drawerIcon: ({focused, size}) => (
-              <Icon
-                name="copy"
-                reverse
-                size={wp('8%')}
-                color="white"
-                style={{marginLeft: 8}}
-              />
-            ),
-            headerLeft: props => {
-              return (
-                <Icon
+        {(AuthStore?.isAdmin || AuthStore?.isService) && (
+          <Drawer.Screen
+            name="Call Summary"
+            component={CallSummary}
+            options={({navigation}) => ({
+              headerStyle: {
+                borderBottomEndRadius: 20,
+                borderBottomStartRadius: 20,
+                backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
+              },
+              headerTitleStyle: {
+                color: theme1.HEADER_TEXT_COLOR,
+              },
+              drawerIcon: ({focused, size}) => (
+                <MaterialCommunityIcons
+                  name="notebook"
                   reverse
-                  name="bars"
-                  size={wp('7%')}
-                  color={theme1.HEADER_TEXT_COLOR}
-                  onPress={() => navigation.toggleDrawer()}
-                  style={{marginLeft: 30}}
+                  size={wp('8%')}
+                  color="white"
+                  style={{marginLeft: 8}}
                 />
-              );
-            },
-          })}
-        />
+              ),
+              headerLeft: props => {
+                return (
+                  <FontAwesome
+                    reverse
+                    name="bars"
+                    size={wp('7%')}
+                    color={theme1.HEADER_TEXT_COLOR}
+                    onPress={() => navigation.toggleDrawer()}
+                    style={{marginLeft: 30}}
+                  />
+                );
+              },
+            })}
+          />
+        )}
 
         <Drawer.Screen
           name="Add Party"
@@ -513,8 +549,8 @@ export const AdminDrawer = () => {
               color: theme1.HEADER_TEXT_COLOR,
             },
             drawerIcon: ({focused, size}) => (
-              <Icon
-                name="copy"
+              <Feather
+                name="user-plus"
                 reverse
                 size={wp('8%')}
                 color="white"
@@ -523,7 +559,43 @@ export const AdminDrawer = () => {
             ),
             headerLeft: props => {
               return (
-                <Icon
+                <FontAwesome
+                  reverse
+                  name="bars"
+                  size={wp('7%')}
+                  color={theme1.HEADER_TEXT_COLOR}
+                  onPress={() => navigation.toggleDrawer()}
+                  style={{marginLeft: 30}}
+                />
+              );
+            },
+          })}
+        />
+
+        <Drawer.Screen
+          name="Tour Claim"
+          component={LocalTourClaim}
+          options={({navigation}) => ({
+            headerStyle: {
+              borderBottomEndRadius: 20,
+              borderBottomStartRadius: 20,
+              backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
+            },
+            headerTitleStyle: {
+              color: theme1.HEADER_TEXT_COLOR,
+            },
+            drawerIcon: ({focused, size}) => (
+              <Ionicons
+                name="receipt-outline"
+                reverse
+                size={wp('8%')}
+                color="white"
+                style={{marginLeft: 8}}
+              />
+            ),
+            headerLeft: props => {
+              return (
+                <FontAwesome
                   reverse
                   name="bars"
                   size={wp('7%')}
@@ -549,8 +621,8 @@ export const AdminDrawer = () => {
               color: theme1.HEADER_TEXT_COLOR,
             },
             drawerIcon: ({focused, size}) => (
-              <Icon
-                name="home"
+              <MaterialCommunityIcons
+                name="notebook-outline"
                 reverse
                 size={wp('8%')}
                 color="white"
@@ -559,7 +631,43 @@ export const AdminDrawer = () => {
             ),
             headerLeft: props => {
               return (
-                <Icon
+                <FontAwesome
+                  reverse
+                  name="bars"
+                  size={wp('7%')}
+                  color={theme1.HEADER_TEXT_COLOR}
+                  onPress={() => navigation.toggleDrawer()}
+                  style={{marginLeft: 30}}
+                />
+              );
+            },
+          })}
+        />
+
+        <Drawer.Screen
+          name="Bar-code Detail"
+          component={BarcodeStack}
+          options={({navigation}) => ({
+            headerStyle: {
+              borderBottomEndRadius: 20,
+              borderBottomStartRadius: 20,
+              backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
+            },
+            headerTitleStyle: {
+              color: theme1.HEADER_TEXT_COLOR,
+            },
+            drawerIcon: ({focused, size}) => (
+              <Ionicons
+                name="barcode-outline"
+                reverse
+                size={wp('8%')}
+                color="white"
+                style={{marginLeft: 8}}
+              />
+            ),
+            headerLeft: props => {
+              return (
+                <FontAwesome
                   reverse
                   name="bars"
                   size={wp('7%')}

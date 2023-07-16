@@ -78,7 +78,7 @@ const ComingSoon = ({navigation, route}) => {
   };
 
   const getTelphoneList = async () => {
-    const URL = `${host}/claim_status/mobgetclaimstatuslist`;
+    const URL = `${AuthStore?.host}/claim_status/mobgetclaimstatuslist`;
     Axios.post(URL, {user: AuthStore?.user}).then(response => {
       setData(response.data.s_callSchema);
       setTableData(response.data.s_callSchema);
@@ -147,7 +147,7 @@ const ComingSoon = ({navigation, route}) => {
     const compid = AuthStore?.companyId;
     const divid = AuthStore?.divisionId;
 
-    const URL = `${host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${startDate}&end_date=${endDate}`;
+    const URL = `${AuthStore?.host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${startDate}&end_date=${endDate}`;
     console.log(URL);
     Axios.get(URL).then(response => {
       setData(response.data.atd);

@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import {FormControl, Input} from 'native-base';
-import React, {useEffect, useState} from 'react';
+import { observer } from 'mobx-react-lite';
+import { FormControl, Input } from 'native-base';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Button,
@@ -13,22 +14,21 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {DataTable} from 'react-native-paper';
+import { Dropdown } from 'react-native-element-dropdown';
+import { DataTable } from 'react-native-paper';
 import Toast from 'react-native-simple-toast';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
-import {host} from '../Constants/Host';
-import {widthPercentageToDP as wp} from '../responsiveLayout/ResponsiveLayout';
 import AuthStore from '../Mobx/AuthStore';
 import theme1 from '../components/styles/DarkTheme';
-import {observer} from 'mobx-react-lite';
-import {getItem} from '../services/storageServices';
+import { widthPercentageToDP as wp } from '../responsiveLayout/ResponsiveLayout';
+import { getItem } from '../services/storageServices';
 
 FontAwesomeIcon.loadFont();
 
 const Login = () => {
   const navigation = useNavigation();
-  const [userName, setUserName] = useState();
-  const [password, setPassword] = useState();
+  const [userName, setUserName] = useState('Sanjay Kumar Malviya');
+  const [password, setPassword] = useState('123');
   const [hidePassword, setHidePassword] = useState(true);
   const [showDivision, setShowDivision] = useState(false);
   const [showCompany, setShowCompany] = useState(false);
@@ -58,10 +58,9 @@ const Login = () => {
   const loginsubmit = async () => {
     setLoading(true);
     const Token = await getItem('fcmToken');
-
     axios({
       method: 'POST',
-      url: `${host}/userright/appuserlogin`,
+      url: `${AuthStore?.host}/userright/appuserlogin`,
       data: {
         usrnm: userName?.trim(),
         usrpwd: password,
@@ -73,9 +72,10 @@ const Login = () => {
           setLoading(false);
           Toast.showWithGravity(respone.data.message, Toast.LONG, Toast.TOP);
         } else {
-          // console.log("Login response --> ", JSON.stringify(respone?.data))
+          console.log('Login response --> ', JSON.stringify(respone?.data));
           const setItem = async () => {
             await AsyncStorage.setItem('masterid', respone.data.masterid);
+            await AsyncStorage.setItem('host', AuthStore?.host);
             await AsyncStorage.setItem('user', respone.data.user_name);
             await AsyncStorage.setItem(
               'responseData',
@@ -89,10 +89,17 @@ const Login = () => {
               'salesTeam',
               respone.data.userright.sales_team,
             );
+            await AsyncStorage.setItem(
+              'serviceTeam',
+              respone.data.userright.service_team,
+            );
             AuthStore.setIsAdmin(
               respone?.data?.userright?.administrator === 'Yes',
             );
             AuthStore.setIsSales(respone.data.userright.sales_team === 'Yes');
+            AuthStore.setIsService(
+              respone.data.userright.service_team === 'Yes',
+            );
             setUser(respone.data.user_name);
             setResponseData(respone.data);
             setShowCompany(true);
@@ -153,76 +160,126 @@ const Login = () => {
       {!user && !loading && (
         <View style={styles.container}>
           <View style={styles.form}>
-            <Image
-              source={{
-                uri: `${host}/public/img/logo.png`,
+            {AuthStore?.host && (
+              <Image
+                source={{
+                  uri: `${AuthStore?.host}/public/img/logo.png`,
+                }}
+                style={styles.image}
+                resizeMode="contain"
+              />
+            )}
+
+            <Dropdown
+              data={[
+                {
+                  label: 'http://122.168.114.94:5000',
+                  value: 'http://122.168.114.94:5000',
+                },
+                {
+                  label: 'http://103.231.46.238:5000',
+                  value: 'http://103.231.46.238:5000',
+                },
+              ]}
+              labelField="label"
+              valueField="value"
+              value={AuthStore?.host}
+              placeholder="Select Server"
+              placeholderStyle={{color: theme1.Grey}}
+              onChange={item => AuthStore?.setHost(item?.value)}
+              style={{
+                width: '90%',
+                alignSelf: 'center',
+                borderWidth: 1,
+                borderRadius: 5,
+                paddingLeft: 5,
+                borderColor: theme1.GreyWhite,
+                marginVertical: AuthStore?.host ? 5 : 15
               }}
-              style={styles.image}
-              resizeMode="contain"
+              activeColor={theme1.LIGHT_ORANGE_COLOR}
+              selectedTextStyle={{
+                color: theme1.GreyWhite,
+                fontSize: 14,
+              }}
+              itemTextStyle={{fontSize: 12}}
+              containerStyle={{borderRadius: 8}}
+              itemContainerStyle={{borderRadius: 8}}
+              iconColor={theme1.LIGHT_ORANGE_COLOR}
             />
 
-            <View style={{width: '90%'}}>
-              <FormControl.Label
-                style={{color: theme1.SemiBlack, fontWeight: 'bold'}}>
-                Username
-              </FormControl.Label>
-              <Input
-                value={userName}
-                onChangeText={username => setUserName(username)}
-                style={{color: '#000', fontWeight: 'bold'}}
-                autoCompleteType="username"></Input>
-            </View>
+            {AuthStore?.host && (
+              <>
+                <View style={{width: '90%'}}>
+                  <FormControl.Label
+                    style={{color: theme1.SemiBlack, fontWeight: 'bold'}}>
+                    Username
+                  </FormControl.Label>
+                  <Input
+                    value={userName}
+                    onChangeText={username => setUserName(username)}
+                    style={{color: '#000', fontWeight: 'bold'}}
+                    autoCompleteType="username"></Input>
+                </View>
 
-            <View style={{width: '90%'}}>
-              <FormControl.Label
-                style={{color: theme1.SemiBlack, fontWeight: 'bold'}}>
-                Password
-              </FormControl.Label>
-              <Input
-                style={{color: '#000', fontWeight: 'bold'}}
-                secureTextEntry={hidePassword}
-                value={password}
-                onChangeText={password => setPassword(password)}
-              />
-            </View>
-            <View
-              style={{
-                position: 'relative',
-                top: -30,
-                left: 130,
-                border: 'none',
-              }}>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => setHidePassword(!hidePassword)}>
-                {hidePassword ? (
-                  <FontAwesomeIcon name="eye-slash" size={23} color="black" />
-                ) : (
-                  <FontAwesomeIcon name="eye" size={23} color="black" />
-                )}
-              </TouchableOpacity>
-            </View>
-            <View style={styles.button}>
-              <TouchableOpacity
-                onPress={() => loginsubmit()}
-                style={{
-                  borderRadius: 10,
-                  height: 35,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <Text
+                <View style={{width: '90%'}}>
+                  <FormControl.Label
+                    style={{color: theme1.SemiBlack, fontWeight: 'bold'}}>
+                    Password
+                  </FormControl.Label>
+                  <Input
+                    style={{color: '#000', fontWeight: 'bold'}}
+                    secureTextEntry={hidePassword}
+                    value={password}
+                    onChangeText={password => setPassword(password)}
+                  />
+                </View>
+
+                <View
                   style={{
-                    fontSize: 18,
-                    fontWeight: '600',
-                    letterSpacing: 1,
-                    color: '#FFF',
+                    position: 'relative',
+                    top: -30,
+                    left: 130,
+                    border: 'none',
                   }}>
-                  Login
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={{top: 10, color: '#222'}}>Forgot Password ?</Text>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setHidePassword(!hidePassword)}>
+                    {hidePassword ? (
+                      <FontAwesomeIcon
+                        name="eye-slash"
+                        size={23}
+                        color="black"
+                      />
+                    ) : (
+                      <FontAwesomeIcon name="eye" size={23} color="black" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.button}>
+                  <TouchableOpacity
+                    onPress={() => loginsubmit()}
+                    style={{
+                      borderRadius: 10,
+                      height: 35,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}>
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        fontWeight: '600',
+                        letterSpacing: 1,
+                        color: '#FFF',
+                      }}>
+                      Login
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={{top: 10, color: '#222'}}>Forgot Password ?</Text>
+              </>
+            )}
           </View>
         </View>
       )}
@@ -326,12 +383,12 @@ const styles = StyleSheet.create({
     height: '30%',
   },
   form: {
-    height: 370,
-    // justifyContent: "center",
     alignItems: 'center',
-    margin: 25,
     backgroundColor: theme1.LIGHT_ORANGE_COLOR,
     borderRadius: 20,
+    width: '90%',
+    alignSelf: 'center',
+    marginTop: 15,
   },
   container: {
     flex: 1,

@@ -1,32 +1,24 @@
+import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import React, {useEffect, useRef, useState} from 'react';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   StyleSheet,
   Text,
-  TextInput,
   ToastAndroid,
   View,
-  Image,
-  Alert,
 } from 'react-native';
-import {Row} from 'react-native-easy-grid';
-import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
+import { Dropdown } from 'react-native-element-dropdown';
+import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import SelectMultiple from 'react-native-select-multiple';
-import SelectTwo from '../../components/SelectTwo';
-import theme1 from '../../components/styles/DarkTheme';
-import {useNavigation} from '@react-navigation/native';
-import {observer} from 'mobx-react-lite';
-import {host} from '../../Constants/Host';
 import AuthStore from '../../Mobx/AuthStore';
-import {
-  heightPercentageToDP as hp,
-  widthPercentageToDP as wp,
-} from '../../responsiveLayout/ResponsiveLayout';
 import TextInputField from '../../components/TextInputField';
-import {Dropdown} from 'react-native-element-dropdown';
+import theme1 from '../../components/styles/DarkTheme';
+import { widthPercentageToDP as wp } from '../../responsiveLayout/ResponsiveLayout';
 
-const AddParty = ({navigation, route}) => {
+const AddParty = () => {
   const nav = useNavigation();
   const checkList = [
     // {value: 'Retails', label: 'Retails'},
@@ -58,18 +50,13 @@ const AddParty = ({navigation, route}) => {
 
   const [selectedItems, setSelectedItems] = useState([]);
 
-  //Handle Ids
-  const handleCityId = item => {
-    setCityId(item.id);
-  };
-
   useEffect(() => {
     getCity();
   }, []);
 
   const getCity = async () => {
     setLoading(false);
-    const URL = `${host}/c_visit_entry/mob_getcity`;
+    const URL = `${AuthStore?.host}/c_visit_entry/mob_getcity`;
     axios
       .get(URL)
       .then(response => {
@@ -145,7 +132,7 @@ const AddParty = ({navigation, route}) => {
 
       axios({
         method: 'POST',
-        url: `${host}/party_master/mobparty_master_add`,
+        url: `${AuthStore?.host}/party_master/mobparty_master_add`,
         data: body,
       })
         .then(respone => {

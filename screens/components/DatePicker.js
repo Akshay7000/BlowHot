@@ -13,7 +13,7 @@ const DatePicker = ({
   type = 'date',
   title = 'Date',
   placeholder = 'Date',
-  conatinerStyles,
+  containerStyles,
   maxDate,
   minDate,
   textStyle,
@@ -40,7 +40,7 @@ const DatePicker = ({
   };
 
   return (
-    <View style={[styles.mainContainer, conatinerStyles]}>
+    <View style={[styles.mainContainer, containerStyles]}>
       <TouchableOpacity disabled={isDisable} onPress={() => showDatePicker()}>
         <View style={[styles.textInput]}>
           <TextInput
@@ -49,20 +49,25 @@ const DatePicker = ({
               placeholderTextColor ? placeholderTextColor : '#BBB'
             }
             placeholder={placeholder}
-            style={[styles.text,textStyle]}
+            style={[styles.text, textStyle]}
             onChangeText={value => setDate(value)}
             editable={false}
             value={date}
           />
 
           {type !== 'time' ? (
-            <AntDesign name="calendar" size={20} color={theme1.LIGHT_ORANGE_COLOR} style={{marginRight: 5}} />
+            <AntDesign
+              name="calendar"
+              size={20}
+              color={theme1.LIGHT_ORANGE_COLOR}
+              style={{marginRight: 5}}
+            />
           ) : (
             <MaterialCommunityIcons
               name="clock-time-eight-outline"
               size={20}
-              color={'#222'}
-
+              color={theme1.LIGHT_ORANGE_COLOR}
+              style={{marginRight: 5}}
             />
           )}
         </View>

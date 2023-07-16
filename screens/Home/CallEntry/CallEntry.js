@@ -1,6 +1,6 @@
 import axios from 'axios';
 import moment from 'moment';
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,19 +13,18 @@ import {
 } from 'react-native';
 
 import Geolocation from '@react-native-community/geolocation';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import {observer} from 'mobx-react-lite';
-import {Dropdown} from 'react-native-element-dropdown';
-import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { observer } from 'mobx-react-lite';
+import { Dropdown } from 'react-native-element-dropdown';
+import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import Toast from 'react-native-simple-toast';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import Icon from 'react-native-vector-icons/Feather';
-import DatePicker from '../../components/DatePicker';
-import theme1 from '../../components/styles/DarkTheme';
-import TextInputField from '../../components/TextInputField';
-import {host} from '../../Constants/Host';
 import AuthStore from '../../Mobx/AuthStore';
-import {widthPercentageToDP as wp} from '../../responsiveLayout/ResponsiveLayout';
+import DatePicker from '../../components/DatePicker';
+import TextInputField from '../../components/TextInputField';
+import theme1 from '../../components/styles/DarkTheme';
+import { widthPercentageToDP as wp } from '../../responsiveLayout/ResponsiveLayout';
 
 const {width, height} = Dimensions.get('window');
 
@@ -68,6 +67,7 @@ function CallEntry({navigation, route}) {
     React.useCallback(() => {
       clear();
       getLocation();
+      getStartDay();
     }, []),
   );
 
@@ -76,7 +76,6 @@ function CallEntry({navigation, route}) {
       let todayDate = moment(new Date()).format('DD/MM/YYYY');
       setDate(todayDate);
       setFollowUpDate(todayDate);
-      getLocation();
     });
     return unsubscribe;
   }, [navigation]);
@@ -100,7 +99,6 @@ function CallEntry({navigation, route}) {
   useEffect(() => {
     const init = async () => {
       PromisData(masterid);
-      getStartDay();
     };
     init();
   }, []);
@@ -119,7 +117,7 @@ function CallEntry({navigation, route}) {
     const divid = AuthStore?.divisionId;
 
     await fetch(
-      `${host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${new Date()}&end_date=${new Date()}`,
+      `${AuthStore?.host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${new Date()}&end_date=${new Date()}`,
       data,
     )
       .then(response => response.json())
@@ -171,7 +169,7 @@ function CallEntry({navigation, route}) {
   //     },
   //   };
   //   return await fetch(
-  //     `${host}/c_visit_entry/mob_calldealer?masterid=${masterid}`,
+  //     `${AuthStore?.host}/c_visit_entry/mob_calldealer?masterid=${masterid}`,
   //     data,
   //   )
   //     .then(response => response.json())
@@ -195,7 +193,7 @@ function CallEntry({navigation, route}) {
       },
     };
     return await fetch(
-      `${host}/c_visit_entry/mob_getcall?masterid=${masterid}`,
+      `${AuthStore?.host}/c_visit_entry/mob_getcall?masterid=${masterid}`,
       data,
     )
       .then(response => response.json())
@@ -219,7 +217,7 @@ function CallEntry({navigation, route}) {
       },
     };
     return await fetch(
-      `${host}/c_visit_entry/mob_productname?masterid=${masterid}`,
+      `${AuthStore?.host}/c_visit_entry/mob_productname?masterid=${masterid}`,
       data,
     )
       .then(response => response.json())
@@ -243,7 +241,7 @@ function CallEntry({navigation, route}) {
       },
     };
     fetch(
-      `${host}/c_visit_entry/mob_modelname?masterid=${AuthStore?.masterId}&modelname=${name}`,
+      `${AuthStore?.host}/c_visit_entry/mob_modelname?masterid=${AuthStore?.masterId}&modelname=${name}`,
       data,
     )
       .then(response => response.json())
@@ -278,15 +276,41 @@ function CallEntry({navigation, route}) {
   };
 
   const getLocation = async () => {
-    Geolocation.requestAuthorization();
-    Geolocation.getCurrentPosition(
-      pos => {
-        setLocation(pos);
+    Geolocation.requestAuthorization(
+      success => {
+        Geolocation.getCurrentPosition(
+          pos => {
+            console.log(pos);
+            setLocation(pos);
+          },
+          error => {
+            Alert.alert('GPS Alert!!', 'Please Enable GPS Location.', [
+              {
+                text: 'Ok',
+                onPress: () => {
+                  nav.goBack();
+                },
+              },
+            ]);
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 5000,
+            maximumAge: 5000,
+            distanceFilter: 10,
+          },
+        );
       },
       error => {
-        console.log('Permission to access location was denied');
+        Alert.alert('Alert!!', 'Permission to access location was denied', [
+          {
+            text: 'Ok',
+            onPress: () => {
+              nav.goBack();
+            },
+          },
+        ]);
       },
-      {enableHighAccuracy: true},
     );
   };
 
@@ -324,7 +348,7 @@ function CallEntry({navigation, route}) {
     // console.log("body", body)
     axios({
       method: 'POST',
-      url: `${host}/c_visit_entry/mobadd`,
+      url: `${AuthStore?.host}/c_visit_entry/mobadd`,
       data: body,
     })
       .then(response => {
@@ -350,7 +374,7 @@ function CallEntry({navigation, route}) {
       setSearchingCustomer(true);
       axios
         .get(
-          `${host}/c_visit_entry/mob_calldealermob?MobileNo=${mobileNumber}&masterid=${AuthStore?.masterId}`,
+          `${AuthStore?.host}/c_visit_entry/mob_calldealermob?MobileNo=${mobileNumber}&masterid=${AuthStore?.masterId}`,
         )
         .then(res => {
           if (res.data.results.length > 0) {
@@ -390,7 +414,7 @@ function CallEntry({navigation, route}) {
 
       axios
         .get(
-          `${host}/c_visit_entry/mob_calldealercity?masterid=${AuthStore?.masterId}&cityname=${searchedCity}`,
+          `${AuthStore?.host}/c_visit_entry/mob_calldealercity?masterid=${AuthStore?.masterId}&cityname=${searchedCity}`,
         )
         .then(res => {
           if (res?.data?.results?.length > 0) {
@@ -437,7 +461,7 @@ function CallEntry({navigation, route}) {
                   date={date}
                   placeholder={'Select Date'}
                   setDate={setDate}
-                  conatinerStyles={{
+                  containerStyles={{
                     width: wp('40%'),
                     borderRadius: 5,
                     margin: 10,
@@ -456,7 +480,7 @@ function CallEntry({navigation, route}) {
                   date={followUpDate}
                   placeholder={'Select Date'}
                   setDate={setFollowUpDate}
-                  conatinerStyles={{
+                  containerStyles={{
                     width: wp('40%'),
                     borderRadius: 5,
                     margin: 10,

@@ -1,10 +1,9 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from '@react-native-community/geolocation';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Axios from 'axios';
-import {observer} from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import moment from 'moment';
-import React, {useCallback, useLayoutEffect, useState} from 'react';
+import React, { useCallback, useLayoutEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,22 +13,20 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
+import DeviceInfo from 'react-native-device-info';
+import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import Toast from 'react-native-simple-toast';
-import DatePicker from '../../components/DatePicker';
-import {ImagePickerAvatar} from '../../components/ImagePickerAvatar';
-import {ImagePickerModal} from '../../components/ImagePickerModal';
-import theme1 from '../../components/styles/DarkTheme';
-import {host} from '../../Constants/Host';
 import AuthStore from '../../Mobx/AuthStore';
-import {widthPercentageToDP as wp} from '../../responsiveLayout/ResponsiveLayout';
-import {useIsConnected} from 'react-native-offline';
+import DatePicker from '../../components/DatePicker';
+import { ImagePickerAvatar } from '../../components/ImagePickerAvatar';
+import { ImagePickerModal } from '../../components/ImagePickerModal';
+import theme1 from '../../components/styles/DarkTheme';
+import { widthPercentageToDP as wp } from '../../responsiveLayout/ResponsiveLayout';
+
 const {width, height} = Dimensions.get('window');
 
 function Attendance({navigation, route}) {
-  const IsConnected = useIsConnected();
-  console.log('Is net connected --> ', IsConnected);
   let rout;
   if (typeof route.params == 'undefined') {
     rout = 'none';
@@ -61,10 +58,24 @@ function Attendance({navigation, route}) {
 
   useFocusEffect(
     useCallback(() => {
+      isLocationEnabled();
       getLocation();
       getStartDay();
     }, []),
   );
+  const isLocationEnabled = async () => {
+    let res = await DeviceInfo.isLocationEnabled();
+    if (!res) {
+      Alert.alert('GPS Alert', 'Please Enable GPS location to Continue...', [
+        {
+          text: 'Ok',
+          onPress: () => {
+            nav.goBack();
+          },
+        },
+      ]);
+    }
+  };
 
   const getStartDay = async () => {
     setLoading(false);
@@ -80,7 +91,7 @@ function Attendance({navigation, route}) {
     const divid = AuthStore?.divisionId;
 
     await fetch(
-      `${host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${new Date()}&end_date=${new Date()}`,
+      `${AuthStore?.host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${new Date()}&end_date=${new Date()}`,
       data,
     )
       .then(response => response.json())
@@ -132,7 +143,6 @@ function Attendance({navigation, route}) {
       var time = new Date().getHours() + ':' + minutes + ampm;
       setStartDate(todayDate);
       setStartDayCurrentTime(time);
-      getLocation();
       getStartDay();
     });
     return unsubscribe;
@@ -189,17 +199,30 @@ function Attendance({navigation, route}) {
       success => {
         Geolocation.getCurrentPosition(
           pos => {
+            console.log(pos);
             setLocation(pos);
             setLoading(true);
           },
           error => {
-            Alert.alert('Cannot get current location');
+            console.log('Error on get location');
           },
-          {enableHighAccuracy: true},
+          {
+            enableHighAccuracy: false,
+            timeout: 5000,
+            maximumAge: 5000,
+            distanceFilter: 10,
+          },
         );
       },
       error => {
-        Alert.alert('Permission to access location was denied');
+        Alert.alert('Alert!!', 'Permission to access location was denied', [
+          {
+            text: 'Ok',
+            onPress: () => {
+              nav.goBack();
+            },
+          },
+        ]);
       },
     );
   };
@@ -242,7 +265,7 @@ function Attendance({navigation, route}) {
 
       Axios({
         method: 'POST',
-        url: `${host}/attendance/startmobadd`,
+        url: `${AuthStore?.host}/attendance/startmobadd`,
         headers: {
           // 'Accept': 'application/json',
           'Content-Type': 'multipart/form-data',
@@ -309,7 +332,7 @@ function Attendance({navigation, route}) {
       console.log('data', data);
       Axios({
         method: 'POST',
-        url: `${host}/attendance/mobend_add`,
+        url: `${AuthStore?.host}/attendance/mobend_add`,
         headers: {
           // 'Accept': 'application/json',
           'Content-Type': 'multipart/form-data',
@@ -356,7 +379,7 @@ function Attendance({navigation, route}) {
 
                 <View style={[styles.column, {marginTop: 12}]}>
                   <DatePicker
-                    conatinerStyles={{
+                    containerStyles={{
                       width: wp('42%'),
                       height: 35,
                       justifyContent: 'center',
@@ -441,7 +464,7 @@ function Attendance({navigation, route}) {
 
                 <View style={[styles.column, {marginTop: 12}]}>
                   <DatePicker
-                    conatinerStyles={{
+                    containerStyles={{
                       width: wp('42%'),
                       height: 40,
                       justifyContent: 'center',

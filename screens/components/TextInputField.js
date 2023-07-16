@@ -3,17 +3,18 @@ import {View} from 'react-native';
 import {FloatingLabelInput} from 'react-native-floating-label-input';
 import theme1 from '../components/styles/DarkTheme';
 
-const TextInputField = props => {
-  const {
-    label,
-    type,
-    value,
-    style,
-    isPassword,
-    onChangeText,
-    leftIcon,
-    placeHolder,
-  } = props;
+const TextInputField = ({
+  label,
+  type,
+  value,
+  style,
+  isPassword,
+  onChangeText,
+  onEnd = () =>{},
+  leftIcon,
+  placeHolder,
+  disable = false
+}) => {
 
   return (
     <View
@@ -34,6 +35,7 @@ const TextInputField = props => {
         hint={placeHolder}
         leftComponent={leftIcon}
         animationDuration={300}
+        editable={!disable}
         keyboardType={type ? type : 'default'}
         containerStyles={{
           borderWidth: 1,
@@ -61,6 +63,9 @@ const TextInputField = props => {
         }}
         onChangeText={value => {
           onChangeText(value);
+        }}
+        onEndEditing={()=>{
+          onEnd();
         }}
       />
 

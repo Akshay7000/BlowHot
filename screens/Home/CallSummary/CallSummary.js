@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import {default as Axios, default as axios} from 'axios';
-import {observer} from 'mobx-react-lite';
+import { default as Axios, default as axios } from 'axios';
+import { observer } from 'mobx-react-lite';
 import moment from 'moment';
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -17,21 +17,20 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Dropdown} from 'react-native-element-dropdown';
-import {ScrollView, TextInput} from 'react-native-gesture-handler';
+import { Dropdown } from 'react-native-element-dropdown';
+import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import ImageCropPicker from 'react-native-image-crop-picker';
-import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
-import {Modalize} from 'react-native-modalize';
-import {Searchbar} from 'react-native-paper';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { Modalize } from 'react-native-modalize';
+import { Searchbar } from 'react-native-paper';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import Toast from 'react-native-simple-toast';
 import Entypo from 'react-native-vector-icons/Entypo';
 import Icon from 'react-native-vector-icons/Feather';
 import FIcon from 'react-native-vector-icons/FontAwesome';
-import {host} from '../../Constants/Host';
 import AuthStore from '../../Mobx/AuthStore';
 import DatePicker from '../../components/DatePicker';
-import {ImagePickerModal} from '../../components/ImagePickerModal';
+import { ImagePickerModal } from '../../components/ImagePickerModal';
 import TextInputField from '../../components/TextInputField';
 import theme1 from '../../components/styles/DarkTheme';
 import {
@@ -108,7 +107,6 @@ function CallSummary({navigation}) {
   const [userLocation, setUserLocation] = useState();
 
   const [productId, setProductId] = useState('');
-  const [brandId, setBrandId] = useState();
   const [modelId, setModelId] = useState('');
 
   const [whatsappModal, setWhatsappModal] = useState(false);
@@ -120,6 +118,12 @@ function CallSummary({navigation}) {
   const [AutoSelectedImages, setAutoSelectedImages] = useState([]);
   const [happyCode, setHappyCode] = useState('');
   const [ReScheduleUser, setReScheduleUser] = useState();
+
+  //PartPending CallType
+  const [AllCallTypes, setAllCallTypes] = useState([]);
+  const [SelectedCallTypes, setSelectedCallTypes] = useState('');
+  const [AllPOS, setAllPOS] = useState([]);
+  const [SelectedPOS, setSelectedPOS] = useState('');
 
   // Signature
   const RBref = useRef();
@@ -162,6 +166,8 @@ function CallSummary({navigation}) {
   useEffect(() => {
     getProducts();
     getModels();
+    getCallTypes();
+    getPOS();
   }, []);
 
   const getDealerList = async (start, end, index) => {
@@ -190,9 +196,9 @@ function CallSummary({navigation}) {
       user: user,
       administrator: administrator,
     };
-    console.log('API  -> ', `${host}/call_summary/mobcall_summary`);
+    console.log('API  -> ', `${AuthStore?.host}/call_summary/mobcall_summary`);
     axios
-      .post(`${host}/call_summary/mobcall_summary`, body)
+      .post(`${AuthStore?.host}/call_summary/mobcall_summary`, body)
       .then(function (response) {
         // console.log('res -> ', JSON.stringify(response.data?.s_call));
         setTableData(response?.data?.s_call);
@@ -207,7 +213,7 @@ function CallSummary({navigation}) {
 
   const getProducts = async () => {
     axios
-      .post(`${host}/call_summary/mobgetproduct`, {
+      .post(`${AuthStore?.host}/call_summary/mobgetproduct`, {
         masterid: AuthStore?.masterId,
       })
       .then(({data}) => {
@@ -220,7 +226,7 @@ function CallSummary({navigation}) {
 
   const getModels = async () => {
     axios
-      .post(`${host}/call_summary/mobgetmodel`, {
+      .post(`${AuthStore?.host}/call_summary/mobgetmodel`, {
         masterid: AuthStore?.masterId,
       })
       .then(response => {
@@ -231,11 +237,36 @@ function CallSummary({navigation}) {
       });
   };
 
+  const getCallTypes = async () => {
+    axios
+      .get(`${AuthStore?.host}/s_call/gettypeofcall?term="installation"`)
+      .then(response => {
+        // console.log("Type of Calls ----> ",JSON.stringify(response?.data?.results));
+        setAllCallTypes(response?.data?.results);
+      })
+      .catch(error => {
+        console.log(error, 'error');
+      });
+  };
+
+  const getPOS = async () => {
+    axios
+      .get(`${AuthStore?.host}/point_store_mast/point_service_mast?term="home"`)
+      .then(response => {
+        // console.log("Type of Calls ----> ",JSON.stringify(response?.data?.results));
+        setAllPOS(response?.data?.results);
+      })
+      .catch(error => {
+        console.log(error, 'error');
+      });
+  };
+
   const getParticularData = id => {
     axios
-      .get(`${host}/s_call/mobs_call_update/${id}`)
+      .get(`${AuthStore?.host}/s_call/mobs_call_update/${id}`)
       .then(function (response) {
         const data = response?.data?.s_call;
+        // console.log("Single Data ---> ", JSON.stringify(response?.data?.s_call))
         setSingleData(data);
         setCharges(data?.visit_charges);
         setTa(data?.ta_km);
@@ -268,6 +299,8 @@ function CallSummary({navigation}) {
         setModelName(data?.s_mdl.Description || '');
         setAutoSelectedImages(data?.filepath || '');
         setSelectedImages([]);
+        setSelectedCallTypes(data?.typ_call?._id);
+        setSelectedPOS(data?.s_posm?._id);
 
         // console.log('Visit Group --> ', JSON.stringify(data?.visit_group));
 
@@ -326,7 +359,7 @@ function CallSummary({navigation}) {
     setLoading(true);
     Axios({
       method: 'POST',
-      url: `${host}/s_call/mobreschedule_add?reschedule_date=${reScheduleDate}&first_time=${firstTime}&second_time=${secondTime}&rescheduleremark=${reScheduleRemark}&vhpxappointment=${SingleData?._id}`,
+      url: `${AuthStore?.host}/s_call/mobreschedule_add?reschedule_date=${reScheduleDate}&first_time=${firstTime}&second_time=${secondTime}&rescheduleremark=${reScheduleRemark}&vhpxappointment=${SingleData?._id}`,
     })
       .then(respone => {
         Toast.showWithGravity(
@@ -398,7 +431,7 @@ function CallSummary({navigation}) {
 
     Axios({
       method: 'POST',
-      url: `${host}/s_call/mobappointment_add`,
+      url: `${AuthStore?.host}/s_call/mobappointment_add`,
       data: body,
     })
       .then(respone => {
@@ -453,7 +486,7 @@ function CallSummary({navigation}) {
     }
 
     if (status === 'Part-Pending') {
-      let empty_Product = false;
+      var empty_Product = false;
       visit_group.map((a, i) => {
         if (a?.visit_spare_part) {
           empty_Product = true;
@@ -505,6 +538,10 @@ function CallSummary({navigation}) {
     data.append('warranty_card_no', warrantyNumber);
     data.append('s_prod', productId);
     data.append('s_mdl', modelId);
+    
+    data.append('typ_call', SelectedCallTypes);
+    data.append('s_posm', SelectedPOS);
+
     data.append('first_visit_status', status);
     data.append('visit_group', JSON.stringify(array));
     data.append('visit_charges', charges);
@@ -523,7 +560,7 @@ function CallSummary({navigation}) {
 
     await Axios({
       method: 'POST',
-      url: `${host}/s_call/mobvisit_add`,
+      url: `${AuthStore?.host}/s_call/mobvisit_add`,
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -589,7 +626,7 @@ function CallSummary({navigation}) {
 
   const resendHappyCode = async () => {
     try {
-      Axios.post(`${host}/s_call/re_sms`, {
+      Axios.post(`${AuthStore?.host}/s_call/re_sms`, {
         mob_no: SingleData?.s_cus?.MobileNo,
         unique_id: uniqueId,
         mongid: SingleData?._id,
@@ -908,7 +945,7 @@ function CallSummary({navigation}) {
                       <View style={styles.SgView}>
                         <Text style={styles.SgLabel}>Problem: - </Text>
                         <Text
-                          style={[styles.SgValue, {width: '40%', }]}
+                          style={[styles.SgValue, {width: '40%'}]}
                           numberOfLines={1}>
                           {item?.typ_call?.CallType}
                         </Text>
@@ -919,7 +956,7 @@ function CallSummary({navigation}) {
                           {item?.time}
                         </Text>
                       </View>
-                      
+
                       <View style={styles.SgView}>
                         <Text style={styles.SgLabel}>Model: - </Text>
                         <Text
@@ -937,7 +974,7 @@ function CallSummary({navigation}) {
                         </Text>
                       </View>
                       <View style={styles.SgView}>
-                      <Text style={styles.SgLabel}>Service at: - </Text>
+                        <Text style={styles.SgLabel}>Service at: - </Text>
                         <Text
                           style={[styles.SgValue, {width: '80%'}]}
                           numberOfLines={1}>
@@ -954,7 +991,7 @@ function CallSummary({navigation}) {
                         alignItems: 'center',
                         marginVertical: 10,
                       }}>
-                      {!AuthStore?.isSales &&<TouchableOpacity
+                      <TouchableOpacity
                         style={styles.ListButton}
                         onPress={() => {
                           if (item?._id) {
@@ -965,7 +1002,7 @@ function CallSummary({navigation}) {
                         <View>
                           <Text style={styles.ListButtonText}>Submit</Text>
                         </View>
-                      </TouchableOpacity>}
+                      </TouchableOpacity>
                       <View
                         style={{
                           flexDirection: 'row',
@@ -997,7 +1034,7 @@ function CallSummary({navigation}) {
                           <FIcon name="whatsapp" size={25} color={'green'} />
                         </TouchableOpacity>
                       </View>
-                      {!AuthStore?.isSales && selectedIndex !== 0 && (
+                      {selectedIndex !== 0 && (
                         <TouchableOpacity
                           style={styles.ListButton}
                           onPress={() => {
@@ -1148,7 +1185,7 @@ function CallSummary({navigation}) {
                 </View>
 
                 <DatePicker
-                  conatinerStyles={{
+                  containerStyles={{
                     width: wp('90%'),
                     alignSelf: 'center',
                     height: 40,
@@ -1289,7 +1326,7 @@ function CallSummary({navigation}) {
                     Date:
                   </Text>
                   <DatePicker
-                    conatinerStyles={{
+                    containerStyles={{
                       // width: wp('42%'),
                       height: 40,
                       justifyContent: 'center',
@@ -1378,7 +1415,6 @@ function CallSummary({navigation}) {
                       borderBottomWidth: 0.5,
                       flexDirection: 'row',
                       justifyContent: 'space-between',
-                      // backgroundColor: theme1.LIGHT_ORANGE_COLOR,
                       borderTopRightRadius: 8,
                       borderTopLeftRadius: 8,
                     }}>
@@ -1500,7 +1536,7 @@ function CallSummary({navigation}) {
                       }}
                     />
                     <DatePicker
-                      conatinerStyles={{
+                      containerStyles={{
                         width: '48%',
                         height: 40,
                         justifyContent: 'center',
@@ -1547,6 +1583,84 @@ function CallSummary({navigation}) {
                         marginTop: 15,
                         borderRadius: 5,
                       }}
+                    />
+                  </View>
+
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      width: '90%',
+                      alignSelf: 'center',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}>
+                    <Dropdown
+                      data={AllCallTypes}
+                      labelField="text"
+                      valueField="id"
+                      value={SelectedCallTypes || ''}
+                      placeholder="Select Call Type"
+                      placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
+                      onChange={item => {
+                        setSelectedCallTypes(item.id);
+                      }}
+                      search={true}
+                      searchPlaceholder="Search"
+                      style={{
+                        width: '48%',
+                        marginTop: 10,
+                        alignSelf: 'center',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        paddingLeft: 5,
+                        borderColor: theme1.LIGHT_ORANGE_COLOR,
+                      }}
+                      inputSearchStyle={{
+                        color: theme1.SemiBlack,
+                      }}
+                      activeColor={theme1.LIGHT_ORANGE_COLOR}
+                      selectedTextStyle={{
+                        color: theme1.SemiBlack,
+                        fontSize: 12,
+                      }}
+                      itemTextStyle={{fontSize: 12}}
+                      containerStyle={{borderRadius: 8}}
+                      itemContainerStyle={{borderRadius: 8}}
+                      iconColor={theme1.LIGHT_ORANGE_COLOR}
+                    />
+                    <Dropdown
+                      data={AllPOS}
+                      labelField="text"
+                      valueField="id"
+                      value={SelectedPOS || ''}
+                      placeholder="Select model"
+                      placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
+                      onChange={item => {
+                        setSelectedPOS(item._id);
+                      }}
+                      search={true}
+                      searchPlaceholder="Search"
+                      style={{
+                        width: '48%',
+                        marginTop: 10,
+                        alignSelf: 'center',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        paddingLeft: 5,
+                        borderColor: theme1.LIGHT_ORANGE_COLOR,
+                      }}
+                      inputSearchStyle={{
+                        color: theme1.SemiBlack,
+                      }}
+                      activeColor={theme1.LIGHT_ORANGE_COLOR}
+                      selectedTextStyle={{
+                        color: theme1.SemiBlack,
+                        fontSize: 12,
+                      }}
+                      itemTextStyle={{fontSize: 12}}
+                      containerStyle={{borderRadius: 8}}
+                      itemContainerStyle={{borderRadius: 8}}
+                      iconColor={theme1.LIGHT_ORANGE_COLOR}
                     />
                   </View>
 
@@ -1717,7 +1831,7 @@ function CallSummary({navigation}) {
 
                     {AutoSelectedImages?.length > 0 &&
                       AutoSelectedImages?.map((fillImage, index) => {
-                        console.log(`${host}/${fillImage}`);
+                        console.log(`${AuthStore?.host}/${fillImage}`);
                         return (
                           <Image
                             key={index + 'AI'}
@@ -1727,7 +1841,7 @@ function CallSummary({navigation}) {
                               resizeMode: 'cover',
                               margin: 5,
                             }}
-                            source={{uri: `${host}/${fillImage}`}}
+                            source={{uri: `${AuthStore?.host}/${fillImage}`}}
                           />
                         );
                       })}
@@ -2308,7 +2422,7 @@ function CallSummary({navigation}) {
               </View>
 
               <DatePicker
-                conatinerStyles={{
+                containerStyles={{
                   width: wp('90%'),
                   height: 40,
                   justifyContent: 'center',

@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Axios from 'axios';
+import { observer } from 'mobx-react-lite';
 import moment from 'moment';
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
@@ -10,19 +11,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import DatePicker from '../../components/DatePicker';
-import {ScrollView} from 'react-native-gesture-handler';
-import {List, Searchbar} from 'react-native-paper';
+import { ScrollView } from 'react-native-gesture-handler';
+import { List, Searchbar } from 'react-native-paper';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import Icon from 'react-native-vector-icons/Feather';
+import AuthStore from '../../Mobx/AuthStore';
+import DatePicker from '../../components/DatePicker';
 import theme1 from '../../components/styles/DarkTheme';
-import {host} from '../../Constants/Host';
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from '../../responsiveLayout/ResponsiveLayout';
-import {observer} from 'mobx-react-lite';
-import AuthStore from '../../Mobx/AuthStore';
 
 function CallEntryListold({navigation}) {
   const [loading, setLoading] = useState(true);
@@ -56,7 +55,7 @@ function CallEntryListold({navigation}) {
     const divid = AuthStore?.divisionId;
     Axios({
       method: 'GET',
-      url: `${host}/c_visit_entry/mob_visitlist?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${start}&end_date=${end}`,
+      url: `${AuthStore?.host}/c_visit_entry/mob_visitlist?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${start}&end_date=${end}`,
     }).then(response => {
       console.log(
         'Call Visit Entry List ---->  ',
@@ -286,7 +285,7 @@ function CallEntryListold({navigation}) {
                       Start Date:
                     </Text>
                     <DatePicker
-                      conatinerStyles={{
+                      containerStyles={{
                         width: wp('42%'),
                         height: 40,
                         justifyContent: 'center',
@@ -312,7 +311,7 @@ function CallEntryListold({navigation}) {
                       End Date:
                     </Text>
                     <DatePicker
-                      conatinerStyles={{
+                      containerStyles={{
                         width: wp('42%'),
                         height: 40,
                         justifyContent: 'center',

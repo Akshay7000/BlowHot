@@ -1,20 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import axios, {Axios} from 'axios';
-import {observer} from 'mobx-react-lite';
+import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import { observer } from 'mobx-react-lite';
 import moment from 'moment';
-import React, {useEffect, useState} from 'react';
-import {Image, Linking, StyleSheet, Text, View} from 'react-native';
-import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
+import React, { useEffect, useState } from 'react';
+import { Image, Linking, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import AuthStore from '../../Mobx/AuthStore';
 import theme1 from '../../components/styles/DarkTheme';
-import {host} from '../../Constants/Host';
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
 } from '../../responsiveLayout/ResponsiveLayout';
-import AuthStore from '../../Mobx/AuthStore';
 
 const Landing = () => {
   const navigation = useNavigation();
@@ -50,11 +49,11 @@ const Landing = () => {
       if (AuthStore?.masterId) {
         console.log(
           '=> ',
-          `${host}/call_summary/mobcall_summarydb?masterid=${AuthStore?.masterId}&user=${AuthStore?.user}&compid=${AuthStore?.companyId}&divid=${AuthStore?.divisionId}&administrator=${AuthStore?.adminId}`,
+          `${AuthStore?.host}/call_summary/mobcall_summarydb?masterid=${AuthStore?.masterId}&user=${AuthStore?.user}&compid=${AuthStore?.companyId}&divid=${AuthStore?.divisionId}&administrator=${AuthStore?.adminId}`,
         );
         axios
           .post(
-            `${host}/call_summary/mobcall_summarydb?masterid=${AuthStore?.masterId}&user=${AuthStore?.user}&compid=${AuthStore?.companyId}&divid=${AuthStore?.divisionId}&administrator=${AuthStore?.adminId}`,
+            `${AuthStore?.host}/call_summary/mobcall_summarydb?masterid=${AuthStore?.masterId}&user=${AuthStore?.user}&compid=${AuthStore?.companyId}&divid=${AuthStore?.divisionId}&administrator=${AuthStore?.adminId}`,
           )
           .then(res => {
             console.log('All data --> ', res?.data?.s_call);
@@ -164,36 +163,42 @@ const Landing = () => {
                 <Text style={styles.text}>Attendance List</Text>
               </TouchableOpacity>
             </View>
-            <View style={[styles.card]}>
-              <TouchableOpacity
-                style={styles.icon}
-                activeOpacity={0.8}
-                onPress={() => callVisitEntryListHandler()}>
-                <MaterialCommunityIcons
-                  name="notebook-check-outline"
-                  size={50}
-                  color={theme1.MEDIUM_ORANGE_COLOR}
-                />
-                <Text style={styles.text}>Visit List</Text>
-              </TouchableOpacity>
-            </View>
+            {(AuthStore?.isAdmin ||
+              AuthStore?.isSales) && (
+                <View style={[styles.card]}>
+                  <TouchableOpacity
+                    style={styles.icon}
+                    activeOpacity={0.8}
+                    onPress={() => callVisitEntryListHandler()}>
+                    <MaterialCommunityIcons
+                      name="notebook-check-outline"
+                      size={50}
+                      color={theme1.MEDIUM_ORANGE_COLOR}
+                    />
+                    <Text style={styles.text}>Visit List</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
           </View>
 
           <View style={[styles.container1, styles.row]}>
-            <View style={[styles.card]}>
-              <TouchableOpacity
-                style={styles.icon}
-                activeOpacity={0.8}
-                onPress={() => callSummaryHandler()}>
-                <MaterialCommunityIcons
-                  name="notebook"
-                  size={50}
-                  color={theme1.MEDIUM_ORANGE_COLOR}
-                />
-                <Text style={styles.text}>Call Summary</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={[styles.card]}>
+            {(AuthStore?.isAdmin ||
+              AuthStore?.isService) && (
+                <View style={[styles.card]}>
+                  <TouchableOpacity
+                    style={styles.icon}
+                    activeOpacity={0.8}
+                    onPress={() => callSummaryHandler()}>
+                    <MaterialCommunityIcons
+                      name="notebook"
+                      size={50}
+                      color={theme1.MEDIUM_ORANGE_COLOR}
+                    />
+                    <Text style={styles.text}>Call Summary</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            {/* <View style={[styles.card]}>
               <TouchableOpacity
                 style={styles.icon}
                 activeOpacity={0.8}
@@ -205,7 +210,7 @@ const Landing = () => {
                 />
                 <Text style={styles.text}>Claim Status</Text>
               </TouchableOpacity>
-            </View>
+            </View> */}
           </View>
           <View>
             {AllData?.length > 0 && (
@@ -264,7 +269,7 @@ const Landing = () => {
             }}>
             <Image
               source={{
-                uri: `${host}/public/img/logo.png `,
+                uri: `${AuthStore?.host}/public/img/logo.png `,
               }}
               style={{
                 height: hp('10%'),
@@ -354,7 +359,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     backgroundColor: '#E9E9E9',
     height: hp('100%'),
-    marginBottom: 60
+    marginBottom: 60,
   },
   icon: {
     height: 100,
