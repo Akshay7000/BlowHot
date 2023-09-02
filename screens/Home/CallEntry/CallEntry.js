@@ -1,10 +1,11 @@
 import axios from 'axios';
 import moment from 'moment';
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  Image,
   StyleSheet,
   Text,
   TextInput,
@@ -13,10 +14,10 @@ import {
 } from 'react-native';
 
 import Geolocation from '@react-native-community/geolocation';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { observer } from 'mobx-react-lite';
-import { Dropdown } from 'react-native-element-dropdown';
-import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {observer} from 'mobx-react-lite';
+import {Dropdown} from 'react-native-element-dropdown';
+import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
 import Toast from 'react-native-simple-toast';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import Icon from 'react-native-vector-icons/Feather';
@@ -24,7 +25,8 @@ import AuthStore from '../../Mobx/AuthStore';
 import DatePicker from '../../components/DatePicker';
 import TextInputField from '../../components/TextInputField';
 import theme1 from '../../components/styles/DarkTheme';
-import { widthPercentageToDP as wp } from '../../responsiveLayout/ResponsiveLayout';
+import {widthPercentageToDP as wp} from '../../responsiveLayout/ResponsiveLayout';
+import ImageCropPicker from 'react-native-image-crop-picker';
 
 const {width, height} = Dimensions.get('window');
 
@@ -63,11 +65,14 @@ function CallEntry({navigation, route}) {
 
   const [location, setLocation] = useState();
 
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [AutoSelectedImages, setAutoSelectedImages] = useState([]);
+
   useFocusEffect(
     React.useCallback(() => {
       clear();
       getLocation();
-      getStartDay();
+      // getStartDay();
     }, []),
   );
 
@@ -117,7 +122,9 @@ function CallEntry({navigation, route}) {
     const divid = AuthStore?.divisionId;
 
     await fetch(
-      `${AuthStore?.host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${new Date()}&end_date=${new Date()}`,
+      `${
+        AuthStore?.host
+      }/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${new Date()}&end_date=${new Date()}`,
       data,
     )
       .then(response => response.json())
@@ -284,6 +291,7 @@ function CallEntry({navigation, route}) {
             setLocation(pos);
           },
           error => {
+            console.log(error);
             Alert.alert('GPS Alert!!', 'Please Enable GPS Location.', [
               {
                 text: 'Ok',
@@ -294,10 +302,11 @@ function CallEntry({navigation, route}) {
             ]);
           },
           {
-            enableHighAccuracy: false,
-            timeout: 5000,
+            enableHighAccuracy: true,
+            timeout: 10000,
             maximumAge: 5000,
             distanceFilter: 10,
+            fastestInterval: 5000,
           },
         );
       },
@@ -319,6 +328,7 @@ function CallEntry({navigation, route}) {
     if (!searchedUser?._id) {
       return Alert.alert('select User');
     }
+    const data = new FormData();
     const user = AuthStore?.user;
     const masterid = AuthStore?.masterId;
     const compid = AuthStore?.companyId;
@@ -329,27 +339,60 @@ function CallEntry({navigation, route}) {
     });
 
     let array = sales_or_group;
-    const body = {
-      so_date: date,
-      buy_podt: followUpDate,
-      c_j_s_p: 'CVE',
-      vouc_code: '1',
-      Ship_party: searchedUser?._id,
-      buy_rmks: remarks,
-      ac_cty: callTypeId,
-      user: user,
-      compid: compid,
-      divid: divid,
-      long: location?.coords?.longitude,
-      lat: location?.coords?.latitude,
-      masterid: masterid,
-      sales_or_group: array,
-    };
+
+    data.append('so_date', date);
+    data.append('buy_podt', followUpDate);
+    data.append('c_j_s_p', 'CVE');
+    data.append('vouc_code', '1');
+    data.append('Ship_party', searchedUser?._id);
+    data.append('buy_rmks', remarks);
+    data.append('ac_cty', callTypeId);
+    data.append('user', user);
+    data.append('compid', compid);
+    data.append('divid', divid);
+    data.append('long', location?.coords?.longitude);
+    data.append('lat', location?.coords?.latitude);
+    data.append('masterid', masterid);
+    data.append('sales_or_group', JSON.stringify(array));
+
+
+
+    if (selectedImages?.path) {
+      const newImageUri =
+        'file:///' + selectedImages.path.split('file:/').join('');
+
+      let ext = newImageUri.split('/').pop().split('.')[1];
+      data.append('files', {
+        uri: selectedImages.path,
+        type: `image/${ext}`, //imageDetails.type,
+        name: newImageUri.split('/').pop(),
+      });
+    }
+    if (selectedImages?.length > 0) {
+      selectedImages.map(singleImage => {
+        const newImageUri =
+          'file:///' + singleImage?.path?.split('file:/')?.join('');
+
+        let ext = newImageUri.split('/').pop().split('.')[1];
+        data.append('files', {
+          name: newImageUri.split('/').pop(),
+          type: `image/${ext}`, //imageDetails.type,
+          uri: singleImage.path,
+        });
+      });
+    }
+
+
     // console.log("body", body)
     axios({
       method: 'POST',
       url: `${AuthStore?.host}/c_visit_entry/mobadd`,
-      data: body,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      processData: false,
+      contentType: false,
+      data: data,
     })
       .then(response => {
         // console.log('Response ---> ', JSON.stringify(response.data));
@@ -385,12 +428,20 @@ function CallEntry({navigation, route}) {
             setSearchingCustomer(false);
           } else {
             setSearchingCustomer(false);
-            Alert.alert('No user found', 'try another number', [
+            Alert.alert('No customer found', 'Do you want to add customer.?', [
               {
-                text: 'Ok',
+                text: 'Yes',
                 onPress: () => {
                   navigation.navigate('Add Party');
                 },
+                style: 'default',
+              },
+              {
+                text: 'No',
+                onPress: () => {
+                  setMobileNumber('');
+                },
+                style: 'default',
               },
             ]);
           }
@@ -442,6 +493,27 @@ function CallEntry({navigation, route}) {
       );
       setFilteredUserList(data);
     } else {
+    }
+  };
+
+  const pickFromCamera = async () => {
+    try {
+      ImageCropPicker.openCamera({
+        width: 300,
+        height: 400,
+        cropping: true,
+        compressImageQuality: 0.5,
+      })
+        .then(async image => {
+          let all = [...selectedImages];
+          all.push(image);
+          setSelectedImages(all);
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    } catch (error) {
+      console.log('IMAGE_PICKER_ERROR - ', error);
     }
   };
 
@@ -713,6 +785,85 @@ function CallEntry({navigation, route}) {
                 marginTop: 5,
               }}
             />
+
+            {/* {Images} */}
+
+            <View
+              style={{
+                width: '95%',
+                alignSelf: 'center',
+                marginTop: 5,
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+              }}>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
+                  height: 40,
+                  width: 40,
+                  borderWidth: 1,
+                  margin: 5,
+                  borderStyle: 'dashed',
+                }}
+                onPress={() => {
+                  pickFromCamera();
+                }}>
+                <Text
+                  style={{
+                    fontSize: 25,
+                    color: '#000',
+                    textAlign: 'center',
+                    textAlignVertical: 'center',
+                  }}>
+                  +
+                </Text>
+              </TouchableOpacity>
+
+              {AutoSelectedImages?.length > 0 &&
+                AutoSelectedImages?.map((fillImage, index) => {
+                  console.log(`${AuthStore?.host}/${fillImage}`);
+                  return (
+                    <Image
+                      key={index + 'AI'}
+                      style={{
+                        height: 40,
+                        width: 40,
+                        resizeMode: 'cover',
+                        margin: 5,
+                      }}
+                      source={{uri: `${AuthStore?.host}/${fillImage}`}}
+                    />
+                  );
+                })}
+
+              {selectedImages?.path && (
+                <Image
+                  style={{
+                    height: 40,
+                    width: 40,
+                    resizeMode: 'cover',
+                    margin: 5,
+                  }}
+                  source={{uri: selectedImages?.path}}
+                />
+              )}
+
+              {selectedImages?.length > 0 &&
+                selectedImages?.map((singleImage, index) => {
+                  return (
+                    <Image
+                      key={index + 'I'}
+                      style={{
+                        height: 40,
+                        width: 40,
+                        resizeMode: 'cover',
+                        margin: 5,
+                      }}
+                      source={{uri: singleImage?.path}}
+                    />
+                  );
+                })}
+            </View>
 
             <View style={{marginTop: 30}}>
               {sales_or_group.map((item, i) => {

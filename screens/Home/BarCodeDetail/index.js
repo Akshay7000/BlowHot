@@ -59,6 +59,7 @@ const BarCodeDetail = () => {
         barcodeStore?.setLoading(false);
       }else{
         barcodeStore?.setLoading(false);
+        barcodeStore?.setBarCodeDetail({});
         Toast.showWithGravity(
           'Please Try Again..',
           Toast.LONG,

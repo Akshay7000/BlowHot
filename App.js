@@ -56,7 +56,9 @@ MaterialCommunityIcons.loadFont();
 Ionicons.loadFont();
 
 Geolocation.setRNConfiguration({
-  locationProvider: 'auto',
+  skipPermissionRequests: false,
+  locationProvider: 'playServices',
+  authorizationLevel: 'always'
 });
 
 const App = () => {
@@ -65,6 +67,11 @@ const App = () => {
       try {
         const usr = await AsyncStorage.getItem('user');
         // await GetFCMToken();
+        Geolocation.requestAuthorization(s=>{
+          Geolocation.getCurrentPosition(s=>{
+
+          })
+        });
         await requestUserPermission();
         if (!!usr) {
           const masterid = await AsyncStorage.getItem('masterid');

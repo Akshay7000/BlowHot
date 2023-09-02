@@ -85,7 +85,7 @@ const AddParty = () => {
   };
 
   useEffect(() => {
-    if (name === undefined || name.length == 0) setDisabled(true);
+    if (name === undefined || name.length == 0 || email === "") setDisabled(true);
     else if (cityId === undefined || cityId.length == null) setDisabled(true);
     else setDisabled(false);
   }, [cityId, name]);
@@ -100,7 +100,6 @@ const AddParty = () => {
           string = string + ',' + item.value;
         }
       });
-      console.log('mob', mobile);
       if (!mobile) {
         alert('Please Enter Mobile No.');
         return;
@@ -344,6 +343,21 @@ const AddParty = () => {
                 onChangeText={setPincode}
                 style={{
                   width: '48%',
+                  height: 40,
+                  marginTop: 15,
+                  borderRadius: 5,
+                }}
+              />
+            </View>
+
+            <View style={styles.row}>
+              <TextInputField
+                label="Email"
+                placeHolder="Enter Email"
+                value={email}
+                onChangeText={setEmail}
+                style={{
+                  width: '100%',
                   height: 40,
                   marginTop: 15,
                   borderRadius: 5,

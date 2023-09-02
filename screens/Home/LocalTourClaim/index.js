@@ -1,9 +1,9 @@
 //import liraries
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import axios from 'axios';
-import { observer } from 'mobx-react';
+import {observer} from 'mobx-react';
 import moment from 'moment';
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -15,18 +15,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Dropdown } from 'react-native-element-dropdown';
+import {Dropdown} from 'react-native-element-dropdown';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import Toast from 'react-native-simple-toast';
 import Feather from 'react-native-vector-icons/Feather';
 import AuthStore from '../../Mobx/AuthStore';
 import DatePicker from '../../components/DatePicker';
-import { ImagePickerModal } from '../../components/ImagePickerModal';
+import {ImagePickerModal} from '../../components/ImagePickerModal';
 import TextInputField from '../../components/TextInputField';
 import theme1 from '../../components/styles/DarkTheme';
-import {
-  widthPercentageToDP as wp
-} from '../../responsiveLayout/ResponsiveLayout';
+import {widthPercentageToDP as wp} from '../../responsiveLayout/ResponsiveLayout';
 
 const {height, width} = Dimensions.get('window');
 // create a component
@@ -115,6 +113,11 @@ const LocalTourClaim = () => {
       list[index]['amount'] = Number(value) * Number(list[index]['rate']);
     }
     setAllLocalTour(list);
+    setTimeout(() => {
+      if (key === 'amount') {
+        calculateTotal();
+      }
+    }, 300);
   };
 
   const handleSave = async () => {
@@ -125,7 +128,7 @@ const LocalTourClaim = () => {
       if (selectedImages?.path) {
         const newImageUri =
           'file:///' + selectedImages?.path?.split('file:/')?.join('');
-  
+
         let ext = newImageUri?.split('/')?.pop()?.split('.')[1];
         formData.append('tour_upload', {
           uri: selectedImages.path,
@@ -133,12 +136,12 @@ const LocalTourClaim = () => {
           name: newImageUri.split('/').pop(),
         });
       }
-      
+
       if (selectedImages?.length > 0) {
         selectedImages.map(singleImage => {
           const newImageUri =
             'file:///' + singleImage?.path?.split('file:/')?.join('');
-  
+
           let ext = newImageUri?.split('/')?.pop()?.split('.')[1];
           formData.append('tour_upload', {
             name: newImageUri?.split('/')?.pop(),
@@ -191,15 +194,16 @@ const LocalTourClaim = () => {
   };
 
   const handleAddClick = i => {
+    let date = new Date().toDateString();
     setAllLocalTour([
       ...allLocalTour,
       {
-        date: '',
+        date: date,
         start_time: '',
         end_time: '09:40PM',
         mode_of_travel: 'Road',
         distance: 0,
-        rate: allLocalTour[0][rate],
+        rate: allLocalTour[0]?.rate,
         amount: 0,
         remark: '',
       },
@@ -217,9 +221,9 @@ const LocalTourClaim = () => {
       })
         .then(image => {
           let all = [...selectedImages];
-          image.map((a)=>{
+          image.map(a => {
             all.push(a);
-          })
+          });
           setSelectedImages(all);
           setImageModal(false);
         })
@@ -315,248 +319,252 @@ const LocalTourClaim = () => {
       <View style={{marginTop: 20}} />
 
       <ScrollView style={{width: '100%'}}>
-        {allLocalTour.length > 0 &&<View style={{flex: 1, alignItems: 'center'}}>
-          {allLocalTour.length > 0 &&
-            allLocalTour.map((tourItem, tourIndex) => {
-              let startDate = moment(tourItem?.date).format('DD/MM/YYYY');
-              return (
-                <View key={tourIndex} style={styles.card}>
-                  <View
-                    style={{
-                      width: 70,
-                      flexDirection: 'row',
-                      alignSelf: 'flex-end',
-                      justifyContent: 'flex-end',
-                    }}>
-                    {allLocalTour?.length - 1 === tourIndex && (
-                      <TouchableOpacity
-                        style={{marginHorizontal: 15}}
-                        onPress={() => handleAddClick(tourIndex)}>
-                        <Feather
-                          name="plus-circle"
-                          size={25}
-                          color={theme1.LIGHT_ORANGE_COLOR}
-                        />
-                      </TouchableOpacity>
-                    )}
-                    {allLocalTour?.length !== 1 && (
-                      <TouchableOpacity
-                        onPress={() => handleRemoveClick(tourIndex)}>
-                        <Feather
-                          name="minus-circle"
-                          size={25}
-                          color={theme1.LIGHT_ORANGE_COLOR}
-                        />
-                      </TouchableOpacity>
-                    )}
+        {allLocalTour.length > 0 && (
+          <View style={{flex: 1, alignItems: 'center'}}>
+            {allLocalTour.length > 0 &&
+              allLocalTour.map((tourItem, tourIndex) => {
+                let startDate = moment(tourItem?.date).format('DD/MM/YYYY');
+                return (
+                  <View key={tourIndex} style={styles.card}>
+                    <View
+                      style={{
+                        width: 70,
+                        flexDirection: 'row',
+                        alignSelf: 'flex-end',
+                        justifyContent: 'flex-end',
+                      }}>
+                      {allLocalTour?.length - 1 === tourIndex && (
+                        <TouchableOpacity
+                          style={{marginHorizontal: 15}}
+                          onPress={() => handleAddClick(tourIndex)}>
+                          <Feather
+                            name="plus-circle"
+                            size={25}
+                            color={theme1.LIGHT_ORANGE_COLOR}
+                          />
+                        </TouchableOpacity>
+                      )}
+                      {allLocalTour?.length !== 1 && (
+                        <TouchableOpacity
+                          onPress={() => handleRemoveClick(tourIndex)}>
+                          <Feather
+                            name="minus-circle"
+                            size={25}
+                            color={theme1.LIGHT_ORANGE_COLOR}
+                          />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    <View style={styles.column}>
+                      <DatePicker
+                        containerStyles={styles.datePicker_style}
+                        maxDate={Date.now()}
+                        textStyle={{color: theme1.SemiBlack}}
+                        date={startDate}
+                        placeholder="Date"
+                        placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
+                        setDate={value => {
+                          handleOnChange(value, tourIndex, 'date');
+                        }}
+                      />
+                      <Dropdown
+                        data={travelMode}
+                        labelField="ModeName"
+                        valueField="ModeName"
+                        value={tourItem?.mode_of_travel}
+                        placeholder="Select Travel Mode"
+                        placeholderStyle={{
+                          color: theme1.LIGHT_ORANGE_COLOR,
+                          fontSize: 14,
+                        }}
+                        onChange={item => {
+                          handleOnChange(
+                            item?.ModeName,
+                            tourIndex,
+                            'mode_of_travel',
+                          );
+                        }}
+                        style={styles.dropDown_style}
+                        activeColor={theme1.LIGHT_ORANGE_COLOR}
+                        selectedTextStyle={{
+                          color: theme1.SemiBlack,
+                          fontSize: 12,
+                        }}
+                        itemTextStyle={{fontSize: 12}}
+                        containerStyle={{borderRadius: 8}}
+                        itemContainerStyle={{borderRadius: 8}}
+                        iconColor={theme1.LIGHT_ORANGE_COLOR}
+                      />
+                    </View>
+                    <View style={styles.column}>
+                      <DatePicker
+                        containerStyles={styles.datePicker_style}
+                        textStyle={{color: theme1.SemiBlack}}
+                        date={tourItem?.start_time}
+                        placeholder="Start Time"
+                        placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
+                        setDate={value => {
+                          handleOnChange(value, tourIndex, 'start_time');
+                        }}
+                        type="time"
+                      />
+                      <DatePicker
+                        containerStyles={styles.datePicker_style}
+                        textStyle={{color: theme1.SemiBlack}}
+                        date={tourItem?.end_time}
+                        placeholder="End Time"
+                        placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
+                        setDate={value => {
+                          handleOnChange(value, tourIndex, 'end_time');
+                        }}
+                        type="time"
+                      />
+                    </View>
+                    <View style={styles.column}>
+                      <TextInputField
+                        label="Distance"
+                        placeHolder="enter distance"
+                        type={'numeric'}
+                        value={String(tourItem?.distance)}
+                        onChangeText={value => {
+                          handleOnChange(value, tourIndex, 'distance');
+                        }}
+                        onEnd={() => {
+                          calculateTotal();
+                        }}
+                        style={styles.card_input_text}
+                      />
+                      <TextInputField
+                        label="Rate"
+                        placeHolder="enter rate"
+                        disable={true}
+                        type={'numeric'}
+                        value={tourItem?.rate}
+                        onChangeText={() => {}}
+                        style={styles.card_input_text}
+                      />
+                    </View>
+                    <View style={styles.column}>
+                      <TextInputField
+                        label="Amount"
+                        placeHolder="enter amount"
+                        type={'numeric'}
+                        value={String(tourItem?.amount)}
+                        onChangeText={value => {
+                          handleOnChange(value, tourIndex, 'amount');
+                        }}
+                        style={styles.card_input_text}
+                        // disable={true}
+                      />
+                      <TextInputField
+                        label="Remark"
+                        placeHolder="enter remark"
+                        // type={'numeric'}
+                        value={tourItem?.remark}
+                        onChangeText={value => {
+                          handleOnChange(value, tourIndex, 'remark');
+                        }}
+                        style={styles.card_input_text}
+                      />
+                    </View>
                   </View>
-                  <View style={styles.column}>
-                    <DatePicker
-                      containerStyles={styles.datePicker_style}
-                      maxDate={Date.now()}
-                      textStyle={{color: theme1.SemiBlack}}
-                      date={startDate}
-                      placeholder="Date"
-                      placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
-                      setDate={value => {
-                        handleOnChange(value, tourIndex, 'date');
-                      }}
-                    />
-                    <Dropdown
-                      data={travelMode}
-                      labelField="ModeName"
-                      valueField="ModeName"
-                      value={tourItem?.mode_of_travel}
-                      placeholder="Select Travel Mode"
-                      placeholderStyle={{
-                        color: theme1.LIGHT_ORANGE_COLOR,
-                        fontSize: 14,
-                      }}
-                      onChange={item => {
-                        handleOnChange(
-                          item?.ModeName,
-                          tourIndex,
-                          'mode_of_travel',
-                        );
-                      }}
-                      style={styles.dropDown_style}
-                      activeColor={theme1.LIGHT_ORANGE_COLOR}
-                      selectedTextStyle={{
-                        color: theme1.SemiBlack,
-                        fontSize: 12,
-                      }}
-                      itemTextStyle={{fontSize: 12}}
-                      containerStyle={{borderRadius: 8}}
-                      itemContainerStyle={{borderRadius: 8}}
-                      iconColor={theme1.LIGHT_ORANGE_COLOR}
-                    />
-                  </View>
-                  <View style={styles.column}>
-                    <DatePicker
-                      containerStyles={styles.datePicker_style}
-                      textStyle={{color: theme1.SemiBlack}}
-                      date={tourItem?.start_time}
-                      placeholder="Start Time"
-                      placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
-                      setDate={value => {
-                        handleOnChange(value, tourIndex, 'start_time');
-                      }}
-                      type="time"
-                    />
-                    <DatePicker
-                      containerStyles={styles.datePicker_style}
-                      textStyle={{color: theme1.SemiBlack}}
-                      date={tourItem?.end_time}
-                      placeholder="End Time"
-                      placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
-                      setDate={value => {
-                        handleOnChange(value, tourIndex, 'end_time');
-                      }}
-                      type="time"
-                    />
-                  </View>
-                  <View style={styles.column}>
-                    <TextInputField
-                      label="Distance"
-                      placeHolder="enter distance"
-                      type={'numeric'}
-                      value={String(tourItem?.distance)}
-                      onChangeText={value => {
-                        handleOnChange(value, tourIndex, 'distance');
-                      }}
-                      onEnd={() => {
-                        calculateTotal();
-                      }}
-                      style={styles.card_input_text}
-                    />
-                    <TextInputField
-                      label="Rate"
-                      placeHolder="enter rate"
-                      disable={true}
-                      type={'numeric'}
-                      value={tourItem?.rate}
-                      onChangeText={() => {}}
-                      style={styles.card_input_text}
-                    />
-                  </View>
-                  <View style={styles.column}>
-                    <TextInputField
-                      label="Amount"
-                      placeHolder="enter amount"
-                      type={'numeric'}
-                      value={String(tourItem?.amount)}
-                      onChangeText={() => {}}
-                      style={styles.card_input_text}
-                      disable={true}
-                    />
-                    <TextInputField
-                      label="Remark"
-                      placeHolder="enter remark"
-                      // type={'numeric'}
-                      value={tourItem?.remark}
-                      onChangeText={value => {
-                        handleOnChange(value, tourIndex, 'remark');
-                      }}
-                      style={styles.card_input_text}
-                    />
-                  </View>
-                </View>
-              );
-            })}
-          {total?.distance && (
-            <View style={styles.column}>
-              <TextInputField
-                label="Total Distance"
-                placeHolder="enter distance"
-                type={'numeric'}
-                value={String(total?.distance)}
-                onChangeText={() => {}}
-                style={styles.card_input_text}
-                disable={true}
-              />
-              <TextInputField
-                label="Total Amount"
-                placeHolder="enter amount"
-                type={'numeric'}
-                value={String(total?.amount)}
-                onChangeText={() => {}}
-                style={styles.card_input_text}
-                disable={true}
-              />
-            </View>
-          )}
-          <TextInputField
-            label="Remark"
-            placeHolder="enter remark"
-            // type={'numeric'}
-            value={SingleRemark}
-            onChangeText={value => {
-              setSingleRemark(value);
-            }}
-            style={[styles.card_input_text,{width: '95%'}]}
-          />
-          {allLocalTour.length > 0 && (
-            <View
-              style={{
-                width: '95%',
-                alignSelf: 'center',
-                marginTop: 5,
-                flexDirection: 'row',
-                flexWrap: 'wrap',
-              }}>
-              <TouchableOpacity
+                );
+              })}
+            {total?.distance && (
+              <View style={styles.column}>
+                <TextInputField
+                  label="Total Distance"
+                  placeHolder="enter distance"
+                  type={'numeric'}
+                  value={String(total?.distance)}
+                  onChangeText={() => {}}
+                  style={styles.card_input_text}
+                  disable={true}
+                />
+                <TextInputField
+                  label="Total Amount"
+                  placeHolder="enter amount"
+                  type={'numeric'}
+                  value={String(total?.amount)}
+                  onChangeText={() => {}}
+                  style={styles.card_input_text}
+                  disable={true}
+                />
+              </View>
+            )}
+            <TextInputField
+              label="Remark"
+              placeHolder="enter remark"
+              // type={'numeric'}
+              value={SingleRemark}
+              onChangeText={value => {
+                setSingleRemark(value);
+              }}
+              style={[styles.card_input_text, {width: '95%'}]}
+            />
+            {allLocalTour.length > 0 && (
+              <View
                 style={{
-                  backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
-                  height: 40,
-                  width: 40,
-                  borderWidth: 1,
-                  margin: 5,
-                  borderStyle: 'dashed',
-                }}
-                onPress={() => {
-                  setImageModal(true);
+                  width: '95%',
+                  alignSelf: 'center',
+                  marginTop: 5,
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
                 }}>
-                <Text
+                <TouchableOpacity
                   style={{
-                    fontSize: 25,
-                    color: '#000',
-                    textAlign: 'center',
-                    textAlignVertical: 'center',
-                  }}>
-                  +
-                </Text>
-              </TouchableOpacity>
-
-              {selectedImages?.path && (
-                <Image
-                  style={{
+                    backgroundColor: theme1.MEDIUM_ORANGE_COLOR,
                     height: 40,
                     width: 40,
-                    resizeMode: 'cover',
+                    borderWidth: 1,
                     margin: 5,
+                    borderStyle: 'dashed',
                   }}
-                  source={{uri: selectedImages?.path}}
-                />
-              )}
+                  onPress={() => {
+                    setImageModal(true);
+                  }}>
+                  <Text
+                    style={{
+                      fontSize: 25,
+                      color: '#000',
+                      textAlign: 'center',
+                      textAlignVertical: 'center',
+                    }}>
+                    +
+                  </Text>
+                </TouchableOpacity>
 
-              {selectedImages?.length > 0 &&
-                selectedImages?.map((singleImage, index) => {
-                  return (
-                    <Image
-                      key={index + 'I'}
-                      style={{
-                        height: 40,
-                        width: 40,
-                        resizeMode: 'cover',
-                        margin: 5,
-                      }}
-                      source={{uri: singleImage?.path}}
-                    />
-                  );
-                })}
-            </View>
-          )}
-        </View>}
+                {selectedImages?.path && (
+                  <Image
+                    style={{
+                      height: 40,
+                      width: 40,
+                      resizeMode: 'cover',
+                      margin: 5,
+                    }}
+                    source={{uri: selectedImages?.path}}
+                  />
+                )}
+
+                {selectedImages?.length > 0 &&
+                  selectedImages?.map((singleImage, index) => {
+                    return (
+                      <Image
+                        key={index + 'I'}
+                        style={{
+                          height: 40,
+                          width: 40,
+                          resizeMode: 'cover',
+                          margin: 5,
+                        }}
+                        source={{uri: singleImage?.path}}
+                      />
+                    );
+                  })}
+              </View>
+            )}
+          </View>
+        )}
         {allLocalTour.length > 0 && (
           <TouchableOpacity
             style={[styles.button1, {alignSelf: 'center'}]}

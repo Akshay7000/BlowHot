@@ -10,6 +10,7 @@
     "test": "jest",
     "lint": "eslint .",
     "build": "cd android && ./gradlew clean && ./gradlew assembleRelease && open ./app/build/outputs/apk/release && cd ..",
+    "buildB": "cd android && ./gradlew clean && ./gradlew bundleRelease && open ./app/build/outputs/bundle/release && cd ..",
     "android_R": "react-native run-android --variant=release"
   },
   "dependencies": {

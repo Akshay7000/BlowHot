@@ -207,10 +207,11 @@ function Attendance({navigation, route}) {
             console.log('Error on get location');
           },
           {
-            enableHighAccuracy: false,
-            timeout: 5000,
+            enableHighAccuracy: true,
+            timeout: 10000,
             maximumAge: 5000,
             distanceFilter: 10,
+            fastestInterval: 5000,
           },
         );
       },

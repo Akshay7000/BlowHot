@@ -6,6 +6,7 @@ import moment from 'moment';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -473,6 +474,16 @@ function CallSummary({navigation}) {
   };
 
   const handleEngineerSubmit = async () => {
+    if(serialNumber === ''){
+      return Alert.alert("Please..","Enter Serial Number");
+    }
+    if(SelectedCallTypes === ''){
+      return Alert.alert("Please..","Select Call Type");
+    }
+    if(SelectedPOS === ''){
+      return Alert.alert("Please..","Select Point of service");
+    }
+
     if (
       status === 'Resolved' &&
       SingleData?._id?.substring(SingleData?._id.length - 6).toUpperCase() !==
