@@ -66,13 +66,12 @@ function CallEntry({navigation, route}) {
   const [location, setLocation] = useState();
 
   const [selectedImages, setSelectedImages] = useState([]);
-  const [AutoSelectedImages, setAutoSelectedImages] = useState([]);
 
   useFocusEffect(
     React.useCallback(() => {
       clear();
       getLocation();
-      // getStartDay();
+      getStartDay();
     }, []),
   );
 
@@ -99,6 +98,7 @@ function CallEntry({navigation, route}) {
     setFilteredUserList('');
     setSearchingCustomer('');
     setSearchingCustomerCity('');
+    setSelectedImages([]);
   };
 
   useEffect(() => {
@@ -323,7 +323,6 @@ function CallEntry({navigation, route}) {
     );
   };
 
-  // Submit Start Day Details
   const submitData = async () => {
     if (!searchedUser?._id) {
       return Alert.alert('select User');
@@ -368,6 +367,7 @@ function CallEntry({navigation, route}) {
         name: newImageUri.split('/').pop(),
       });
     }
+
     if (selectedImages?.length > 0) {
       selectedImages.map(singleImage => {
         const newImageUri =
@@ -381,8 +381,6 @@ function CallEntry({navigation, route}) {
         });
       });
     }
-
-
     // console.log("body", body)
     axios({
       method: 'POST',
@@ -818,23 +816,6 @@ function CallEntry({navigation, route}) {
                   +
                 </Text>
               </TouchableOpacity>
-
-              {AutoSelectedImages?.length > 0 &&
-                AutoSelectedImages?.map((fillImage, index) => {
-                  console.log(`${AuthStore?.host}/${fillImage}`);
-                  return (
-                    <Image
-                      key={index + 'AI'}
-                      style={{
-                        height: 40,
-                        width: 40,
-                        resizeMode: 'cover',
-                        margin: 5,
-                      }}
-                      source={{uri: `${AuthStore?.host}/${fillImage}`}}
-                    />
-                  );
-                })}
 
               {selectedImages?.path && (
                 <Image

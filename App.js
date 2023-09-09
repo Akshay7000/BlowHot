@@ -58,7 +58,7 @@ Ionicons.loadFont();
 Geolocation.setRNConfiguration({
   skipPermissionRequests: false,
   locationProvider: 'playServices',
-  authorizationLevel: 'always'
+  authorizationLevel: 'always',
 });
 
 const App = () => {
@@ -67,10 +67,8 @@ const App = () => {
       try {
         const usr = await AsyncStorage.getItem('user');
         // await GetFCMToken();
-        Geolocation.requestAuthorization(s=>{
-          Geolocation.getCurrentPosition(s=>{
-
-          })
+        Geolocation.requestAuthorization(s => {
+          Geolocation.getCurrentPosition(s => {});
         });
         await requestUserPermission();
         if (!!usr) {
@@ -230,6 +228,16 @@ export const CustomDrawerContent = props => {
             </View>
           </TouchableOpacity>
         )}
+
+        <View
+          style={{
+            height: 30,
+            marginTop: 20,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <Text style={{color: '#FFF', fontSize: 16}}>Version: 1.4</Text>
+        </View>
       </DrawerContentScrollView>
     </>
   );

@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { default as Axios, default as axios } from 'axios';
-import { observer } from 'mobx-react-lite';
+import {default as Axios, default as axios} from 'axios';
+import {observer} from 'mobx-react-lite';
 import moment from 'moment';
-import React, { useEffect, useRef, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -18,12 +18,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Dropdown } from 'react-native-element-dropdown';
-import { ScrollView, TextInput } from 'react-native-gesture-handler';
+import {Dropdown} from 'react-native-element-dropdown';
+import {ScrollView, TextInput} from 'react-native-gesture-handler';
 import ImageCropPicker from 'react-native-image-crop-picker';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { Modalize } from 'react-native-modalize';
-import { Searchbar } from 'react-native-paper';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {Modalize} from 'react-native-modalize';
+import {Searchbar} from 'react-native-paper';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import Toast from 'react-native-simple-toast';
 import Entypo from 'react-native-vector-icons/Entypo';
@@ -31,7 +31,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import FIcon from 'react-native-vector-icons/FontAwesome';
 import AuthStore from '../../Mobx/AuthStore';
 import DatePicker from '../../components/DatePicker';
-import { ImagePickerModal } from '../../components/ImagePickerModal';
+import {ImagePickerModal} from '../../components/ImagePickerModal';
 import TextInputField from '../../components/TextInputField';
 import theme1 from '../../components/styles/DarkTheme';
 import {
@@ -474,14 +474,14 @@ function CallSummary({navigation}) {
   };
 
   const handleEngineerSubmit = async () => {
-    if(serialNumber === ''){
-      return Alert.alert("Please..","Enter Serial Number");
+    if (serialNumber === '') {
+      return Alert.alert('Please..', 'Enter Serial Number');
     }
-    if(SelectedCallTypes === ''){
-      return Alert.alert("Please..","Select Call Type");
+    if (SelectedCallTypes === '') {
+      return Alert.alert('Please..', 'Select Call Type');
     }
-    if(SelectedPOS === ''){
-      return Alert.alert("Please..","Select Point of service");
+    if (SelectedPOS === '') {
+      return Alert.alert('Please..', 'Select Point of service');
     }
 
     if (
@@ -499,15 +499,17 @@ function CallSummary({navigation}) {
     if (status === 'Part-Pending') {
       var empty_Product = false;
       visit_group.map((a, i) => {
-        if (a?.visit_spare_part) {
+        if (!a?.visit_spare_part) {
           empty_Product = true;
         }
       });
-      return Toast.showWithGravity(
-        'Please select all fields.',
-        Toast.LONG,
-        Toast.BOTTOM,
-      );
+      if (empty_Product) {
+        return Toast.showWithGravity(
+          'Please select all fields.',
+          Toast.LONG,
+          Toast.BOTTOM,
+        );
+      }
     }
     setLoading(true);
     const data = new FormData();
@@ -549,7 +551,7 @@ function CallSummary({navigation}) {
     data.append('warranty_card_no', warrantyNumber);
     data.append('s_prod', productId);
     data.append('s_mdl', modelId);
-    
+
     data.append('typ_call', SelectedCallTypes);
     data.append('s_posm', SelectedPOS);
 

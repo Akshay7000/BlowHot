@@ -373,7 +373,7 @@ function Attendance({navigation, route}) {
                 <View style={[styles.column, {top: 0}]}>
                   <ImagePickerAvatar
                     uri={startDay ? image : ''}
-                    onPress={() => setstartDayVisible(true)}
+                    onPress={() => pickFromCamera()}
                     editable={!startDay}
                   />
                 </View>

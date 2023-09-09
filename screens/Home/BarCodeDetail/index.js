@@ -1,9 +1,13 @@
 //import liraries
-import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useIsFocused,
+  useNavigation,
+} from '@react-navigation/native';
 import axios from 'axios';
-import { observer } from 'mobx-react';
+import {observer} from 'mobx-react';
 import moment from 'moment';
-import { useCallback, useEffect } from 'react';
+import {useCallback, useEffect} from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -18,16 +22,16 @@ import Toast from 'react-native-simple-toast';
 import barcodeStore from '../../Mobx/BarcodeStore';
 import TextInputField from '../../components/TextInputField';
 import theme1 from '../../components/styles/DarkTheme';
-import {
-  widthPercentageToDP as wp
-} from '../../responsiveLayout/ResponsiveLayout';
+import {widthPercentageToDP as wp} from '../../responsiveLayout/ResponsiveLayout';
 import AuthStore from '../../Mobx/AuthStore';
+import { ScrollView } from 'react-native-gesture-handler';
 
-const {height, width} = Dimensions.get('window');
-// create a component
+const {height} = Dimensions.get('window');
+
 const BarCodeDetail = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const {barCodeDetail} = barcodeStore;
 
   useFocusEffect(
     useCallback(() => {
@@ -54,25 +58,20 @@ const BarCodeDetail = () => {
         },
       });
       if (res?.data?.success) {
-        console.log(res?.data?.results);
-        barcodeStore?.setBarCodeDetail(res?.data?.results);
+        // console.log(JSON.stringify(res?.data));
+        barcodeStore?.setBarCodeDetail({
+          ...res?.data?.results,
+          ...res?.data.s_callSchema,
+        });
         barcodeStore?.setLoading(false);
-      }else{
+      } else {
         barcodeStore?.setLoading(false);
         barcodeStore?.setBarCodeDetail({});
-        Toast.showWithGravity(
-          'Please Try Again..',
-          Toast.LONG,
-          Toast.BOTTOM,
-        );
+        Toast.showWithGravity('Please Try Again..', Toast.LONG, Toast.BOTTOM);
       }
     } catch (e) {
       barcodeStore?.setLoading(false);
-      Toast.showWithGravity(
-        'Please Try Again..',
-        Toast.LONG,
-        Toast.BOTTOM,
-      );
+      Toast.showWithGravity('Please Try Again..', Toast.LONG, Toast.BOTTOM);
       console.log('Error on get Detail --> ', e);
     }
   };
@@ -128,7 +127,7 @@ const BarCodeDetail = () => {
           <Text style={{color: 'white'}}>Submit</Text>
         </TouchableOpacity>
       )}
-
+      <ScrollView style={{flex: 1, width: '100%'}}>
       {barcodeStore?.barCodeDetail?.so_date && (
         <View style={styles.detail_card}>
           <View style={styles.detail_view}>
@@ -139,6 +138,16 @@ const BarCodeDetail = () => {
               )}
             </Text>
           </View>
+          {barCodeDetail?.s_callSchema && (
+            <View style={styles.detail_view}>
+              <Text style={styles.detail_label}>Buy Date:- </Text>
+              <Text style={styles.detail_value}>
+                {moment(barCodeDetail?.s_callSchema?.pur_date).format(
+                  'DD/MM/YYYY',
+                )}
+              </Text>
+            </View>
+          )}
           <View style={styles.detail_view}>
             <Text style={styles.detail_label}>Brand:- </Text>
             <Text style={styles.detail_value}>
@@ -151,8 +160,10 @@ const BarCodeDetail = () => {
           <View style={styles.detail_view}>
             <Text style={styles.detail_label}>Product:- </Text>
             <Text style={styles.detail_value}>
-              { barcodeStore?.barCodeDetail?.sales_or_group[0]?.so_disc
-                  ?.Fg_Model?.Description}
+              {
+                barcodeStore?.barCodeDetail?.sales_or_group[0]?.so_disc
+                  ?.Fg_Model?.Description
+              }
             </Text>
           </View>
           <View style={styles.detail_view}>
@@ -169,6 +180,26 @@ const BarCodeDetail = () => {
           </View>
         </View>
       )}
+      {barCodeDetail?.sales_or_group[0]?.so_disc?.product_raw_group?.map(
+        (item, index) => (
+          <View style={[styles.detail_card, {marginTop: 10}]} key={item?._id}>
+            <View style={styles.detail_view}>
+              <Text style={styles.detail_label}>Model:- </Text>
+              <Text style={styles.detail_value}>
+                {item?.raw_matrl_nm?.Rm_Des}
+              </Text>
+            </View>
+            <View style={styles.detail_view}>
+              <Text style={styles.detail_label}>Warranty:- </Text>
+              <Text style={styles.detail_value}>
+                {item?.price}
+              </Text>
+            </View>
+          </View>
+        ),
+      )}
+      <View style={{height: 20}} />
+      </ScrollView>
     </View>
   );
 };
@@ -202,6 +233,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
     paddingVertical: 15,
     borderColor: theme1?.DARK_ORANGE_COLOR,
+    alignSelf:'center'
   },
   detail_view: {
     flexDirection: 'row',
@@ -212,13 +244,13 @@ const styles = StyleSheet.create({
     color: theme1?.DARK_ORANGE_COLOR,
     fontSize: 16,
     fontWeight: '600',
-    width: 100
+    width: 100,
   },
   detail_value: {
     color: theme1?.HEADER_TEXT_COLOR,
     fontSize: 14,
     fontWeight: '500',
-    width: '70%'
+    width: '70%',
   },
 });
 
