@@ -180,7 +180,7 @@ const BarCodeDetail = () => {
           </View>
         </View>
       )}
-      {barCodeDetail?.sales_or_group[0]?.so_disc?.product_raw_group?.map(
+      {barCodeDetail?.sales_or_group?.length > 0 && barCodeDetail?.sales_or_group[0]?.so_disc?.product_raw_group?.map(
         (item, index) => (
           <View style={[styles.detail_card, {marginTop: 10}]} key={item?._id}>
             <View style={styles.detail_view}>

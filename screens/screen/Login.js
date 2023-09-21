@@ -72,7 +72,6 @@ const Login = () => {
           setLoading(false);
           Toast.showWithGravity(respone.data.message, Toast.LONG, Toast.TOP);
         } else {
-          console.log('Login response --> ', JSON.stringify(respone?.data));
           const setItem = async () => {
             await AsyncStorage.setItem('masterid', respone.data.masterid);
             await AsyncStorage.setItem('host', AuthStore?.host);

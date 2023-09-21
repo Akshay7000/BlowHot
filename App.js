@@ -56,7 +56,7 @@ MaterialCommunityIcons.loadFont();
 Ionicons.loadFont();
 
 Geolocation.setRNConfiguration({
-  skipPermissionRequests: false,
+  skipPermissionRequests: true,
   locationProvider: 'playServices',
   authorizationLevel: 'always',
 });
@@ -236,7 +236,7 @@ export const CustomDrawerContent = props => {
             justifyContent: 'center',
             alignItems: 'center',
           }}>
-          <Text style={{color: '#FFF', fontSize: 16}}>Version: 1.4</Text>
+          <Text style={{color: '#FFF', fontSize: 16}}>Version: 1.6</Text>
         </View>
       </DrawerContentScrollView>
     </>

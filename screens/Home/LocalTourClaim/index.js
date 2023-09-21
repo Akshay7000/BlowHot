@@ -360,8 +360,13 @@ const LocalTourClaim = () => {
                         containerStyles={styles.datePicker_style}
                         maxDate={Date.now()}
                         textStyle={{color: theme1.SemiBlack}}
-                        date={startDate}
+                        date={
+                          startDate === 'Invalid date'
+                            ? tourItem?.date
+                            : startDate
+                        }
                         placeholder="Date"
+                        type="date"
                         placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
                         setDate={value => {
                           handleOnChange(value, tourIndex, 'date');

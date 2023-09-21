@@ -12,7 +12,7 @@ import {
   ToastAndroid,
   View,
 } from 'react-native';
-
+import DeviceInfo from 'react-native-device-info';
 import Geolocation from '@react-native-community/geolocation';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {observer} from 'mobx-react-lite';
@@ -70,6 +70,7 @@ function CallEntry({navigation, route}) {
   useFocusEffect(
     React.useCallback(() => {
       clear();
+      isLocationEnabled();
       getLocation();
       getStartDay();
     }, []),
@@ -282,35 +283,51 @@ function CallEntry({navigation, route}) {
     setProductList(list);
   };
 
+  const isLocationEnabled = async () => {
+    let res = await DeviceInfo.isLocationEnabled();
+    if (!res) {
+      Alert.alert('GPS Alert', 'Please Enable GPS location to Continue...', [
+        {
+          text: 'Ok',
+          onPress: () => {
+            nav.goBack();
+          },
+        },
+      ]);
+    }
+  };
+
   const getLocation = async () => {
+    setLoading(false);
     Geolocation.requestAuthorization(
       success => {
+        console.log("Permission -> ", success);
         Geolocation.getCurrentPosition(
           pos => {
             console.log(pos);
             setLocation(pos);
+            setLoading(true);
           },
           error => {
-            console.log(error);
-            Alert.alert('GPS Alert!!', 'Please Enable GPS Location.', [
+            console.log('Error on get location', error);
+            Alert.alert('Location not available', 'Try it again...', [
               {
                 text: 'Ok',
                 onPress: () => {
-                  nav.goBack();
+                  getLocation();
                 },
               },
             ]);
           },
           {
             enableHighAccuracy: true,
-            timeout: 10000,
+            timeout: 5000,
             maximumAge: 5000,
-            distanceFilter: 10,
-            fastestInterval: 5000,
           },
         );
       },
       error => {
+        console.log("Error on Location -> ", error);
         Alert.alert('Alert!!', 'Permission to access location was denied', [
           {
             text: 'Ok',

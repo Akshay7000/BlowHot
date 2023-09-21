@@ -204,14 +204,20 @@ function Attendance({navigation, route}) {
             setLoading(true);
           },
           error => {
-            console.log('Error on get location');
+            console.log('Error on get location', error);
+            Alert.alert('Location not available', 'Try it again...', [
+              {
+                text: 'Ok',
+                onPress: () => {
+                  getLocation();
+                },
+              },
+            ]);
           },
           {
             enableHighAccuracy: true,
-            timeout: 10000,
+            timeout: 5000,
             maximumAge: 5000,
-            distanceFilter: 10,
-            fastestInterval: 5000,
           },
         );
       },
