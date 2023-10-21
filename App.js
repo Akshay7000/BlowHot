@@ -5,15 +5,16 @@ import {
   Button,
   Image,
   LogBox,
+  PermissionsAndroid,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
+import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import Feather from 'react-native-vector-icons/Feather';
 
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import theme1 from './screens/components/styles/DarkTheme.js';
@@ -30,7 +31,7 @@ import {
 } from './screens/responsiveLayout/ResponsiveLayout';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Geolocation from '@react-native-community/geolocation';
+import {createStackNavigator} from '@react-navigation/stack';
 import {observer} from 'mobx-react';
 import {NativeBaseProvider} from 'native-base';
 import {NetworkProvider} from 'react-native-offline';
@@ -38,6 +39,8 @@ import SPLASH from './assets/splash.png';
 import AddParty from './screens/Home/AddParty/AddParty';
 import Attendance from './screens/Home/Attendance/Attendance';
 import AttendanceList from './screens/Home/Attendance/AttendanceList';
+import BarCodeDetail from './screens/Home/BarCodeDetail/index.js';
+import ScanCode from './screens/Home/BarCodeDetail/ScanCode.js';
 import CallEntry from './screens/Home/CallEntry/CallEntry';
 import CallEntryList from './screens/Home/CallEntry/CallEntryList';
 import CallSummary from './screens/Home/CallSummary/CallSummary';
@@ -46,31 +49,26 @@ import Landing from './screens/Home/Landing/Landing';
 import LocalTourClaim from './screens/Home/LocalTourClaim/index.js';
 import AuthStore from './screens/Mobx/AuthStore.js';
 import {requestUserPermission} from './screens/services/notify/notificationService.js';
-import BarCodeDetail from './screens/Home/BarCodeDetail/index.js';
-import {createStackNavigator} from '@react-navigation/stack';
-import ScanCode from './screens/Home/BarCodeDetail/ScanCode.js';
+import ErrorBoundary from 'react-native-error-boundary';
 
 LogBox.ignoreAllLogs();
 FontAwesome.loadFont();
 MaterialCommunityIcons.loadFont();
 Ionicons.loadFont();
 
-Geolocation.setRNConfiguration({
-  skipPermissionRequests: true,
-  locationProvider: 'playServices',
-  authorizationLevel: 'always',
-});
-
 const App = () => {
   useEffect(() => {
     const unsubscribe = async () => {
       try {
         const usr = await AsyncStorage.getItem('user');
-        // await GetFCMToken();
-        Geolocation.requestAuthorization(s => {
-          Geolocation.getCurrentPosition(s => {});
-        });
         await requestUserPermission();
+        PermissionsAndroid.requestMultiple([
+          'android.permission.POST_NOTIFICATIONS',
+          'android.permission.ACCESS_COARSE_LOCATION',
+          'android.permission.ACCESS_FINE_LOCATION',
+          'android.permission.CAMERA',
+          'android.permission.READ_MEDIA_IMAGES',
+        ]);
         if (!!usr) {
           const masterid = await AsyncStorage.getItem('masterid');
           const compid = await AsyncStorage.getItem('companyCode');
@@ -80,18 +78,18 @@ const App = () => {
           const service = await AsyncStorage.getItem('serviceTeam');
           const hst = await AsyncStorage.getItem('host');
 
-          AuthStore.setIsLoggedIn(usr !== null);
-          AuthStore.setUser(usr);
-          AuthStore.setMasterId(masterid);
-          AuthStore.setCompanyId(compid);
-          AuthStore.setDivisionId(divid);
-          AuthStore.setAdmin(admin);
-          AuthStore.setSales(sales);
-          AuthStore.setIsSales(sales === 'Yes');
-          AuthStore.setIsService(service === 'Yes');
+          AuthStore?.setIsLoggedIn(usr !== null);
+          AuthStore?.setUser(usr);
+          AuthStore?.setMasterId(masterid);
+          AuthStore?.setCompanyId(compid);
+          AuthStore?.setDivisionId(divid);
+          AuthStore?.setAdmin(admin);
+          AuthStore?.setSales(sales);
+          AuthStore?.setIsSales(sales === 'Yes');
+          AuthStore?.setIsService(service === 'Yes');
           AuthStore?.setHost(hst);
         }
-        AuthStore.setLoading(false);
+        AuthStore?.setLoading(false);
       } catch (error) {
         console.log('Error on set All Data ---> ', JSON.stringify(error));
       }
@@ -108,18 +106,20 @@ const App = () => {
   }
 
   return (
-    <NetworkProvider>
-      <NativeBaseProvider>
-        {!AuthStore?.isLoading ? (
-          <View style={styles.container}>
-            <Toast />
-            {AuthStore?.isLoggedIn ? <AdminDrawer /> : <LoginDrawer />}
-          </View>
-        ) : (
-          <View></View>
-        )}
-      </NativeBaseProvider>
-    </NetworkProvider>
+    <ErrorBoundary>
+      <NetworkProvider>
+        <NativeBaseProvider>
+          {!AuthStore?.isLoading ? (
+            <View style={styles.container}>
+              <Toast />
+              {AuthStore?.isLoggedIn ? <AdminDrawer /> : <LoginDrawer />}
+            </View>
+          ) : (
+            <View></View>
+          )}
+        </NativeBaseProvider>
+      </NetworkProvider>
+    </ErrorBoundary>
   );
 };
 
@@ -236,7 +236,7 @@ export const CustomDrawerContent = props => {
             justifyContent: 'center',
             alignItems: 'center',
           }}>
-          <Text style={{color: '#FFF', fontSize: 16}}>Version: 1.6</Text>
+          <Text style={{color: '#FFF', fontSize: 16}}>Version: 2.6</Text>
         </View>
       </DrawerContentScrollView>
     </>

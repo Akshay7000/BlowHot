@@ -1,5 +1,6 @@
 {
     "java.configuration.updateBuildConfiguration": "automatic",
     "java.compile.nullAnalysis.mode": "automatic",
-    "cSpell.language": "en,en-GB,en-US,lorem"
+    "cSpell.language": "en,en-GB,en-US,lorem",
+    "prettier.withNodeModules": false
 }

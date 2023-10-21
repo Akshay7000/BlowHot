@@ -5,6 +5,7 @@ import NotifService from './NotifService';
 
 export async function requestUserPermission() {
   const authStatus = await messaging().requestPermission();
+  console.log('Authorization status:', authStatus);
   const enabled =
     authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
     authStatus === messaging.AuthorizationStatus.PROVISIONAL;
@@ -71,9 +72,9 @@ export async function NotificationListner() {
       }
     });
 
-  messaging().onMessage(async remoteMessage => {
-    notifyService.localNotif(remoteMessage);
-    console.log('Notification on forground mode', remoteMessage);
+  messaging().onMessage(async ({notification}) => {
+    notifyService.localNotif(notification);
+    console.log('Notification on forground mode', notification);
   });
 }
 const ShowNotification = remoteMessage => {

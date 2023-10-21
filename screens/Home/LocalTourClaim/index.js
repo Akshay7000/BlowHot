@@ -1,9 +1,9 @@
 //import liraries
-import {useNavigation} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import {observer} from 'mobx-react';
+import { observer } from 'mobx-react';
 import moment from 'moment';
-import React, {useState} from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -15,18 +15,18 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Dropdown} from 'react-native-element-dropdown';
+import { Dropdown } from 'react-native-element-dropdown';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import Toast from 'react-native-simple-toast';
 import Feather from 'react-native-vector-icons/Feather';
 import AuthStore from '../../Mobx/AuthStore';
 import DatePicker from '../../components/DatePicker';
-import {ImagePickerModal} from '../../components/ImagePickerModal';
+import { ImagePickerModal } from '../../components/ImagePickerModal';
 import TextInputField from '../../components/TextInputField';
 import theme1 from '../../components/styles/DarkTheme';
-import {widthPercentageToDP as wp} from '../../responsiveLayout/ResponsiveLayout';
+import { widthPercentageToDP as wp } from '../../responsiveLayout/ResponsiveLayout';
 
-const {height, width} = Dimensions.get('window');
+const { height, width } = Dimensions.get('window');
 // create a component
 const LocalTourClaim = () => {
   const navigation = useNavigation();
@@ -41,6 +41,11 @@ const LocalTourClaim = () => {
   const [imageModal, setImageModal] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
 
+  useFocusEffect(
+    useCallback(() => {
+      clear();
+    }, []),
+  );
   const clear = () => {
     setAllLocalTour([]);
     setTravelMode([]);
@@ -56,9 +61,9 @@ const LocalTourClaim = () => {
       const tourRes = await axios.get(
         `${AuthStore?.host}/c_visit_entry/get_loc_tour?username=${userName}&period=${fromDate} to ${toDate}`,
       );
-      // console.log(JSON.stringify(tourRes?.data))
       let Rate = 0;
       let ac = tourRes?.data?.accountSchema?.SalesDesignation?.DesignationGrade;
+      // console.log(JSON.stringify(tourRes?.data))
       if (ac?.two_wheeler > '0') {
         Rate = ac?.two_wheeler;
       }
@@ -92,17 +97,19 @@ const LocalTourClaim = () => {
         });
       }
       setLoading(false);
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const calculateTotal = () => {
     let total_distance = 0;
+    let total_amount = 0;
     allLocalTour?.map(item => {
       total_distance += Number(item?.distance);
+      total_amount += Number(item?.amount);
     });
     setTotal({
-      distance: String(total_distance),
-      amount: Number(total_distance) * Number(allLocalTour[0]?.rate),
+      distance: Number(total_distance).toFixed(2),
+      amount: Number(total_amount).toFixed(2),
     });
   };
 
@@ -113,11 +120,6 @@ const LocalTourClaim = () => {
       list[index]['amount'] = Number(value) * Number(list[index]['rate']);
     }
     setAllLocalTour(list);
-    setTimeout(() => {
-      if (key === 'amount') {
-        calculateTotal();
-      }
-    }, 300);
   };
 
   const handleSave = async () => {
@@ -220,7 +222,7 @@ const LocalTourClaim = () => {
         multiple: true,
       })
         .then(image => {
-          let all = [...selectedImages];
+          var all = [...selectedImages];
           image.map(a => {
             all.push(a);
           });
@@ -244,7 +246,7 @@ const LocalTourClaim = () => {
         compressImageQuality: 0.5,
       })
         .then(async image => {
-          let all = [...selectedImages];
+          var all = [...selectedImages];
           all.push(image);
           setSelectedImages(all);
           setImageModal(false);
@@ -289,7 +291,7 @@ const LocalTourClaim = () => {
         <DatePicker
           containerStyles={styles.datePicker_style}
           maxDate={Date.now()}
-          textStyle={{color: theme1.SemiBlack}}
+          textStyle={{ color: theme1.SemiBlack }}
           date={fromDate}
           placeholder="From Date"
           placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
@@ -301,7 +303,7 @@ const LocalTourClaim = () => {
         <DatePicker
           containerStyles={styles.datePicker_style}
           maxDate={Date.now()}
-          textStyle={{color: theme1.SemiBlack}}
+          textStyle={{ color: theme1.SemiBlack }}
           date={toDate}
           placeholder="To Date"
           placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
@@ -313,14 +315,14 @@ const LocalTourClaim = () => {
         onPress={() => {
           getLocalTour();
         }}>
-        <Text style={{color: 'white'}}>Submit</Text>
+        <Text style={{ color: 'white' }}>Submit</Text>
       </TouchableOpacity>
 
-      <View style={{marginTop: 20}} />
+      <View style={{ marginTop: 20 }} />
 
-      <ScrollView style={{width: '100%'}}>
+      <ScrollView style={{ width: '100%' }}>
         {allLocalTour.length > 0 && (
-          <View style={{flex: 1, alignItems: 'center'}}>
+          <View style={{ flex: 1, alignItems: 'center' }}>
             {allLocalTour.length > 0 &&
               allLocalTour.map((tourItem, tourIndex) => {
                 let startDate = moment(tourItem?.date).format('DD/MM/YYYY');
@@ -335,7 +337,7 @@ const LocalTourClaim = () => {
                       }}>
                       {allLocalTour?.length - 1 === tourIndex && (
                         <TouchableOpacity
-                          style={{marginHorizontal: 15}}
+                          style={{ marginHorizontal: 15 }}
                           onPress={() => handleAddClick(tourIndex)}>
                           <Feather
                             name="plus-circle"
@@ -359,7 +361,7 @@ const LocalTourClaim = () => {
                       <DatePicker
                         containerStyles={styles.datePicker_style}
                         maxDate={Date.now()}
-                        textStyle={{color: theme1.SemiBlack}}
+                        textStyle={{ color: theme1.SemiBlack }}
                         date={
                           startDate === 'Invalid date'
                             ? tourItem?.date
@@ -395,16 +397,16 @@ const LocalTourClaim = () => {
                           color: theme1.SemiBlack,
                           fontSize: 12,
                         }}
-                        itemTextStyle={{fontSize: 12}}
-                        containerStyle={{borderRadius: 8}}
-                        itemContainerStyle={{borderRadius: 8}}
+                        itemTextStyle={{ fontSize: 12 }}
+                        containerStyle={{ borderRadius: 8 }}
+                        itemContainerStyle={{ borderRadius: 8 }}
                         iconColor={theme1.LIGHT_ORANGE_COLOR}
                       />
                     </View>
                     <View style={styles.column}>
                       <DatePicker
                         containerStyles={styles.datePicker_style}
-                        textStyle={{color: theme1.SemiBlack}}
+                        textStyle={{ color: theme1.SemiBlack }}
                         date={tourItem?.start_time}
                         placeholder="Start Time"
                         placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
@@ -415,7 +417,7 @@ const LocalTourClaim = () => {
                       />
                       <DatePicker
                         containerStyles={styles.datePicker_style}
-                        textStyle={{color: theme1.SemiBlack}}
+                        textStyle={{ color: theme1.SemiBlack }}
                         date={tourItem?.end_time}
                         placeholder="End Time"
                         placeholderTextColor={theme1.LIGHT_ORANGE_COLOR}
@@ -445,7 +447,7 @@ const LocalTourClaim = () => {
                         disable={true}
                         type={'numeric'}
                         value={tourItem?.rate}
-                        onChangeText={() => {}}
+                        onChangeText={() => { }}
                         style={styles.card_input_text}
                       />
                     </View>
@@ -458,8 +460,12 @@ const LocalTourClaim = () => {
                         onChangeText={value => {
                           handleOnChange(value, tourIndex, 'amount');
                         }}
+                        onEnd={() => {
+                          calculateTotal()
+                        }
+                        }
                         style={styles.card_input_text}
-                        // disable={true}
+                      // disable={true}
                       />
                       <TextInputField
                         label="Remark"
@@ -482,7 +488,7 @@ const LocalTourClaim = () => {
                   placeHolder="enter distance"
                   type={'numeric'}
                   value={String(total?.distance)}
-                  onChangeText={() => {}}
+                  onChangeText={() => { }}
                   style={styles.card_input_text}
                   disable={true}
                 />
@@ -491,7 +497,7 @@ const LocalTourClaim = () => {
                   placeHolder="enter amount"
                   type={'numeric'}
                   value={String(total?.amount)}
-                  onChangeText={() => {}}
+                  onChangeText={() => { }}
                   style={styles.card_input_text}
                   disable={true}
                 />
@@ -505,7 +511,7 @@ const LocalTourClaim = () => {
               onChangeText={value => {
                 setSingleRemark(value);
               }}
-              style={[styles.card_input_text, {width: '95%'}]}
+              style={[styles.card_input_text, { width: '95%' }]}
             />
             {allLocalTour.length > 0 && (
               <View
@@ -547,7 +553,7 @@ const LocalTourClaim = () => {
                       resizeMode: 'cover',
                       margin: 5,
                     }}
-                    source={{uri: selectedImages?.path}}
+                    source={{ uri: selectedImages?.path }}
                   />
                 )}
 
@@ -562,7 +568,7 @@ const LocalTourClaim = () => {
                           resizeMode: 'cover',
                           margin: 5,
                         }}
-                        source={{uri: singleImage?.path}}
+                        source={{ uri: singleImage?.path }}
                       />
                     );
                   })}
@@ -572,11 +578,11 @@ const LocalTourClaim = () => {
         )}
         {allLocalTour.length > 0 && (
           <TouchableOpacity
-            style={[styles.button1, {alignSelf: 'center'}]}
+            style={[styles.button1, { alignSelf: 'center' }]}
             onPress={() => {
               handleSave();
             }}>
-            <Text style={{color: 'white'}}>Submit</Text>
+            <Text style={{ color: 'white' }}>Submit</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -637,7 +643,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     elevation: 10,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 3},
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.5,
     shadowRadius: 5,
     padding: 10,

@@ -6,6 +6,9 @@ includeBuild('../node_modules/react-native-gradle-plugin')
 include ':react-native-exception-handler'
 project(':react-native-exception-handler').projectDir = new File(rootProject.projectDir,'../node_modules/react-native-exception-handler/android')
 
+include ':react-native-scan-barcode', ':app'
+project(':react-native-scan-barcode').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-scan-barcode/android')
+
 if (settings.hasProperty("newArchEnabled") && settings.newArchEnabled == "true") {
     include(":ReactAndroid")
     project(":ReactAndroid").projectDir = file('../node_modules/react-native/ReactAndroid')

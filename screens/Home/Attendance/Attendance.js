@@ -1,12 +1,12 @@
-import Geolocation from '@react-native-community/geolocation';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import Axios from 'axios';
-import { observer } from 'mobx-react-lite';
+import {observer} from 'mobx-react-lite';
 import moment from 'moment';
-import React, { useCallback, useLayoutEffect, useState } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   Dimensions,
   StyleSheet,
   Text,
@@ -14,26 +14,25 @@ import {
   View,
 } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
-import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
+import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import Toast from 'react-native-simple-toast';
 import AuthStore from '../../Mobx/AuthStore';
 import DatePicker from '../../components/DatePicker';
-import { ImagePickerAvatar } from '../../components/ImagePickerAvatar';
-import { ImagePickerModal } from '../../components/ImagePickerModal';
+import {ImagePickerAvatar} from '../../components/ImagePickerAvatar';
+import {ImagePickerModal} from '../../components/ImagePickerModal';
 import theme1 from '../../components/styles/DarkTheme';
-import { widthPercentageToDP as wp } from '../../responsiveLayout/ResponsiveLayout';
+import {widthPercentageToDP as wp} from '../../responsiveLayout/ResponsiveLayout';
+import Geolocation from 'react-native-geolocation-service';
 
-const {width, height} = Dimensions.get('window');
+const {height} = Dimensions.get('window');
 
-function Attendance({navigation, route}) {
-  let rout;
-  if (typeof route.params == 'undefined') {
-    rout = 'none';
-  } else {
-    rout = route.params.routing;
-  }
+Geolocation.setRNConfiguration({
+  skipPermissionRequests: true,
+  locationProvider: 'playServices',
+});
 
+function Attendance({navigation}) {
   const nav = useNavigation();
 
   const [startDate, setStartDate] = useState(new Date(Date.now()));
@@ -56,13 +55,54 @@ function Attendance({navigation, route}) {
   const [image, setImage] = useState();
   const [imageDetails, setImageDetails] = useState();
 
+  const allData = () => {
+    let todayDate = moment(new Date()).format('DD/MM/YYYY');
+    var ampm = new Date().getHours() >= 12 ? 'PM' : 'AM';
+    let minutes = new Date().getMinutes();
+    if (minutes < 10) minutes = '0' + minutes;
+    var time = new Date().getHours() + ':' + minutes + ampm;
+    setStartDate(todayDate);
+    setStartDayCurrentTime(time);
+    isLocationEnabled();
+    getStartDay();
+  };
+
   useFocusEffect(
     useCallback(() => {
-      isLocationEnabled();
-      getLocation();
-      getStartDay();
+      allData();
     }, []),
   );
+
+  useEffect(() => {
+    AppState.addEventListener('change',()=>{getLocation()})
+  }, []);
+
+  const getLocation = () => {
+    setLoading(false);
+    Geolocation.getCurrentPosition(
+      position => {
+        console.log(position)
+        setLocation(position);
+        setLoading(true);
+      },
+      error => {
+        Alert.alert('Location not available', 'Try it again...', [
+          {
+            text: 'Ok',
+            onPress: () => {
+              getLocation();
+            },
+          },
+        ]);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 5000,
+      },
+    );
+  };
+
   const isLocationEnabled = async () => {
     let res = await DeviceInfo.isLocationEnabled();
     if (!res) {
@@ -91,7 +131,9 @@ function Attendance({navigation, route}) {
     const divid = AuthStore?.divisionId;
 
     await fetch(
-      `${AuthStore?.host}/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${new Date()}&end_date=${new Date()}`,
+      `${
+        AuthStore?.host
+      }/attendance/mobattendance_list?name=${user}&masterid=${masterid}&compid=${compid}&divid=${divid}&start_date=${new Date()}&end_date=${new Date()}`,
       data,
     )
       .then(response => response.json())
@@ -102,7 +144,6 @@ function Attendance({navigation, route}) {
         const end_Date = obj?.end_date;
         const id = obj?._id;
 
-        console.log('Get start day --> ', JSON.stringify(data));
         if (data.atd.length == 0) {
           setStartDay(true);
         } else {
@@ -127,26 +168,13 @@ function Attendance({navigation, route}) {
           }
         }
         setLoading(true);
+        getLocation();
       })
       .catch(e => {
         console.log('Error on loading --> ', e);
         setLoading(true);
       });
   };
-
-  useLayoutEffect(() => {
-    const unsubscribe = navigation.addListener('focus', async () => {
-      let todayDate = moment(new Date()).format('DD/MM/YYYY');
-      var ampm = new Date().getHours() >= 12 ? 'PM' : 'AM';
-      let minutes = new Date().getMinutes();
-      if (minutes < 10) minutes = '0' + minutes;
-      var time = new Date().getHours() + ':' + minutes + ampm;
-      setStartDate(todayDate);
-      setStartDayCurrentTime(time);
-      getStartDay();
-    });
-    return unsubscribe;
-  }, [navigation]);
 
   const pickImage = async () => {
     try {
@@ -193,115 +221,77 @@ function Attendance({navigation, route}) {
     }
   };
 
-  const getLocation = async () => {
-    setLoading(false);
-    Geolocation.requestAuthorization(
-      success => {
-        Geolocation.getCurrentPosition(
-          pos => {
-            console.log(pos);
-            setLocation(pos);
-            setLoading(true);
-          },
-          error => {
-            console.log('Error on get location', error);
-            Alert.alert('Location not available', 'Try it again...', [
-              {
-                text: 'Ok',
-                onPress: () => {
-                  getLocation();
-                },
-              },
-            ]);
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 5000,
-          },
-        );
-      },
-      error => {
-        Alert.alert('Alert!!', 'Permission to access location was denied', [
-          {
-            text: 'Ok',
-            onPress: () => {
-              nav.goBack();
-            },
-          },
-        ]);
-      },
-    );
-  };
-
   // Submit Start Day Details
   const handleStartDaySubmit = async () => {
     try {
       setLoading(false);
-      const user = AuthStore?.user;
-      const masterid = AuthStore?.masterId;
-      const compid = AuthStore?.companyId;
-      const divid = AuthStore?.divisionId;
+      const submitData = async pos => {
+        const user = AuthStore?.user;
+        const masterid = AuthStore?.masterId;
+        const compid = AuthStore?.companyId;
+        const divid = AuthStore?.divisionId;
+        const data = new FormData();
+        const newImageUri =
+          'file:///' + imageDetails?.path?.split('file:/')?.join('');
 
-      const data = new FormData();
-      const newImageUri =
-        'file:///' + imageDetails?.path?.split('file:/')?.join('');
-
-      data.append('image', {
-        uri: imageDetails?.path,
-        type: 'image/jpg', //imageDetails.type,
-        name: newImageUri?.split('/')?.pop(),
-      });
-
-      data.append('name', user);
-      data.append('att_time', startDayCurrentTime);
-      data.append('strt_dte', startDate);
-      data.append('millometer_reading', startDayMillometerReading);
-      data.append('remark', startDayRemarks);
-      data.append('usrnm', user);
-      data.append('photo', '');
-      data.append('end_day', 'End');
-      data.append('start_long', location?.coords?.longitude);
-      data.append('start_lat', location?.coords?.latitude);
-      data.append('co_code', compid);
-      data.append('div_code', divid);
-      data.append('masterid', masterid);
-      data.append('filename', newImageUri?.split('/')?.pop());
-
-      console.log('Attendance body ----> ', JSON.stringify(data));
-
-      Axios({
-        method: 'POST',
-        url: `${AuthStore?.host}/attendance/startmobadd`,
-        headers: {
-          // 'Accept': 'application/json',
-          'Content-Type': 'multipart/form-data',
-        },
-        processData: false,
-        contentType: false,
-        data: data,
-      })
-        .then(respone => {
-          let todayDate = moment(new Date()).format('DD/MM/YYYY');
-          var ampm = new Date().getHours() >= 12 ? 'PM' : 'AM';
-          let minutes = new Date().getMinutes();
-          if (minutes < 10) minutes = '0' + minutes;
-          var time = new Date().getHours() + ':' + minutes + ampm;
-          setEndDate(todayDate);
-          setEndDayCurrentTime(time);
-          setStartDayRemarks('');
-          setStartDayMillometerReading('');
-          setImageDetails({});
-          setImage(null);
-          setLoading(true);
-          Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
-          nav.goBack();
-        })
-        .catch(error => {
-          console.log('erron on startDay ---> ', JSON.stringify(error));
-          setLoading(true);
-          Toast.showWithGravity('Submit data failed', Toast.LONG, Toast.BOTTOM);
+        data.append('image', {
+          uri: imageDetails?.path,
+          type: imageDetails?.mime,
+          name: newImageUri?.split('/')?.pop(),
         });
+
+        data.append('name', user);
+        data.append('att_time', startDayCurrentTime);
+        data.append('strt_dte', startDate);
+        data.append('millometer_reading', startDayMillometerReading);
+        data.append('remark', startDayRemarks);
+        data.append('usrnm', user);
+        data.append('photo', '');
+        data.append('end_day', 'End');
+        data.append('start_long', pos?.coords?.longitude);
+        data.append('start_lat', pos?.coords?.latitude);
+        data.append('co_code', compid);
+        data.append('div_code', divid);
+        data.append('masterid', masterid);
+        data.append('filename', newImageUri?.split('/')?.pop());
+
+        Axios({
+          method: 'POST',
+          url: `${AuthStore?.host}/attendance/startmobadd`,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          processData: false,
+          contentType: false,
+          data: data,
+        })
+          .then(respone => {
+            let todayDate = moment(new Date()).format('DD/MM/YYYY');
+            var ampm = new Date().getHours() >= 12 ? 'PM' : 'AM';
+            let minutes = new Date().getMinutes();
+            if (minutes < 10) minutes = '0' + minutes;
+            var time = new Date().getHours() + ':' + minutes + ampm;
+            setEndDate(todayDate);
+            setEndDayCurrentTime(time);
+            setStartDayRemarks('');
+            setStartDayMillometerReading('');
+            setImageDetails({});
+            setImage(null);
+            setLoading(true);
+            Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
+            nav.goBack();
+          })
+          .catch(error => {
+            console.log('erron on startDay ---> ', JSON.stringify(error));
+            setLoading(true);
+            Toast.showWithGravity(
+              'Submit data failed',
+              Toast.LONG,
+              Toast.BOTTOM,
+            );
+          });
+      };
+      submitData(location);
     } catch (error) {
       console.log('Error on catch --> ', error);
     }
@@ -309,63 +299,68 @@ function Attendance({navigation, route}) {
 
   // Submit End Day Details
   const handleEndDaySubmit = async () => {
-    setLoading(false);
-    const submitData = async () => {
-      const data = new FormData();
-      const newImageUri =
-        'file:///' + imageDetails.path.split('file:/').join('');
+    try {
+      setLoading(false);
+      const submitData = async pos => {
+        const data = new FormData();
+        const newImageUri =
+          'file:///' + imageDetails.path.split('file:/').join('');
 
-      data.append('image', {
-        uri: imageDetails.path,
-        type: 'image/jpg', //imageDetails.type,
-        name: newImageUri.split('/').pop(),
-      });
-
-      data.append('end_time', endDayCurrentTime);
-      data.append('end_dte', endDate);
-      data.append('end_millometer_reading', endDayMillometerReading);
-      data.append('end_remark', endDayRemarks);
-      data.append('vhpxendday', vId);
-      data.append('photo', '');
-      data.append('end_day', '');
-      data.append('end_long', location?.coords?.longitude);
-      data.append('end_lat', location?.coords?.latitude);
-
-      data.append('co_code', AuthStore?.companyId);
-      data.append('div_code', AuthStore?.divisionId);
-      data.append('masterid', AuthStore?.masterId);
-      data.append('filename', newImageUri.split('/').pop());
-
-      console.log('data', data);
-      Axios({
-        method: 'POST',
-        url: `${AuthStore?.host}/attendance/mobend_add`,
-        headers: {
-          // 'Accept': 'application/json',
-          'Content-Type': 'multipart/form-data',
-        },
-        processData: false,
-        contentType: false,
-        data: data,
-      })
-        .then(respone => {
-          console.log(respone);
-          Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
-          setStartDay(true);
-          setStartDayRemarks('');
-          setStartDayMillometerReading('');
-          setImageDetails({});
-          setImage(null);
-          nav.goBack();
-        })
-        .catch(error => {
-          console.log('erron on startDay ---> ', JSON.stringify(error));
-          setLoading(true);
-          Toast.showWithGravity('Submit data failed', Toast.LONG, Toast.BOTTOM);
+        data.append('image', {
+          uri: imageDetails.path,
+          type: 'image/jpg', //imageDetails.type,
+          name: newImageUri.split('/').pop(),
         });
-    };
-    submitData();
-    setLoading(true);
+
+        data.append('end_time', endDayCurrentTime);
+        data.append('end_dte', endDate);
+        data.append('end_millometer_reading', endDayMillometerReading);
+        data.append('end_remark', endDayRemarks);
+        data.append('vhpxendday', vId);
+        data.append('photo', '');
+        data.append('end_day', '');
+        data.append('end_long', pos?.coords.longitude);
+        data.append('end_lat', pos?.coords.latitude);
+        data.append('co_code', AuthStore?.companyId);
+        data.append('div_code', AuthStore?.divisionId);
+        data.append('masterid', AuthStore?.masterId);
+        data.append('filename', newImageUri.split('/').pop());
+
+        Axios({
+          method: 'POST',
+          url: `${AuthStore?.host}/attendance/mobend_add`,
+          headers: {
+            // 'Accept': 'application/json',
+            'Content-Type': 'multipart/form-data',
+          },
+          processData: false,
+          contentType: false,
+          data: data,
+        })
+          .then(respone => {
+            Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
+            setStartDay(true);
+            setStartDayRemarks('');
+            setStartDayMillometerReading('');
+            setImageDetails({});
+            setImage(null);
+            setLoading(true);
+            nav.goBack();
+          })
+          .catch(error => {
+            console.log('erron on startDay ---> ', JSON.stringify(error));
+            setLoading(true);
+            Toast.showWithGravity(
+              'Submit data failed',
+              Toast.LONG,
+              Toast.BOTTOM,
+            );
+          });
+      };
+      submitData(location);
+    } catch (error) {
+      console.log('Error on catch --> ', error);
+    }
   };
 
   return (
@@ -392,7 +387,6 @@ function Attendance({navigation, route}) {
                       justifyContent: 'center',
                       borderRadius: 5,
                       marginTop: 5,
-                      // marginRight: 17,
                       borderColor: '#ccc',
                     }}
                     date={startDate}

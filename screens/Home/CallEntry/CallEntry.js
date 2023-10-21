@@ -1,9 +1,12 @@
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import axios from 'axios';
+import {observer} from 'mobx-react-lite';
 import moment from 'moment';
 import React, {useEffect, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   Dimensions,
   Image,
   StyleSheet,
@@ -13,11 +16,9 @@ import {
   View,
 } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
-import Geolocation from '@react-native-community/geolocation';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import {observer} from 'mobx-react-lite';
 import {Dropdown} from 'react-native-element-dropdown';
 import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
+import ImageCropPicker from 'react-native-image-crop-picker';
 import Toast from 'react-native-simple-toast';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import Icon from 'react-native-vector-icons/Feather';
@@ -26,9 +27,14 @@ import DatePicker from '../../components/DatePicker';
 import TextInputField from '../../components/TextInputField';
 import theme1 from '../../components/styles/DarkTheme';
 import {widthPercentageToDP as wp} from '../../responsiveLayout/ResponsiveLayout';
-import ImageCropPicker from 'react-native-image-crop-picker';
+import Geolocation from 'react-native-geolocation-service';
 
-const {width, height} = Dimensions.get('window');
+const {height} = Dimensions.get('window');
+
+Geolocation.setRNConfiguration({
+  skipPermissionRequests: true,
+  locationProvider: 'playServices',
+});
 
 function CallEntry({navigation, route}) {
   let masterid = '';
@@ -67,23 +73,21 @@ function CallEntry({navigation, route}) {
 
   const [selectedImages, setSelectedImages] = useState([]);
 
+  const allData = () => {
+    setLoading(false);
+    let todayDate = moment(new Date()).format('DD/MM/YYYY');
+    setDate(todayDate);
+    setFollowUpDate(todayDate);
+    isLocationEnabled();
+    getLocation();
+    // getStartDay();
+  };
+
   useFocusEffect(
     React.useCallback(() => {
-      clear();
-      isLocationEnabled();
-      getLocation();
-      getStartDay();
+      allData();
     }, []),
   );
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', async () => {
-      let todayDate = moment(new Date()).format('DD/MM/YYYY');
-      setDate(todayDate);
-      setFollowUpDate(todayDate);
-    });
-    return unsubscribe;
-  }, [navigation]);
 
   const clear = () => {
     setSearchedUser({});
@@ -94,7 +98,6 @@ function CallEntry({navigation, route}) {
     setMobileNumber('');
     setSearchedCity('');
     setSearchedName('');
-    setSearchedUser('');
     setSearchedUserList('');
     setFilteredUserList('');
     setSearchingCustomer('');
@@ -104,10 +107,38 @@ function CallEntry({navigation, route}) {
 
   useEffect(() => {
     const init = async () => {
+      clear();
       PromisData(masterid);
+      AppState.addEventListener('change',()=>{getLocation()})
     };
     init();
   }, []);
+
+  const getLocation = () => {
+    setLoading(false);
+    Geolocation.getCurrentPosition(
+      position => {
+        console.log(position);
+        setLocation(position);
+        setLoading(true);
+      },
+      error => {
+        Alert.alert('Location not available', 'Try it again...', [
+          {
+            text: 'Ok',
+            onPress: () => {
+              getLocation();
+            },
+          },
+        ]);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 5000,
+      },
+    );
+  };
 
   const getStartDay = async () => {
     setLoading(false);
@@ -143,6 +174,7 @@ function CallEntry({navigation, route}) {
           ]);
         }
         setLoading(true);
+        getLocation();
       })
       .catch(e => {
         console.log('Error on loading --> ', e);
@@ -150,48 +182,17 @@ function CallEntry({navigation, route}) {
       });
   };
 
-  //Dealers List
-
   const PromisData = async () => {
     setLoading(false);
-    // var diler = getDealers(masterid);
     var calls = getCallType(AuthStore?.masterId);
     var product = getProducts(AuthStore?.masterId);
     Promise.all([calls, product]).then(values => {
-      // setDealerItems(values[0]);
       setCallTypeItems(values[0]);
       setBrandItems(values[1]?.brand);
-      // setProductItems(values[1]?.products);
       setModelItems(values[1]?.model);
       setLoading(true);
     });
   };
-
-  // const getDealers = async masterid => {
-  //   console.log('dealers');
-
-  //   const data = {
-  //     method: 'GET',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //     },
-  //   };
-  //   return await fetch(
-  //     `${AuthStore?.host}/c_visit_entry/mob_calldealer?masterid=${masterid}`,
-  //     data,
-  //   )
-  //     .then(response => response.json())
-  //     .then(data => {
-  //       // console.log("dtaa", data)
-  //       var responseData = [...dealerItems];
-  //       data.results.map(dat =>
-  //         responseData.push({id: dat._id, name: dat.ACName}),
-  //       );
-  //       return responseData;
-  //     });
-  // };
-
-  //Call Type List
 
   const getCallType = async masterid => {
     const data = {
@@ -216,7 +217,6 @@ function CallEntry({navigation, route}) {
       });
   };
 
-  // Product List
   const getProducts = async masterid => {
     const data = {
       method: 'GET',
@@ -297,134 +297,97 @@ function CallEntry({navigation, route}) {
     }
   };
 
-  const getLocation = async () => {
-    setLoading(false);
-    Geolocation.requestAuthorization(
-      success => {
-        console.log("Permission -> ", success);
-        Geolocation.getCurrentPosition(
-          pos => {
-            console.log(pos);
-            setLocation(pos);
-            setLoading(true);
-          },
-          error => {
-            console.log('Error on get location', error);
-            Alert.alert('Location not available', 'Try it again...', [
-              {
-                text: 'Ok',
-                onPress: () => {
-                  getLocation();
-                },
-              },
-            ]);
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 5000,
-          },
-        );
-      },
-      error => {
-        console.log("Error on Location -> ", error);
-        Alert.alert('Alert!!', 'Permission to access location was denied', [
-          {
-            text: 'Ok',
-            onPress: () => {
-              nav.goBack();
-            },
-          },
-        ]);
-      },
-    );
-  };
-
   const submitData = async () => {
-    if (!searchedUser?._id) {
-      return Alert.alert('select User');
-    }
-    const data = new FormData();
-    const user = AuthStore?.user;
-    const masterid = AuthStore?.masterId;
-    const compid = AuthStore?.companyId;
-    const divid = AuthStore?.divisionId;
+    const submit = async pos => {
+      if (!searchedUser?._id) {
+        return Alert.alert('select User');
+      }
+      setLoading(false);
+      const data = new FormData();
+      const user = AuthStore?.user;
+      const masterid = AuthStore?.masterId;
+      const compid = AuthStore?.companyId;
+      const divid = AuthStore?.divisionId;
 
-    sales_or_group.map((item, index) => {
-      item.dsirn = index + 1;
-    });
-
-    let array = sales_or_group;
-
-    data.append('so_date', date);
-    data.append('buy_podt', followUpDate);
-    data.append('c_j_s_p', 'CVE');
-    data.append('vouc_code', '1');
-    data.append('Ship_party', searchedUser?._id);
-    data.append('buy_rmks', remarks);
-    data.append('ac_cty', callTypeId);
-    data.append('user', user);
-    data.append('compid', compid);
-    data.append('divid', divid);
-    data.append('long', location?.coords?.longitude);
-    data.append('lat', location?.coords?.latitude);
-    data.append('masterid', masterid);
-    data.append('sales_or_group', JSON.stringify(array));
-
-
-
-    if (selectedImages?.path) {
-      const newImageUri =
-        'file:///' + selectedImages.path.split('file:/').join('');
-
-      let ext = newImageUri.split('/').pop().split('.')[1];
-      data.append('files', {
-        uri: selectedImages.path,
-        type: `image/${ext}`, //imageDetails.type,
-        name: newImageUri.split('/').pop(),
+      sales_or_group.map((item, index) => {
+        item.dsirn = index + 1;
       });
-    }
 
-    if (selectedImages?.length > 0) {
-      selectedImages.map(singleImage => {
+      let array = sales_or_group;
+
+      data.append('so_date', date);
+      data.append('buy_podt', followUpDate);
+      data.append('c_j_s_p', 'CVE');
+      data.append('vouc_code', '1');
+      data.append('Ship_party', searchedUser?._id);
+      data.append('buy_rmks', remarks);
+      data.append('ac_cty', callTypeId);
+      data.append('user', user);
+      data.append('compid', compid);
+      data.append('divid', divid);
+      data.append('long', pos?.coords?.longitude);
+      data.append('lat', pos?.coords?.latitude);
+      data.append('masterid', masterid);
+      data.append('sales_or_group', JSON.stringify(array));
+
+      if (selectedImages?.path) {
         const newImageUri =
-          'file:///' + singleImage?.path?.split('file:/')?.join('');
+          'file:///' + selectedImages.path.split('file:/').join('');
 
         let ext = newImageUri.split('/').pop().split('.')[1];
         data.append('files', {
-          name: newImageUri.split('/').pop(),
+          uri: selectedImages.path,
           type: `image/${ext}`, //imageDetails.type,
-          uri: singleImage.path,
+          name: newImageUri.split('/').pop(),
         });
-      });
-    }
-    // console.log("body", body)
-    axios({
-      method: 'POST',
-      url: `${AuthStore?.host}/c_visit_entry/mobadd`,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      processData: false,
-      contentType: false,
-      data: data,
-    })
-      .then(response => {
-        // console.log('Response ---> ', JSON.stringify(response.data));
-        if (response.data.success) {
-          Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
-          let todayDate = moment(new Date()).format('DD/MM/YYYY');
-          setDate(todayDate);
-          setFollowUpDate(todayDate);
-          clear();
-          nav.navigate('Home');
-        } else {
-          Alert.alert('User Already exist. Please use different mobile number');
-        }
+      }
+
+      if (selectedImages?.length > 0) {
+        selectedImages.map(singleImage => {
+          const newImageUri =
+            'file:///' + singleImage?.path?.split('file:/')?.join('');
+
+          let ext = newImageUri.split('/').pop().split('.')[1];
+          data.append('files', {
+            name: newImageUri.split('/').pop(),
+            type: `image/${ext}`, //imageDetails.type,
+            uri: singleImage.path,
+          });
+        });
+      }
+      // console.log("body", body)
+      axios({
+        method: 'POST',
+        url: `${AuthStore?.host}/c_visit_entry/mobadd`,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        processData: false,
+        contentType: false,
+        data: data,
       })
-      .catch(e => {
-        console.log('Error --> ', e);
-      });
+        .then(response => {
+          // console.log('Response ---> ', JSON.stringify(response.data));
+          setLoading(true);
+          if (response.data.success) {
+            Toast.showWithGravity('Data Submitted.', Toast.LONG, Toast.BOTTOM);
+            let todayDate = moment(new Date()).format('DD/MM/YYYY');
+            setDate(todayDate);
+            setFollowUpDate(todayDate);
+            clear();
+            nav.navigate('Home');
+          } else {
+            Alert.alert(
+              'User Already exist. Please use different mobile number',
+            );
+          }
+        })
+        .catch(e => {
+          console.log('Error --> ', e);
+          setLoading(true);
+        });
+    };
+    submit(location);
   };
 
   const searchCustomer = () => {
@@ -864,7 +827,7 @@ function CallEntry({navigation, route}) {
             </View>
 
             <View style={{marginTop: 30}}>
-              {sales_or_group.map((item, i) => {
+              {sales_or_group?.map((item, i) => {
                 return (
                   <View key={i} style={styles.card}>
                     <View
@@ -939,12 +902,12 @@ function CallEntry({navigation, route}) {
                         data={productItems[i] || []}
                         labelField="Fg_Des"
                         valueField="_id"
-                        value={item.productid || ''}
+                        value={item?.productid || ''}
                         placeholder="Select product"
                         placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
                         onChange={item => {
                           // setProductId(item.id);
-                          handleProductDetails(item.id, i, 'productid');
+                          handleProductDetails(item._id, i, 'productid');
                         }}
                         search={true}
                         searchPlaceholder="Search"
@@ -977,7 +940,7 @@ function CallEntry({navigation, route}) {
                         data={brandItems || []}
                         labelField="name"
                         valueField="id"
-                        value={item.brandid || ''}
+                        value={item?.brandid || ''}
                         placeholder="Select brand"
                         placeholderStyle={{color: theme1.LIGHT_ORANGE_COLOR}}
                         onChange={item => {

@@ -21,10 +21,15 @@ import { widthPercentageToDP as wp } from '../../responsiveLayout/ResponsiveLayo
 const AddParty = () => {
   const nav = useNavigation();
   const checkList = [
-    // {value: 'Retails', label: 'Retails'},
+    {value: 'Appliances', label: 'Appliances'},
+    {value: 'Crockery', label: 'Crockery'},
     {value: 'Dealer', label: 'Dealer'},
+    {value: 'Direct Marketing', label: 'Direct Marketing'},
     {value: 'Distributor', label: 'Distributor'},
-    // {value: 'Customer', label: 'Customer'},
+    {value: 'Electronics', label: 'Electronics'},
+    {value: 'Hardware & Sanitary', label: 'Hardware & Sanitary'},
+    {value: 'Multibrand', label: 'Multibrand'},
+    {value: 'Others', label: 'Others'},
   ];
 
   const [loading, setLoading] = useState(true);
@@ -158,8 +163,6 @@ const AddParty = () => {
         });
     };
     submit();
-    //Seller Broker--T
-    //Buyer Broker--R
   };
 
   const onSelectionsChange = selectedItems => {
@@ -177,6 +180,7 @@ const AddParty = () => {
             selectedItems={selectedItems}
             onSelectionsChange={onSelectionsChange}
             labelStyle={{color: theme1.SemiBlack}}
+            horizontal={true}
             rowStyle={{
               borderColor: theme1.LIGHT_ORANGE_COLOR,
               width: '90%',
